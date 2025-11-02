@@ -1,10 +1,10 @@
 CREATE TABLE IF NOT EXISTS orders (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    quantity INT NOT NULL CHECK (quantity > 0),
+    quantity INT UNSIGNED NOT NULL CHECK (quantity > 0),
     client_id INT UNSIGNED NOT NULL,
-    recipes_id INT UNSIGNED NOT NULL,
+    recipe_id INT UNSIGNED,
 
     FOREIGN KEY (client_id) REFERENCES clients(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (recipes_id) REFERENCES recipes(id),
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON UPDATE CASCADE ON DELETE SET NULL,
     PRIMARY KEY (id)
 );
