@@ -21,9 +21,9 @@ services:
         container_name: my-mysql
         environment:
             MYSQL_ROOT_PASSWORD: root
-            MYSQL_DATABASE: container
+            MYSQL_DATABASE: cosmetics
             MYSQL_USER: user
-            MYSQL_PASSWORD: 12345
+            MYSQL_PASSWORD: 12345qwerty
             MYSQL_SSL_CA: ""
         ports:
             - '3306:3306'
@@ -33,16 +33,21 @@ services:
 
     phpmyadmin:
         image: phpmyadmin/phpmyadmin
+        container_name: my-phpmyadmin
         depends_on:
-            - mysql
+            mysql:
+                condition: service_started
         environment:
             PMA_HOST: my-mysql
             PMA_PORT: 3306
             MYSQL_ROOT_PASSWORD: root
         ports:
             - '8080:80'
+        networks:
+            - default
 
     composer:
+        container_name: my-composer
         image: composer:latest
         working_dir: /application
         volumes:

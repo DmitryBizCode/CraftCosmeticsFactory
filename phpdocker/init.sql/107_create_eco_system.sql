@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS eco_system (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     date_start DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-    date_end DATETIME(6) CHECK (date_end > date_start),
+    date_end DATETIME(6),
     client_id INT UNSIGNED NOT NULL,
     staff_id INT UNSIGNED NOT NULL,
 

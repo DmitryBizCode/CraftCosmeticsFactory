@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS orders (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    quantity INT UNSIGNED NOT NULL CHECK (quantity > 0),
+    quantity INT UNSIGNED NOT NULL,
     client_id INT UNSIGNED NOT NULL,
     recipe_id INT UNSIGNED,
 
