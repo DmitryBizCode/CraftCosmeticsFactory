@@ -1,0 +1,369 @@
+/* Загальні стилі */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    color: #004080;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.section-title::after {
+    content: "";
+    width: 50px;
+    height: 4px;
+    background-color: #ffcc00;
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* shipment and route */
+.shipment-info-section {
+    padding: 60px 0;
+    background-color: #f8f9fa;
+}
+
+.shipment-route {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+
+.route-icon {
+    font-size: 2rem;
+    color: #004080;
+    margin-bottom: 10px;
+}
+
+.route-header .route-line {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.route-progress {
+    width: 100%;
+    height: 8px;
+    background: #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.route-progress-bar {
+    height: 8px;
+    background: #004080;
+}
+
+.route-progress-icon {
+    font-size: 1.5rem;
+    color: #004080;
+    position: absolute;
+    top: -10px;
+}
+
+.shipment-details .detail-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.shipment-details .detail-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.shipment-details .detail-icon {
+    font-size: 1.5rem;
+    color: #004080;
+    margin-right: 10px;
+}
+
+.detail-card h5 {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.detail-card p {
+    margin: 0;
+    font-size: 1rem;
+    color: #555;
+}
+
+/* Transaction Information Section */
+.transaction-info-section {
+    background-color: #f8f9fa;
+    padding: 60px 0;
+}
+
+.transaction-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.transaction-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.transaction-icon {
+    font-size: 2.5rem;
+    color: #004080;
+    margin-bottom: 10px;
+}
+
+.transaction-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.transaction-status {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.transaction-status.paid {
+    color: #28a745;
+}
+
+.transaction-status.unpaid {
+    color: #dc3545;
+}
+
+.transaction-date {
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.additional-transaction-info {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 1rem;
+    color: #333;
+}
+
+.additional-transaction-info .detail-icon {
+    font-size: 1.2rem;
+    color: #004080;
+    margin-right: 5px;
+}
+
+/*base css */
+
+.info-card {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.icon-container {
+    font-size: 2rem;
+    color: #004080;
+    margin-right: 15px;
+}
+
+.info-content p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.image-frame img {
+    border-radius: 15px;
+}
+
+.additional-info {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    color: #333;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.info-item h5 {
+    font-size: 1rem;
+    color: #004080;
+    margin-bottom: 5px;
+}
+
+.info-item p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* client and owner*/
+
+.client-info-section {
+    background-color: #f8f9fa;
+    padding: 60px 0;
+}
+
+.client-profile-card,
+.owner-profile-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+}
+
+.client-photo img,
+.owner-photo img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #004080;
+}
+
+.client-details h5,
+.owner-details h5 {
+    font-size: 1rem;
+    color: #004080;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.client-details p,
+.owner-details p {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.detail-icon {
+    font-size: 1.2rem;
+    color: #004080;
+    margin-right: 10px;
+}
+
+.additional-client-info {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 1rem;
+    color: #333;
+}
+
+.additional-client-info .detail-icon {
+    font-size: 1.2rem;
+    color: #004080;
+    margin-right: 5px;
+}
+/* IoT Sensor Data Section */
+.iot-sensor-data-section .sensor-card {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.iot-sensor-data-section .sensor-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.iot-sensor-data-section h5 {
+    font-size: 1.3rem;
+    color: #004080;
+    margin-bottom: 10px;
+}
+
+.iot-sensor-data-section p {
+    font-size: 1rem;
+    color: #555;
+}
+
+.iot-sensor-data-section input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.iot-sensor-data-section .btn {
+    margin-top: 10px;
+    width: 100%;
+    background-color: #004080;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.iot-sensor-data-section .btn:hover {
+    background-color: #003366;
+}
+
+/* Sensor Metrics Charts Section */
+.sensor-metrics-charts-section .chart-card {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.sensor-metrics-charts-section h5 {
+    font-size: 1.3rem;
+    color: #004080;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+/* Адаптивність */
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2.5rem;
+    }
+    .hero-section p {
+        font-size: 1rem;
+    }
+    .section-title {
+        font-size: 2rem;
+    }
+}

@@ -1,0 +1,10 @@
+# Игнорировать всё содержимое var
+*
+
+# Разрешаем только .gitignore файлы
+!.gitignore
+!.gitkeep
+
+# Разрешаем структуру cache для .gitignore
+!cache/
+!cache/.gitignore

@@ -1,0 +1,75 @@
+# PhpStorm
+.idea/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# PHP
+vendor/
+composer.phar
+*.cache
+
+# Twig кэш
+var/cache/*.php
+!var/cache/.gitignore
+
+# Вся папка var (кэш, временные файлы)
+var/*
+!var/.gitignore
+!var/cache/
+!var/cache/.gitignore
+
+# Логи
+*.log
+logs/
+
+# Временные файлы
+*.tmp
+*.swp
+*.swo
+*~
+
+# БД
+*.sql.backup
+*.sql.bak
+
+# Docker
+docker-data/
+mysql-data/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Uploads
+image/*
+!image/.gitignore
+
+# Старые backup файлы
+*.bak
+*.backup
+*.old
+
+# Тестовые файлы
+test_data/
+fixtures/
+
+# Документация (будет добавлена позже)
+*.md
+*.txt
+
+# Неактуальные SQL файлы (старая схема контейнеров)
+phpdocker/init.sql/10_create_statuses.sql
+phpdocker/init.sql/11_create_transactions.sql
+phpdocker/init.sql/12_create_metrics.sql
+phpdocker/init.sql/1_test.sql
+
+# Альтернативная SQL схема
+var/sql/
+
+# Пароли и чувствительные данные
+var/password.txt

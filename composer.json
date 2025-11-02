@@ -1,0 +1,28 @@
+{
+  "name": "dmitr/basic-blog-fox",
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Dmitry Beznosiuk",
+      "email": "145875719+DmitryBizCode@users.noreply.github.com"
+    }
+  ],
+  "require-dev": {
+    "symfony/var-dumper": "^6.3",
+    "friendsofphp/php-cs-fixer": "v3.64.0",
+    "phpunit/phpunit": "^11.3",
+    "symfony/framework-bundle": "^7.1"
+  },
+  "require": {
+    "twbs/bootstrap": "^5.3",
+    "twig/twig": "^3.0",
+    "ext-pdo": "*",
+    "ext-mysqli": "*",
+    "symfony/console": "^7.1",
+    "phpmailer/phpmailer": "^6.9"
+  }
+}

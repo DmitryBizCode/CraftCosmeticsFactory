@@ -1,0 +1,265 @@
+/* Hero Section */
+.hero-section {
+    background-image: linear-gradient(rgba(0, 64, 128, 0.8), rgba(0, 64, 128, 0.8)), url('/image/main.webp');
+    color: white;
+    padding: 100px 0;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+}
+.hero-section h1 {
+    font-size: 3rem;
+    font-weight: 700;
+}
+.hero-section p {
+    font-size: 1.25rem;
+    margin-bottom: 30px;
+}
+.hero-section .btn {
+    font-size: 1.2rem;
+    padding: 10px 30px;
+}
+/* Feature Section */
+.feature-section {
+    background-color: #f8f9fa;
+    padding: 60px 0;
+}
+.feature-section h2 {
+    font-size: 2.5rem;
+    color: #004080;
+    font-weight: 700;
+    margin-bottom: 40px;
+    position: relative;
+}
+.feature-section h2::after {
+    content: "";
+    width: 50px;
+    height: 4px;
+    background-color: #ffcc00;
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Feature Card */
+.feature-card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+.feature-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #ffcc00;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+.feature-card:hover .feature-image {
+    transform: scale(1.1);
+}
+.feature-card h4 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #004080;
+    margin-top: 15px;
+}
+.feature-card p {
+    font-size: 1rem;
+    color: #555;
+    margin-top: 10px;
+    line-height: 1.6;
+}
+
+
+/* Why Choose Us Section */
+.why-choose-us {
+    padding: 60px 0;
+    background-color: #f8f9fa;
+}
+.why-choose-us h2 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #004080;
+    margin-bottom: 40px;
+    position: relative;
+}
+.why-choose-us h2::after {
+    content: "";
+    width: 50px;
+    height: 4px;
+    background-color: #ffcc00;
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.why-choose-us .col-md-3 {
+    padding: 20px;
+    transition: transform 0.3s ease;
+}
+.why-choose-us .col-md-3:hover {
+    transform: translateY(-10px);
+}
+
+.why-choose-us .service-icon img {
+    max-width: 60%;
+}
+.why-choose-us h4 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin-top: 15px;
+    color: #004080;
+}
+.why-choose-us p {
+    font-size: 1rem;
+    color: #555;
+}
+.why-choose-us .btn {
+    font-size: 1.2rem;
+    padding: 10px 30px;
+    color: #fff;
+    background-color: #ffcc00;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+.why-choose-us .btn:hover {
+    background-color: #e6b800;
+}
+
+
+/* Stats Section */
+.stats-section {
+    background-color: #004080;
+    color: white;
+    padding: 60px 0;
+}
+.stats-section h2 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 40px;
+}
+.stats-section .col-md-3 {
+    border: 2px solid #0059b3;
+    border-radius: 8px;
+    padding: 30px;
+    margin: 10px 0;
+    transition: background-color 0.3s, color 0.3s;
+}
+.stats-section .col-md-3:hover {
+    background-color: #0059b3;
+    color: #fff;
+}
+.stats-section h3 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+.stats-section p {
+    font-size: 1.1rem;
+    font-weight: 300;
+}
+
+/* Social Media Icon Images */
+.social-icons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+.social-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+.social-img {
+    width: 40px;
+    height: 40px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.social-icon:hover .social-img {
+    transform: scale(1.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Decorative Elements */
+.footer-top {
+    border-bottom: 1px solid #ffffff33;
+    padding-bottom: 20px;
+}
+.footer-bottom .decorative-line {
+    width: 100px;
+    height: 4px;
+    background-color: #ffcc00;
+    margin: 0 auto;
+}
+.footer-bottom p {
+    color: #d1d1d1;
+}
+.footer .container {
+    max-width: 1200px;
+}
+
+
+/* Services Section Styles */
+.services-section {
+    background-color: #f0f4f8;
+    padding: 60px 0;
+}
+.services-section h2 {
+    font-size: 2.5rem;
+    color: #004080;
+    font-weight: 700;
+}
+.services-section h4 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #004080;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+.services-section ul {
+    list-style: none;
+    padding-left: 0;
+}
+.services-section ul li {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+.services-section ul li i {
+    font-size: 1.3rem;
+    margin-right: 8px;
+}
+.services-section .single-service-image {
+    margin-top: -80px;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    max-width: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 470px; /* Задає ширину 400 пікселів */
+    height: 470px; /* Задає висоту 400 пікселів */
+    object-fit: cover; /* Додає обрізання, щоб зображення займало весь простір */
+}
+
+.services-section .single-service-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+.services-section .btn {
+    font-size: 1.2rem;
+    padding: 12px 40px;
+    color: #fff;
+    background-color: #004080;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+.services-section .btn:hover {
+    background-color: #003366;
+}

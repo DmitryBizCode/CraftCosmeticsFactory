@@ -1,0 +1,63 @@
+.user-avatar {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    margin-bottom: 15px;
+}
+.card {
+    border-radius: 8px;
+    overflow: hidden;
+}
+.card-header {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+.list-group-item {
+    font-size: 0.9rem;
+    padding: 10px 15px;
+}
+.table {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+.progress {
+    height: 15px;
+    border-radius: 10px;
+    background-color: #f1f1f1;
+}
+.progress-bar {
+    font-size: 0.75rem;
+}
+.profile-photo-preview {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+}
+
+.profile-photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn {
+    font-size: 0.875rem;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-bottom: 50px;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}

@@ -1,0 +1,4 @@
+# Игнорировать все файлы кроме .gitignore
+*
+!.gitignore
+!.gitkeep

@@ -1,0 +1,166 @@
+{% extends '/templates/base_concept.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleServices.css">
+{% endblock %}
+
+{% block content %}
+
+    <!-- Hero Section for Services Page -->
+    <section class="hero-section py-5 text-white text-center" style="background-image: url('/image/main.webp'); background-size: cover;">
+        <div class="container">
+            <h1 class="display-4">Our Services and Global Reach</h1>
+            <p class="lead">Connecting trade worldwide with reliable container rentals and IoT management.</p>
+        </div>
+    </section>
+
+    <!-- Countries We Work With Section -->
+    <div class="countries-section">
+        <h2 class="text-center">Countries We Work With</h2>
+        <p class="text-up-up">Explore the destinations we serve globally. Our extensive network ensures that your goods reach any part of the world safely and on time.</p>
+
+        <!-- Центрований верхній рядок з трьома елементами -->
+        <div class="row justify-content-between">
+            <div class="col-md-3 text-center mb-4">
+                <img src="/image/services/USA.png" alt="USA" class="img-fluid country-image">
+                <h4 class="mt-3">USA</h4>
+                <p>Our services ensure reliable shipping to major ports in the United States with full customs and IoT container tracking support.</p>
+            </div>
+            <div class="col-md-3 text-center mb-4">
+                <img src="/image/services/Germany.png" alt="Germany" class="img-fluid country-image">
+                <h4 class="mt-3">Germany</h4>
+                <p>Strong logistics support for routes to Germany, enabling secure and efficient cargo handling across the EU.</p>
+            </div>
+            <div class="col-md-3 text-center mb-4">
+                <img src="/image/services/China.png" alt="China" class="img-fluid country-image">
+                <h4 class="mt-3">China</h4>
+                <p>With established routes to China, we facilitate smooth customs operations and provide IoT monitoring solutions for your cargo.</p>
+            </div>
+        </div>
+
+        <!-- Центрований рядок для двох елементів -->
+        <div class="row justify-content-center">
+            <div class="col-md-3 text-center mb-4">
+                <img src="/image/services/Japan.png" alt="Japan" class="img-fluid country-image">
+                <h4 class="mt-3">Japan</h4>
+                <p>Efficient shipping and real-time tracking for shipments to Japan, meeting the highest standards for logistics and security.</p>
+            </div>
+            <div class="col-md-3 text-center mb-4">
+                <img src="/image/services/UK.png" alt="United Kingdom" class="img-fluid country-image">
+                <h4 class="mt-3">United Kingdom</h4>
+                <p>Comprehensive logistics solutions to major ports in the UK, ensuring secure and fast customs clearance.</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Order Process Section with Image -->
+    <section class="order-process-section py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-4">Order Process</h2>
+            <p class="text-center text-secondary mb-5">Our structured approach ensures each step of your order is handled with precision and care.</p>
+
+            <div class="row align-items-center">
+                <!-- Order Steps -->
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-6 mb-4 text-center">
+                            <div class="order-step p-4 bg-white rounded shadow">
+                                <h4>Step 1: Selection</h4>
+                                <p>Select the required container type and IoT sensors as per your cargo requirements.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4 text-center">
+                            <div class="order-step p-4 bg-white rounded shadow">
+                                <h4>Step 2: Rental Agreement</h4>
+                                <p>Agree on rental terms and validate container availability with all logistics partners.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4 text-center">
+                            <div class="order-step p-4 bg-white rounded shadow">
+                                <h4>Step 3: Customs Approval</h4>
+                                <p>Coordinate with customs for legal clearance, ensuring compliance with destination regulations.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4 text-center">
+                            <div class="order-step p-4 bg-white rounded shadow">
+                                <h4>Step 4: Owner Approval</h4>
+                                <p>Receive container owner’s approval, confirming that all terms are met.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4 text-center">
+                            <div class="order-step p-4 bg-white rounded shadow">
+                                <h4>Step 5: Payment</h4>
+                                <p>Complete the transaction and secure container booking for your shipment.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4 text-center">
+                            <div class="order-step p-4 bg-white rounded shadow">
+                                <h4>Step 6: Tracking and Management</h4>
+                                <p>Access real-time data from IoT sensors on container conditions throughout the journey.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Image on the Right -->
+                <div class="col-md-4">
+                    <img src="/image/services/process.webp" alt="Order Process" class="img-fluid rounded shadow">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- IoT Management Section -->
+    <section class="iot-management-section py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">IoT Management Capabilities</h2>
+            <p class="text-center text-secondary mb-5">
+                Manage your container's environment and condition in real time. Whether you are shipping perishable goods, sensitive materials, or high-value items, our advanced IoT features give you full control without the need for administrative support. Every sensor can be individually configured to ensure the highest standard of protection and optimal conditions.
+            </p>
+
+            <div class="row">
+                <div class="col-md-3 text-center mb-4">
+                    <img src="/image/services/temperature.webp" alt="Temperature Sensor" class="img-fluid sensor-image">
+                    <h5>Temperature</h5>
+                    <p>Ensure temperature stability for perishables or sensitive items, minimizing spoilage risk.</p>
+                </div>
+                <div class="col-md-3 text-center mb-4">
+                    <img src="/image/services/humidity.webp" alt="Humidity Sensor" class="img-fluid sensor-image">
+                    <h5>Humidity</h5>
+                    <p>Maintain precise humidity levels, ideal for pharmaceuticals, electronics, and other sensitive goods.</p>
+                </div>
+                <div class="col-md-3 text-center mb-4">
+                    <img src="/image/services/vibrometer.webp" alt="Vibration Sensor" class="img-fluid sensor-image">
+                    <h5>Vibration</h5>
+                    <p>Minimize the impact of turbulence, ensuring stability for fragile or valuable cargo.</p>
+                </div>
+                <div class="col-md-3 text-center mb-4">
+                    <img src="/image/services/incline.webp" alt="Incline Sensor" class="img-fluid sensor-image">
+                    <h5>Incline</h5>
+                    <p>Detect tilts and monitor angle shifts for delicate or position-sensitive goods.</p>
+                </div>
+                <div class="col-md-3 text-center mb-4">
+                    <img src="/image/services/openings.webp" alt="Opening Sensor" class="img-fluid sensor-image">
+                    <h5>Opening</h5>
+                    <p>Track any unauthorized container openings to enhance cargo security.</p>
+                </div>
+                <div class="col-md-3 text-center mb-4">
+                    <img src="/image/services/gps.webp" alt="GPS Sensor" class="img-fluid sensor-image">
+                    <h5>GPS</h5>
+                    <p>Monitor location in real-time, ensuring you know where your cargo is at all times.</p>
+                </div>
+                <div class="col-md-3 text-center mb-4">
+                    <img src="/image/services/illuminated.webp" alt="Illumination Sensor" class="img-fluid sensor-image">
+                    <h5>Illumination</h5>
+                    <p>Manage light exposure to protect sensitive cargo from unwanted light sources.</p>
+                </div>
+                <div class="col-md-3 text-center mb-4">
+                    <img src="/image/services/gases.webp" alt="Gas Sensor" class="img-fluid sensor-image">
+                    <h5>Gases</h5>
+                    <p>Measure and control gas levels, ensuring safety and preserving the integrity of goods.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}

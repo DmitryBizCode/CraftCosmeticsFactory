@@ -1,0 +1,47 @@
+/* Custom Navbar Styles */
+.custom-navbar {
+    background-color: #00264d; /* Темно-синій фон для морської тематики */
+    padding: 15px 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.custom-navbar .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffcc00; /* Виділений жовтий колір для бренду */
+    transition: color 0.3s ease;
+}
+
+.custom-navbar .navbar-brand:hover {
+    color: #e6b800; /* Темніший жовтий при наведенні */
+}
+
+.custom-navbar .nav-link {
+    font-size: 1.1rem;
+    color: #ffffff;
+    padding: 10px 15px;
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.custom-navbar .nav-link:hover {
+    color: #ffcc00; /* Жовтий текст при наведенні */
+    background-color: rgba(255, 255, 255, 0.1); /* Легкий фон для виділення */
+    border-radius: 5px;
+}
+
+.custom-navbar .nav-item.active .nav-link {
+    font-weight: 600;
+    color: #ffcc00; /* Жовтий колір для активного посилання */
+}
+
+.custom-navbar .login-link {
+    border: 1px solid #ffcc00; /* Контур для посилання входу */
+    border-radius: 5px;
+    padding: 8px 15px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.custom-navbar .login-link:hover {
+    color: #00264d;
+    background-color: #ffcc00; /* Заповнений жовтий фон при наведенні */
+}

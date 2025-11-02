@@ -1,0 +1,151 @@
+/* About Section */
+.about-section {
+    background-color: #f8f9fa;
+    padding: 60px 0;
+    text-align: center;
+}
+
+.about-section h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #004080; /* Глибокий синій */
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.about-section h2::after {
+    content: "";
+    width: 50px;
+    height: 4px;
+    background-color: #ffcc00; /* Жовтий акцент */
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.about-section p {
+    font-size: 1.15rem;
+    color: #333; /* Темніший відтінок для контрасту */
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+/* Збільшені картинки з закругленими кутами */
+.about-section .img-fluid,
+.contact-section .img-fluid {
+    width: 250px;
+    height: 250px;
+    border-radius: 15px; /* Закруглені кути */
+    object-fit: cover; /* Центрування зображення */
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.about-section .img-fluid:hover,
+.contact-section .img-fluid:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.about-section h4 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #004080;
+    margin-top: 20px;
+}
+
+/* Contact Section */
+.contact-section {
+    padding: 60px 0;
+    background-color: #004080; /* Глибокий синій фон */
+    color: #ffffff;
+    text-align: center;
+}
+
+.contact-section h2 {
+    font-size: 2.5rem;
+    color: #ffcc00; /* Жовтий акцент */
+    font-weight: 700;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.contact-section h2::after {
+    content: "";
+    width: 50px;
+    height: 4px;
+    background-color: #ffcc00;
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.contact-section p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #d1d1d1;
+    margin-bottom: 30px;
+}
+
+.contact-section .form-label {
+    font-weight: bold;
+    color: white;
+}
+
+.contact-section .form-control {
+    background-color: #f0f4f8; /* Світло-сірий */
+    border: 1px solid #004080; /* Синій обідок */
+    border-radius: 8px;
+    color: #004080;
+    transition: border-color 0.3s ease;
+    padding: 12px;
+}
+
+.contact-section .form-control:focus {
+    border-color: #ffcc00; /* Жовтий акцент */
+    box-shadow: none;
+}
+
+.contact-section .btn-primary {
+    background-color: #ffcc00; /* Жовтий акцент */
+    border: none;
+    font-size: 1.2rem;
+    padding: 10px 30px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    color: #004080;
+}
+
+.contact-section .btn-primary:hover {
+    background-color: #e6b800;
+}
+
+/* Social Icons */
+.contact-section .social-icons a {
+    color: #ffcc00;
+    font-size: 1.5rem;
+    margin: 0 10px;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.contact-section .social-icons a:hover {
+    color: #e6b800;
+    transform: scale(1.1);
+}
+
+/* Адаптивність для мобільних пристроїв */
+@media (max-width: 768px) {
+    .about-section h2, .contact-section h2 {
+        font-size: 2rem;
+    }
+    .about-section p, .contact-section p {
+        font-size: 1rem;
+    }
+    .about-section .img-fluid,
+    .contact-section .img-fluid {
+        width: 200px;
+        height: 200px;
+    }
+}

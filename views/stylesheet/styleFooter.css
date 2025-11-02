@@ -1,0 +1,46 @@
+/* Footer Styles */
+.footer {
+    background: linear-gradient(135deg, #00264d, #003366);
+    color: white;
+    font-size: 0.9rem;
+    padding-top: 60px;
+    position: relative;
+}
+.footer h5, .footer h6 {
+    font-weight: 600;
+    color: #ffcc00;
+    position: relative;
+}
+.footer h5::after, .footer h6::after {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 3px;
+    background-color: #ffcc00;
+    margin-top: 10px;
+}
+.footer p {
+    color: #d1d1d1;
+    line-height: 1.6;
+}
+.footer a {
+    color: #ffcc00;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+.footer a:hover {
+    color: #e6b800;
+}
+.footer .list-unstyled li {
+    margin-bottom: 10px;
+}
+.social-icons .social-img {
+    width: 30px; /* Задайте потрібний розмір */
+    height: 30px;
+    margin-right: 10px; /* Відступ між іконками */
+    transition: transform 0.3s ease;
+}
+
+.social-icons .social-img:hover {
+    transform: scale(1.1); /* Легкий збільшений ефект при наведенні */
+}

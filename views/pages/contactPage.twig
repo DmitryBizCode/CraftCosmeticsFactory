@@ -1,0 +1,85 @@
+{% extends '/templates/base_concept.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleContact.css">
+{% endblock %}
+
+{% block content %}
+
+    <!-- About Us Section -->
+    <section class="about-section">
+        <div class="container">
+            <h2>About Us</h2>
+            <p>We are a leading logistics provider offering container rentals and comprehensive shipping solutions across the globe. With a commitment to reliability and customer satisfaction, we ensure that your cargo reaches its destination safely and efficiently.</p>
+
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <img src="/image/contact1.webp" alt="Our Mission" class="img-fluid about-image mb-3">
+                    <h4>Our Mission</h4>
+                    <p>To provide efficient, innovative, and reliable shipping solutions to our clients worldwide.</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <img src="/image/contact2.webp" alt="Our Vision" class="img-fluid about-image mb-3">
+                    <h4>Our Vision</h4>
+                    <p>To be the most trusted and preferred logistics partner for global trade and commerce.</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <img src="/image/contact3.webp" alt="Our Values" class="img-fluid about-image mb-3">
+                    <h4>Our Values</h4>
+                    <p>Commitment to quality, integrity, and respect for our clients and their needs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section">
+        <div class="container">
+            <h2>Contact Us</h2>
+            <p>Feel free to reach out for inquiries or assistance with our logistics and container rental services.</p>
+
+            <div class="row">
+                <!-- Contact Form -->
+                <div class="col-md-6">
+                    <h4>Send Us a Message</h4>
+                    <form action="/index.php?action=contact" method="POST">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Your Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </form>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="col-md-6">
+                    <h4>Our Office</h4>
+                    <p><i class="fas fa-map-marker-alt text-primary me-2"></i>Gavrilishina 24, Kyiv, Ukraine</p>
+                    <p><i class="fas fa-phone-alt text-primary me-2"></i>+38 (099) 547-23-54</p>
+                    <p><i class="fas fa-envelope text-primary me-2"></i>dmitrybeznosiukcode@gmail.com</p>
+
+                    <h4>Working Hours</h4>
+                    <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
+                    <p>Saturday: 10:00 AM - 3:00 PM</p>
+
+                    <h4>Follow Us</h4>
+                    <p class="social-icons">
+                        <a href="https://www.facebook.com"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://www.twitter.com"><i class="fab fa-twitter"></i></a>
+                        <a href="https://www.instagram.com"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.linkedin.com"><i class="fab fa-linkedin-in"></i></a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Logistics Company - Container Rental</title>
+    <link href="/vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/views/stylesheet/styleNavBar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    {% block linksScript %} {% endblock %}
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js" defer></script>
+    <script src="/vendor/twbs/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+
+<body>
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
+    <a class="navbar-brand" href="/index.php">Logistics Co.</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item {% if homeNavBar %}active{% endif %}">
+                <a class="nav-link" href="/index.php">Home</a>
+            </li>
+            <li class="nav-item {% if servicesNavBar %}active{% endif %}">
+                <a class="nav-link" href="/index.php?action=services">Services</a>
+            </li>
+            <li class="nav-item {% if contactNavBar %}active{% endif %}">
+                <a class="nav-link" href="/index.php?action=contact">Contact</a>
+            </li>
+            <li class="nav-item {% if signNavBar %}active{% endif %}">
+                <a class="nav-link login-link" href="/index.php?action=sign">Account Login</a>
+            </li>
+        </ul>
+    </div>
+
+</nav>
+{% block content %}{% endblock %}
+
+
+{% if footer is not empty %}
+    <link rel="stylesheet" href="/views/stylesheet/styleFooter.css">
+    {% include 'partials/footer.twig' %}
+{% endif %}
+
+
+</body>
+</html>
