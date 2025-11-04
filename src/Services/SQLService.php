@@ -8,7 +8,7 @@ class SQLService
 {
     private PDO $pdo;
 
-    public function __construct(string $host = null, string $user = 'user', string $pass = '12345', string $db = 'container', int $port = 3306)
+    public function __construct(string $host = null, string $user = 'user', string $pass = '12345qwerty', string $db = 'cosmetics', int $port = 3306)
     {
         // Автоматическое определение хоста: в Docker используется имя сервиса 'mysql', локально 'localhost'
         if ($host === null) {
@@ -16,8 +16,9 @@ class SQLService
         }
         try {
             $this->pdo = new PDO("mysql:host=$host;port=$port;dbname=$db", $user, $pass);
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            echo "Error access to database: " . $e->getMessage();
+            throw new \Exception("Error access to database: " . $e->getMessage());
         }
     }
 

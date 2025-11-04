@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Logistics Company - Container Rental</title>
     <link href="/vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/views/stylesheet/styleNavBar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     {% block linksScript %} {% endblock %}
+    <link rel="stylesheet" href="/views/stylesheet/styleNavBar.css">
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js" defer></script>
@@ -15,28 +15,25 @@
 
 <body>
 <!-- Navigation Bar -->
-<nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
-    <a class="navbar-brand" href="/index.php">Logistics Co.</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-            <li class="nav-item {% if homeNavBar %}active{% endif %}">
-                <a class="nav-link" href="/index.php">Home</a>
-            </li>
-            <li class="nav-item {% if servicesNavBar %}active{% endif %}">
-                <a class="nav-link" href="/index.php?action=services">Services</a>
-            </li>
-            <li class="nav-item {% if contactNavBar %}active{% endif %}">
-                <a class="nav-link" href="/index.php?action=contact">Contact</a>
-            </li>
-            <li class="nav-item {% if signNavBar %}active{% endif %}">
-                <a class="nav-link login-link" href="/index.php?action=sign">Account Login</a>
-            </li>
-        </ul>
+<nav class="custom-navbar" style="background: transparent !important; background-color: transparent !important; padding: 20px 40px; position: absolute !important; top: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; z-index: 1000 !important;">
+    <div class="navbar-container" style="max-width: 1400px; margin: 0 auto; background-color: #ffffff !important; background: #ffffff !important; border-radius: 50px; padding: 15px 40px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1); position: relative; width: calc(100% - 80px);">
+        <a href="/index.php" class="navbar-logo" style="display: flex; align-items: center; text-decoration: none; z-index: 1;">
+            <span class="logo-emblem" style="font-size: 32px; font-weight: 900; color: #000 !important; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-family: 'Arial', sans-serif;">A</span>
+        </a>
+        <h1 class="navbar-title" style="font-size: 24px; font-weight: 600; color: #333 !important; margin: 0; letter-spacing: 2px; font-family: 'Georgia', 'Times New Roman', serif; text-transform: uppercase; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap;">VAL.SH.BEATY</h1>
+        <div class="navbar-icons" style="display: flex; align-items: center; gap: 25px; z-index: 1;">
+            <a href="#" class="navbar-icon" title="Search" style="display: flex; align-items: center; justify-content: center; text-decoration: none; color: #333 !important; font-size: 20px; width: 40px; height: 40px; transition: all 0.3s ease;">
+                <i class="fas fa-search"></i>
+            </a>
+            <a href="#" class="navbar-icon cart-icon" title="Cart" style="display: flex; align-items: center; justify-content: center; text-decoration: none; color: #333 !important; font-size: 20px; width: 40px; height: 40px; transition: all 0.3s ease; position: relative;">
+                <i class="fas fa-shopping-bag"></i>
+                <span class="cart-badge" style="position: absolute; top: -5px; right: -5px; background-color: #dc3545; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; border: 2px solid white;">2</span>
+            </a>
+            <a href="#" class="navbar-icon profile-icon" title="Profile" style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 2px solid #4da6ff; padding: 2px; background-color: white; display: block;">
+                <img src="/image/1.png" alt="Profile" class="profile-avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+            </a>
+        </div>
     </div>
-
 </nav>
 {% block content %}{% endblock %}
 
