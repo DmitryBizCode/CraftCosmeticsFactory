@@ -64,13 +64,15 @@ class Router
                 }
             // no break
             case 'setting':
-                if ($method == 'POST') {
-                    $content = $this->getContainerController()->setting($id,$data);
-                    break;
-                } else {
-                    $content = $this->getContainerController()->getSetting($id,$data);
-                    break;
-                }
+                $content = $this->ecommerceController->getProfileSetting();
+                break;
+                // if ($method == 'POST') {
+                //     $content = $this->getContainerController()->setting($id,$data);
+                //     break;
+                // } else {
+                //     $content = $this->getContainerController()->getSetting($id,$data);
+                //     break;
+                // }
             // no break
             case 'rental':
                 if ($method == 'POST') {

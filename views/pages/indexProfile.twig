@@ -1,26 +1,14 @@
 {% extends '/templates/base_concept.twig' %}
 
 {% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleProfileAside.css">
     <link rel="stylesheet" href="/views/stylesheet/styleProfile.css">
 {% endblock %}
 
 {% block content %}
 <section class="profile-page">
     <div class="profile-layout">
-        <aside class="profile-sidebar">
-            <span class="profile-sidebar-line"></span>
-            <nav class="profile-nav">
-                <a href="#" class="profile-nav-item active" title="Discover">
-                    <i class="fas fa-home"></i>
-                </a>
-                <a href="#" class="profile-nav-item" title="Purchases">
-                    <i class="fas fa-shopping-bag"></i>
-                </a>
-                <a href="#" class="profile-nav-item" title="Settings">
-                    <i class="fas fa-cog"></i>
-                </a>
-            </nav>
-        </aside>
+        {% include 'partials/asideProfie/aside.twig' with {faHome: true} %}
 
         <main class="profile-content">
             <div class="profile-heading">

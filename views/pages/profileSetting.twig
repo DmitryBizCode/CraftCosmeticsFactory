@@ -1,0 +1,224 @@
+{% extends '/templates/base_concept.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleProfileAside.css">
+    <link rel="stylesheet" href="/views/stylesheet/styleProfileSetting.css">
+{% endblock %}
+
+{% block content %}
+<section class="profile-page settings-page">
+    <div class="profile-layout">
+        {% include 'partials/asideProfie/aside.twig' with { faCog: true } %}
+
+        <main class="profile-content settings-content">
+            <header class="settings-heading">
+                <h1>Profile settings</h1>
+                <p>Refresh your details to tailor product recommendations, care reminders, and loyalty updates.</p>
+                <span class="profile-heading-divider"></span>
+            </header>
+
+            <section class="settings-card settings-account">
+                <div class="settings-card-header">
+                    <div class="settings-avatar-block">
+                        <div class="settings-avatar-ring">
+                            <img src="/image/3.jpg" alt="Valeria Beznosiuk" class="settings-avatar">
+                        </div>
+                        <div class="settings-avatar-actions">
+                            <button type="button" class="settings-btn secondary">Upload</button>
+                            <button type="button" class="settings-btn ghost">Remove</button>
+                        </div>
+                    </div>
+                    <div class="settings-card-meta">
+                        <h2>Account profile</h2>
+                        <p>Rename the essentials and control what the beauty community sees about you.</p>
+                    </div>
+                </div>
+
+                <form class="settings-form">
+                    <div class="settings-grid">
+                        <div class="settings-field">
+                            <label for="first-name" class="settings-label">
+                                First name
+                                <span>Used for invoices</span>
+                            </label>
+                            <input id="first-name" type="text" class="settings-input" value="Valeria">
+                        </div>
+                        <div class="settings-field">
+                            <label for="last-name" class="settings-label">
+                                Last name
+                                <span>Shown on delivery slips</span>
+                            </label>
+                            <input id="last-name" type="text" class="settings-input" value="Beznosiuk">
+                        </div>
+                        <div class="settings-field">
+                            <label for="email-address" class="settings-label">
+                                Email address
+                                <span>Notifications + sign in</span>
+                            </label>
+                            <input id="email-address" type="email" class="settings-input" value="valeria@purecraft.ua">
+                        </div>
+                        <div class="settings-field">
+                            <label for="phone-number" class="settings-label">
+                                Phone number
+                                <span>Delivery updates</span>
+                            </label>
+                            <input id="phone-number" type="tel" class="settings-input" value="+38 067 123 45 67">
+                        </div>
+                        <div class="settings-field full">
+                            <label for="street-address" class="settings-label">
+                                Street address
+                                <span>Shipping destination</span>
+                            </label>
+                            <input id="street-address" type="text" class="settings-input" value="Kyiv, Volodymyrska 22">
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <section class="settings-card settings-password">
+                <div class="settings-card-header minimal">
+                    <div>
+                        <h3>Password & security</h3>
+                        <p>Update the password you use to sign in and secure your beauty data.</p>
+                    </div>
+                </div>
+                <div class="settings-grid password-grid">
+                    <div class="settings-field">
+                        <label for="new-password" class="settings-label">New password</label>
+                        <input id="new-password" type="password" class="settings-input" placeholder="Create a new password">
+                    </div>
+                    <div class="settings-field">
+                        <label for="confirm-password" class="settings-label">Confirm password</label>
+                        <input id="confirm-password" type="password" class="settings-input" placeholder="Repeat new password">
+                    </div>
+                </div>
+                <div class="settings-password-actions">
+                    <button type="button" class="settings-btn outline">Save password</button>
+                </div>
+            </section>
+
+            <section class="settings-card settings-social">
+                <div class="settings-card-header minimal">
+                    <div>
+                        <h3>Social channels</h3>
+                        <p>Keep your handles aligned with the highlights on the main page.</p>
+                    </div>
+                </div>
+                <div class="settings-social-grid">
+                    <div class="settings-social-card youtube">
+                        <div class="settings-social-top">
+                            <span class="social-icon"><i class="fab fa-youtube"></i></span>
+                            <div>
+                                <h4>YouTube</h4>
+                                <small>Showcase rituals & tutorials</small>
+                            </div>
+                        </div>
+                        <div class="settings-social-body">
+                            <input id="social-youtube" type="text" class="settings-input" value="@glowbymaria">
+                            <input type="url" class="settings-input subtle" value="https://youtube.com/@glowbymaria">
+                        </div>
+                    </div>
+                    <div class="settings-social-card instagram">
+                        <div class="settings-social-top">
+                            <span class="social-icon"><i class="fab fa-instagram"></i></span>
+                            <div>
+                                <h4>Instagram</h4>
+                                <small>Daily glow diary</small>
+                            </div>
+                        </div>
+                        <div class="settings-social-body">
+                            <input id="social-instagram" type="text" class="settings-input" value="@maria.glow">
+                            <input type="url" class="settings-input subtle" value="https://instagram.com/maria.glow">
+                        </div>
+                    </div>
+                    <div class="settings-social-card tiktok">
+                        <div class="settings-social-top">
+                            <span class="social-icon"><i class="fab fa-tiktok"></i></span>
+                            <div>
+                                <h4>TikTok</h4>
+                                <small>Quick tips & unboxings</small>
+                            </div>
+                        </div>
+                        <div class="settings-social-body">
+                            <input id="social-tiktok" type="text" class="settings-input" value="@skincare_maria">
+                            <input type="url" class="settings-input subtle" value="https://tiktok.com/@skincare_maria">
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-social-actions">
+                    <button type="button" class="settings-btn ghost">Add channel</button>
+                </div>
+            </section>
+
+            <section class="settings-card settings-linked">
+                <div class="settings-row">
+                    <div>
+                        <h3>Linked accounts</h3>
+                        <p>Use your favourite services to sign in faster and sync loyalty perks.</p>
+                    </div>
+                    <button type="button" class="settings-btn outline">
+                        <i class="fab fa-google"></i>
+                        Sign in with Google
+                    </button>
+                </div>
+                <div class="settings-row">
+                    <div>
+                        <h3>Care calendar</h3>
+                        <p>Connect your calendar to receive personal treatment reminders.</p>
+                    </div>
+                    <button type="button" class="settings-btn outline">
+                        <i class="far fa-calendar-check"></i>
+                        Connect calendar
+                    </button>
+                </div>
+            </section>
+
+            <section class="settings-card settings-notifications">
+                <h3>Beauty notifications</h3>
+                <p>Choose how we nudge you about rituals, refills, and limited drops.</p>
+                <div class="settings-toggle-grid">
+                    <label class="settings-toggle">
+                        <input type="checkbox" checked>
+                        <span class="settings-toggle-decor"></span>
+                        <div>
+                            <strong>Weekly curations</strong>
+                            <small>Fresh routines from experts and bestselling line-ups.</small>
+                        </div>
+                    </label>
+                    <label class="settings-toggle">
+                        <input type="checkbox">
+                        <span class="settings-toggle-decor"></span>
+                        <div>
+                            <strong>SMS reminders</strong>
+                            <small>Track shipments and upcoming spa appointments.</small>
+                        </div>
+                    </label>
+                    <label class="settings-toggle">
+                        <input type="checkbox" checked>
+                        <span class="settings-toggle-decor"></span>
+                        <div>
+                            <strong>Push about limited drops</strong>
+                            <small>Be the first to discover new batches of craft cosmetics.</small>
+                        </div>
+                    </label>
+                </div>
+            </section>
+
+            <section class="settings-card settings-danger">
+                <div class="settings-row danger">
+                    <div>
+                        <h3>Delete account</h3>
+                        <p>Deleting is permanent and removes order history, rewards, and saved rituals.</p>
+                    </div>
+                    <button type="button" class="settings-btn danger">Delete account</button>
+                </div>
+            </section>
+
+            <div class="settings-actions">
+                <button type="button" class="settings-btn primary">Save changes</button>
+            </div>
+        </main>
+    </div>
+</section>
+{% endblock %}
+

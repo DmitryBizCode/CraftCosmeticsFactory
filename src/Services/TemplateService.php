@@ -12,8 +12,9 @@ class TemplateService
     {
         $loader  = new FilesystemLoader(__DIR__. '/../../views');
         $this->twig = new Environment($loader, [
-            'cache' => __DIR__. '/../../var/cache',
-            'debug' => true
+            'cache' => false,
+            'debug' => true,
+            'auto_reload' => true
         ]);
     }
 

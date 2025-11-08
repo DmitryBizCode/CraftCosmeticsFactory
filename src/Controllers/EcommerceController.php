@@ -35,6 +35,14 @@ class EcommerceController
     }
     public function getProfile(): string
     {
-        return $this->templateService->render('pages/profileDashboard', ["homeNavBar" => 1, "footer" => null]);
+        return $this->templateService->render('pages/indexProfile', ["homeNavBar" => 1, "footer" => null]);
+    }
+    public function getProfileSetting(): string
+    {
+        return $this->templateService->render('pages/profileSetting', ["homeNavBar" => 1, "footer" => null]);
+    }
+    public function getProfileOrders(): string
+    {
+        return $this->templateService->render('pages/profileOrders', ["homeNavBar" => 1, "footer" => null]);
     }
 }
