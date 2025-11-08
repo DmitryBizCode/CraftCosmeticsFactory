@@ -1,0 +1,232 @@
+{% extends '/templates/base_concept.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleProfile.css">
+    <link rel="stylesheet" href="/views/stylesheet/styleProfileAside.css">
+    <link rel="stylesheet" href="/views/stylesheet/styleProfileOrders.css">
+{% endblock %}
+
+{% block content %}
+<section class="profile-page orders-page">
+    <div class="profile-layout">
+        {% include 'partials/asideProfie/aside.twig' with { faShoppingBag: true } %}
+
+        <main class="profile-content orders-content">
+            <div class="profile-heading">
+                <h1>Orders analytics</h1>
+                <p>Keep an eye on balance, velocity of new orders, and the health of latest transactions.</p>
+                <div class="profile-heading-divider"></div>
+            </div>
+
+            <section class="orders-overview">
+                <article class="orders-card balance-card">
+                    <div class="balance-head">
+                        <span>Account balance</span>
+                        <strong>$12,540.00</strong>
+                    </div>
+                    <div class="balance-footer">
+                        <span>Primary account holder</span>
+                        <strong>Valeria Beznosiuk • CLT-02345</strong>
+                    </div>
+                </article>
+
+                <article class="orders-card metric-card">
+                    <header>
+                        <i class="fas fa-dollar-sign"></i>
+                        <span>Total transactions amount</span>
+                    </header>
+                    <strong>$48,230</strong>
+                    <small>Based on `transactions.value` aggregated this quarter.</small>
+                </article>
+
+                <article class="orders-card metric-card">
+                    <header>
+                        <i class="fas fa-receipt"></i>
+                        <span>Total orders count</span>
+                    </header>
+                    <strong>128</strong>
+                    <small>Records coming from `orders` table</small>
+                </article>
+
+                <article class="orders-card metric-card">
+                    <header>
+                        <i class="fas fa-file-invoice"></i>
+                        <span>Settled invoices</span>
+                    </header>
+                    <strong>96</strong>
+                    <small>Transactions marked as `Completed`</small>
+                </article>
+
+                <article class="orders-card metric-card">
+                    <header>
+                        <i class="fas fa-percentage"></i>
+                        <span>Conversion rate</span>
+                    </header>
+                    <strong>82%</strong>
+                    <small>Orders paid vs. placed • rolling 30 days</small>
+                </article>
+
+                <article class="orders-card metric-card loan-card">
+                    <header>
+                        <div>
+                            <span>Loan balance</span>
+                            <strong>$3,480</strong>
+                        </div>
+                        <small class="loan-delta">+$180 yesterday</small>
+                    </header>
+                    <ul>
+                        <li><span>Total debit</span><span class="bar bar-debit"></span></li>
+                        <li><span>Total credit</span><span class="bar bar-credit"></span></li>
+                        <li><span>Interest</span><span class="bar bar-interest"></span></li>
+                    </ul>
+                </article>
+            </section>
+
+            <section class="orders-lower-grid">
+                <article class="orders-chart" data-chart>
+                    <header>
+                        <h2>Spending trend</h2>
+                        <span>Monthly value aggregated from `transactions.date` & `transactions.value`</span>
+                    </header>
+                    <div class="chart-surface" data-chart-surface></div>
+                    <footer>
+                        <ul data-chart-labels></ul>
+                    </footer>
+                </article>
+
+                <article class="orders-table-card">
+                    <header>
+                        <h2>Recent transactions</h2>
+                    </header>
+                    <table class="orders-table">
+                        <thead>
+                        <tr>
+                            <th>Recipient name</th>
+                            <th>Amount</th>
+                            <th>Transfer name</th>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for tx in transactions|slice(0,5)|default([]) %}
+                            <tr class="orders-row">
+                                <td>{{ tx.recipient }}</td>
+                                <td>${{ tx.amount }}</td>
+                                <td>{{ tx.transfer }}</td>
+                                <td>{{ tx.date }}</td>
+                                <td>{{ tx.type }}</td>
+                                <td><span class="status {{ tx.statusClass }}">{{ tx.status }}</span></td>
+                            </tr>
+                        {% else %}
+                            <tr class="orders-row placeholder-row">
+                                <td>Miracle Aminoff</td>
+                                <td>$1,240</td>
+                                <td>GlowLab Refill</td>
+                                <td>17 Oct 2024</td>
+                                <td>Credit</td>
+                                <td><span class="status success">Successful</span></td>
+                            </tr>
+                            <tr class="orders-row placeholder-row">
+                                <td>Brandon Vetrovs</td>
+                                <td>$870</td>
+                                <td>PureCraft Wholesale</td>
+                                <td>18 Oct 2024</td>
+                                <td>Credit</td>
+                                <td><span class="status success">Successful</span></td>
+                            </tr>
+                            <tr class="orders-row placeholder-row">
+                                <td>Carter Donin</td>
+                                <td>$650</td>
+                                <td>Retail Replenishment</td>
+                                <td>19 Oct 2024</td>
+                                <td>Debit</td>
+                                <td><span class="status alert">Pending</span></td>
+                            </tr>
+                            <tr class="orders-row placeholder-row">
+                                <td>Ashlynn Vaccaro</td>
+                                <td>$420</td>
+                                <td>Sample kit transfer</td>
+                                <td>21 Oct 2024</td>
+                                <td>Credit</td>
+                                <td><span class="status failed">Failed</span></td>
+                            </tr>
+                            <tr class="orders-row placeholder-row">
+                                <td>Mason Herrera</td>
+                                <td>$380</td>
+                                <td>Care routine upgrade</td>
+                                <td>24 Oct 2024</td>
+                                <td>Credit</td>
+                                <td><span class="status success">Successful</span></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="orders-pagination">
+                        <button type="button">View all transactions</button>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+</section>
+
+<script>
+    (() => {
+        const chartSurface = document.querySelector('[data-chart-surface]');
+        if (!chartSurface) return;
+
+        const chartData = [
+            { label: 'Jan', value: 4280 },
+            { label: 'Feb', value: 3960 },
+            { label: 'Mar', value: 5120 },
+            { label: 'Apr', value: 6840 },
+            { label: 'May', value: 7250 },
+            { label: 'Jun', value: 8120 },
+            { label: 'Jul', value: 7620 },
+            { label: 'Aug', value: 6980 },
+            { label: 'Sep', value: 6550 },
+            { label: 'Oct', value: 7120 },
+            { label: 'Nov', value: 7680 }
+        ];
+
+        const labelsList = document.querySelector('[data-chart-labels]');
+        if (labelsList) {
+            labelsList.innerHTML = chartData.map(({ label }) => `<li>${label}</li>`).join('');
+        }
+
+        const values = chartData.map(({ value }) => value);
+        const maxValue = Math.max(...values) * 1.08;
+
+        const points = values.map((value, index) => {
+            const x = (index / (values.length - 1)) * 100;
+            const y = 90 - (value / maxValue) * 70;
+            return { x, y, value };
+        });
+
+        const linePath = ['M0,100', `Q5,${points[0].y}`, `L${points[0].x},${points[0].y}`]
+            .concat(points.slice(1).map(({ x, y }, i) => {
+                const prev = points[i];
+                const midX = (prev.x + x) / 2;
+                const midY = (prev.y + y) / 2;
+                return `Q${prev.x},${prev.y} ${midX},${midY} T${x},${y}`;
+            })).join(' ');
+
+        const areaPath = `${linePath} L100,100 L0,100 Z`;
+
+        chartSurface.innerHTML = `
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="ordersChartGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="rgba(43, 182, 115, 0.35)" />
+                        <stop offset="100%" stop-color="rgba(43, 182, 115, 0)" />
+                    </linearGradient>
+                </defs>
+                <path class="chart-area" d="${areaPath}"></path>
+                <path class="chart-line" d="${linePath}"></path>
+            </svg>
+        `;
+    })();
+</script>
+{% endblock %}

@@ -66,6 +66,9 @@ class Router
             case 'setting':
                 $content = $this->ecommerceController->getProfileSetting();
                 break;
+            case 'ordersProfile':
+                $content = $this->ecommerceController->getProfileOrders();
+                break;
                 // if ($method == 'POST') {
                 //     $content = $this->getContainerController()->setting($id,$data);
                 //     break;

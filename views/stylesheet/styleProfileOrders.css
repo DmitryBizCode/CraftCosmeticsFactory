@@ -1,0 +1,459 @@
+/* Orders analytics layout */
+.profile-page.orders-page {
+    background-color: #ffffff;
+    min-height: 100vh;
+    padding: 140px 40px 60px;
+    font-family: 'Arial', sans-serif;
+}
+
+.profile-page.orders-page .profile-layout {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 28px;
+}
+
+.orders-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.orders-overview {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.orders-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eceff3;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.balance-card {
+    grid-column: span 2;
+    background: linear-gradient(135deg, #b2f0d6 0%, #5ec7a5 100%);
+    color: #0b2a19;
+    border: none;
+    box-shadow: 0 20px 40px rgba(28, 173, 123, 0.35);
+}
+
+.balance-card .balance-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.balance-card .balance-head span {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(11, 42, 25, 0.75);
+}
+
+.balance-card .balance-head strong {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.balance-card .balance-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    color: rgba(11, 42, 25, 0.85);
+}
+
+.metric-card header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #8b8e96;
+}
+
+.metric-card header i {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #111111, #2b2d32);
+    color: #ffffff;
+}
+
+.metric-card strong {
+    font-size: 26px;
+    color: #111111;
+}
+
+.metric-card small {
+    color: #6f727a;
+    font-size: 12px;
+}
+
+.loan-card {
+    grid-column: span 2;
+    background: #ffffff;
+}
+
+.orders-lower-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 24px;
+}
+
+.loan-card header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.loan-card header span {
+    display: block;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #8b8e96;
+}
+
+.loan-card header strong {
+    font-size: 28px;
+    color: #111111;
+}
+
+.loan-card .loan-delta {
+    font-size: 12px;
+    color: #1a7f46;
+    font-weight: 600;
+}
+
+.loan-card ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.loan-card ul li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: #50525a;
+}
+
+.loan-card .bar {
+    flex: 1;
+    height: 10px;
+    border-radius: 999px;
+    background: #e9edf4;
+    position: relative;
+    overflow: hidden;
+}
+
+.loan-card .bar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: 999px;
+}
+
+.bar-debit::after {
+    width: 75%;
+    background: linear-gradient(135deg, #7fd3b7, #35b28b);
+}
+
+.bar-credit::after {
+    width: 60%;
+    background: linear-gradient(135deg, #aad6ff, #3897f0);
+}
+
+.bar-interest::after {
+    width: 38%;
+    background: linear-gradient(135deg, #ffe8a3, #ffb347);
+}
+
+.orders-chart {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 22px 26px 20px;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eceff3;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.orders-chart header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.orders-chart header h2 {
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: 0.8px;
+    color: #111111;
+    text-transform: uppercase;
+}
+
+.orders-chart header span {
+    font-size: 12px;
+    color: #6c6f77;
+}
+
+.chart-surface {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-width: none;
+    margin: 0 auto;
+    border-radius: 18px;
+    overflow: hidden;
+    background: radial-gradient(circle at 20% 0%, rgba(43, 182, 115, 0.3), rgba(255, 255, 255, 0) 55%),
+                linear-gradient(180deg, #f7fbf9 0%, #ffffff 100%);
+    border: 1px solid #eef1f6;
+}
+
+.chart-surface svg {
+    width: 100%;
+    height: 100%;
+}
+
+.chart-area {
+    fill: url(#ordersChartGradient);
+}
+
+.chart-line {
+    fill: none;
+    stroke: #1f9a63;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 6px 12px rgba(31, 154, 99, 0.22));
+}
+
+.orders-chart footer ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+    font-size: 12px;
+    color: #888a92;
+}
+
+.orders-chart footer ul li {
+    text-align: center;
+}
+
+.orders-table-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 24px 28px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eceff3;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.orders-table-card header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.orders-table-card h2 {
+    margin: 0;
+    font-size: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #111111;
+}
+
+.table-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.table-actions button {
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #ffffff;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.table-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    table-layout: fixed;
+}
+
+.orders-table thead th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #8b8e96;
+    padding: 0 16px;
+}
+
+.orders-row {
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eef1f6;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 72px;
+}
+
+.orders-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.1);
+}
+
+.orders-row td {
+    padding: 14px 16px;
+    font-size: 14px;
+    color: #333333;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.orders-row td:first-child {
+    border-top-left-radius: 18px;
+    border-bottom-left-radius: 18px;
+}
+
+.orders-row td:last-child {
+    border-top-right-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+
+.orders-row td:nth-child(1) { max-width: 180px; }
+.orders-row td:nth-child(3) { max-width: 240px; }
+.orders-row td:nth-child(4) { max-width: 140px; }
+
+.orders-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.orders-pagination button {
+    padding: 10px 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #ffffff;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.orders-pagination button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status.success {
+    color: #1a7f46;
+    background: rgba(46, 204, 113, 0.18);
+}
+
+.status.alert {
+    color: #c26a11;
+    background: rgba(255, 193, 7, 0.22);
+}
+
+.status.failed {
+    color: #b71c1c;
+    background: rgba(244, 67, 54, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 1280px) {
+    .profile-page.orders-page .profile-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .orders-overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .orders-lower-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .balance-card,
+    .loan-card,
+    .transfer-card {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-page.orders-page {
+        padding: 120px 20px 40px;
+    }
+
+    .orders-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .orders-card {
+        padding: 20px;
+    }
+
+    .orders-lower-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .orders-chart,
+    .orders-table-card {
+        padding: 22px;
+    }
+
+    .orders-chart footer ul {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+}
