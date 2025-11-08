@@ -82,7 +82,7 @@
                 </article>
             </section>
 
-            <section class="orders-lower-grid">
+            <section class="orders-chart-section">
                 <article class="orders-chart" data-chart>
                     <header>
                         <h2>Spending trend</h2>
@@ -93,80 +93,78 @@
                         <ul data-chart-labels></ul>
                     </footer>
                 </article>
+            </section>
 
-                <article class="orders-table-card">
-                    <header>
-                        <h2>Recent transactions</h2>
-                    </header>
-                    <table class="orders-table">
-                        <thead>
-                        <tr>
-                            <th>Recipient name</th>
-                            <th>Amount</th>
-                            <th>Transfer name</th>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Status</th>
+            <section class="orders-table-profile">
+                <div class="orders-table-header">
+                    <h2>Recent transactions</h2>
+                    <button type="button" class="orders-table-button">View all transactions</button>
+                </div>
+                <table class="orders-table profile-style">
+                    <thead>
+                    <tr>
+                        <th>Hash</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for tx in transactions|slice(0,5)|default([]) %}
+                        <tr class="orders-row">
+                            <td><span class="order-id">{{ tx.hash }}</span></td>
+                            <td>{{ tx.date }}</td>
+                            <td>{{ tx.items }}</td>
+                            <td><span class="order-amount">${{ tx.total }}</span></td>
+                            <td><span class="status {{ tx.statusClass }}">{{ tx.status }}</span></td>
+                            <td>{{ tx.description }}</td>
                         </tr>
-                        </thead>
-                        <tbody>
-                        {% for tx in transactions|slice(0,5)|default([]) %}
-                            <tr class="orders-row">
-                                <td>{{ tx.recipient }}</td>
-                                <td>${{ tx.amount }}</td>
-                                <td>{{ tx.transfer }}</td>
-                                <td>{{ tx.date }}</td>
-                                <td>{{ tx.type }}</td>
-                                <td><span class="status {{ tx.statusClass }}">{{ tx.status }}</span></td>
-                            </tr>
-                        {% else %}
-                            <tr class="orders-row placeholder-row">
-                                <td>Miracle Aminoff</td>
-                                <td>$1,240</td>
-                                <td>GlowLab Refill</td>
-                                <td>17 Oct 2024</td>
-                                <td>Credit</td>
-                                <td><span class="status success">Successful</span></td>
-                            </tr>
-                            <tr class="orders-row placeholder-row">
-                                <td>Brandon Vetrovs</td>
-                                <td>$870</td>
-                                <td>PureCraft Wholesale</td>
-                                <td>18 Oct 2024</td>
-                                <td>Credit</td>
-                                <td><span class="status success">Successful</span></td>
-                            </tr>
-                            <tr class="orders-row placeholder-row">
-                                <td>Carter Donin</td>
-                                <td>$650</td>
-                                <td>Retail Replenishment</td>
-                                <td>19 Oct 2024</td>
-                                <td>Debit</td>
-                                <td><span class="status alert">Pending</span></td>
-                            </tr>
-                            <tr class="orders-row placeholder-row">
-                                <td>Ashlynn Vaccaro</td>
-                                <td>$420</td>
-                                <td>Sample kit transfer</td>
-                                <td>21 Oct 2024</td>
-                                <td>Credit</td>
-                                <td><span class="status failed">Failed</span></td>
-                            </tr>
-                            <tr class="orders-row placeholder-row">
-                                <td>Mason Herrera</td>
-                                <td>$380</td>
-                                <td>Care routine upgrade</td>
-                                <td>24 Oct 2024</td>
-                                <td>Credit</td>
-                                <td><span class="status success">Successful</span></td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                    <div class="orders-pagination">
-                        <button type="button">View all transactions</button>
-                    </div>
-                </article>
+                    {% else %}
+                        <tr class="orders-row placeholder-row">
+                            <td><span class="order-id">84A4</span></td>
+                            <td>18 Nov 2024</td>
+                            <td>3 items</td>
+                            <td><span class="order-amount">$1,240</span></td>
+                            <td><span class="status success">Completed</span></td>
+                            <td>GlowLab Refill, Velvet Skin Mask</td>
+                        </tr>
+                        <tr class="orders-row placeholder-row">
+                            <td><span class="order-id">61F0</span></td>
+                            <td>04 Nov 2024</td>
+                            <td>2 items</td>
+                            <td><span class="order-amount">$870</span></td>
+                            <td><span class="status success">Completed</span></td>
+                            <td>PureCraft Wholesale order</td>
+                        </tr>
+                        <tr class="orders-row placeholder-row">
+                            <td><span class="order-id">61F5</span></td>
+                            <td>20 Oct 2024</td>
+                            <td>4 items</td>
+                            <td><span class="order-amount">$650</span></td>
+                            <td><span class="status alert">Pending</span></td>
+                            <td>Retail replenishment</td>
+                        </tr>
+                        <tr class="orders-row placeholder-row">
+                            <td><span class="order-id">42F3</span></td>
+                            <td>02 Oct 2024</td>
+                            <td>1 item</td>
+                            <td><span class="order-amount">$420</span></td>
+                            <td><span class="status failed">Failed</span></td>
+                            <td>Sample kit transfer</td>
+                        </tr>
+                        <tr class="orders-row placeholder-row">
+                            <td><span class="order-id">17A1</span></td>
+                            <td>15 Sep 2024</td>
+                            <td>3 items</td>
+                            <td><span class="order-amount">$380</span></td>
+                            <td><span class="status success">Completed</span></td>
+                            <td>Care routine upgrade</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </section>
         </main>
     </div>
@@ -219,8 +217,8 @@
             <svg viewBox="0 0 100 100" preserveAspectRatio="none">
                 <defs>
                     <linearGradient id="ordersChartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="rgba(43, 182, 115, 0.35)" />
-                        <stop offset="100%" stop-color="rgba(43, 182, 115, 0)" />
+                        <stop offset="0%" stop-color="rgba(31, 154, 99, 0.25)" />
+                        <stop offset="100%" stop-color="rgba(31, 154, 99, 0)" />
                     </linearGradient>
                 </defs>
                 <path class="chart-area" d="${areaPath}"></path>

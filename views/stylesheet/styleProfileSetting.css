@@ -23,8 +23,9 @@
 .settings-heading {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding-bottom: 12px;
+    /* gap: 4px; */
+    padding-bottom: 24px;
+    margin-bottom: 0;
 }
 
 .settings-heading h1 {
@@ -34,7 +35,7 @@
 }
 
 .settings-heading p {
-    margin: 6px 0 12px;
+    margin: 10px 0 16px;
     color: #666666;
     font-size: 14px;
 }

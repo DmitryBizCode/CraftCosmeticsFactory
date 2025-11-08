@@ -16,7 +16,12 @@
 .orders-content {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 10px;
+}
+
+.orders-content > .profile-heading {
+    padding-bottom: 24px;
+    margin-bottom: 0;
 }
 
 .orders-overview {
@@ -37,11 +42,15 @@
 }
 
 .balance-card {
-    grid-column: span 2;
     background: linear-gradient(135deg, #b2f0d6 0%, #5ec7a5 100%);
     color: #0b2a19;
     border: none;
     box-shadow: 0 20px 40px rgba(28, 173, 123, 0.35);
+}
+
+.loan-card {
+    grid-column: span 2;
+    background: #ffffff;
 }
 
 .balance-card .balance-head {
@@ -100,11 +109,6 @@
 .metric-card small {
     color: #6f727a;
     font-size: 12px;
-}
-
-.loan-card {
-    grid-column: span 2;
-    background: #ffffff;
 }
 
 .orders-lower-grid {
@@ -222,12 +226,10 @@
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    max-width: none;
-    margin: 0 auto;
     border-radius: 18px;
     overflow: hidden;
-    background: radial-gradient(circle at 20% 0%, rgba(43, 182, 115, 0.3), rgba(255, 255, 255, 0) 55%),
-                linear-gradient(180deg, #f7fbf9 0%, #ffffff 100%);
+    background: radial-gradient(circle at 20% 0%, rgba(31, 154, 99, 0.2), rgba(255, 255, 255, 0) 55%),
+                linear-gradient(180deg, #f2faf6 0%, #ffffff 100%);
     border: 1px solid #eef1f6;
 }
 
@@ -263,7 +265,8 @@
     text-align: center;
 }
 
-.orders-table-card {
+.orders-table-profile {
+    margin-top: 12px;
     background: #ffffff;
     border-radius: 24px;
     padding: 24px 28px;
@@ -274,13 +277,13 @@
     gap: 18px;
 }
 
-.orders-table-card header {
+.orders-table-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.orders-table-card h2 {
+.orders-table-header h2 {
     margin: 0;
     font-size: 20px;
     text-transform: uppercase;
@@ -288,31 +291,28 @@
     color: #111111;
 }
 
-.table-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.table-actions button {
-    padding: 8px 16px;
+.orders-table-button {
+    padding: 10px 20px;
     border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    background: #ffffff;
+    border: none;
+    background: #111111;
+    color: #ffffff;
     font-weight: 600;
     font-size: 13px;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.table-actions button:hover {
+.orders-table-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    background: #333333;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
 .orders-table {
     width: 100%;
     border-collapse: separate;
-    border-spacing: 0 10px;
+    border-spacing: 0 12px;
     table-layout: fixed;
 }
 
@@ -359,30 +359,16 @@
     border-bottom-right-radius: 18px;
 }
 
-.orders-row td:nth-child(1) { max-width: 180px; }
-.orders-row td:nth-child(3) { max-width: 240px; }
+.orders-row td:nth-child(1) { max-width: 120px; }
+.orders-row td:nth-child(3) { max-width: 200px; }
 .orders-row td:nth-child(4) { max-width: 140px; }
+.orders-row td:nth-child(6) {
+    white-space: normal;
+    line-height: 1.4;
+}
 
 .orders-pagination {
-    display: flex;
-    justify-content: center;
-    margin-top: 4px;
-}
-
-.orders-pagination button {
-    padding: 10px 22px;
-    border-radius: 14px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    background: #ffffff;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.orders-pagination button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    display: none;
 }
 
 .status {
@@ -418,16 +404,6 @@
     .orders-overview {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
-    .orders-lower-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .balance-card,
-    .loan-card,
-    .transfer-card {
-        grid-column: span 2;
-    }
 }
 
 @media (max-width: 768px) {
@@ -443,13 +419,8 @@
         padding: 20px;
     }
 
-    .orders-lower-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-
     .orders-chart,
-    .orders-table-card {
+    .orders-table-profile {
         padding: 22px;
     }
 
