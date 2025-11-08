@@ -52,14 +52,8 @@ class Router
                 }
             // no break
             case 'profile':
-                if ($method == 'POST') {
-                    $content = $this->getContainerController()->getProfileRequest($sign,$data);
-                    break;
-                } else {
-                    $content = $this->getContainerController()->getProfile($id);
-                    break;
-                }
-            // no break
+                $content = $this->ecommerceController->getProfile();
+                break;
             case 'orders':
                 if ($method == 'POST') {
                     //$content = $this->getContainerController()->getProfileRequest($sign,$data);

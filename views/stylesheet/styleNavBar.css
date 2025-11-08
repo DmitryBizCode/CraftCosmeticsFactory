@@ -1,220 +1,173 @@
-/* Custom Navbar Styles - New E-commerce Design */
+/* Base reset for body */
 body {
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0;
+    padding: 0;
 }
 
-/* Гарантированно убираем темный фон */
-html body nav.custom-navbar,
-html body .custom-navbar {
-    background: transparent !important;
-    background-color: transparent !important;
+/* Navbar wrapper */
+.custom-navbar {
+    position: absolute;
+    top: -12px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 10px 40px 18px;
+    background: transparent;
+    z-index: 1000;
 }
 
-/* Переопределяем все стили Bootstrap для navbar */
-nav.custom-navbar,
-nav.navbar.custom-navbar,
-.custom-navbar.navbar {
-    padding: 20px 40px !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    z-index: 1000 !important;
-    border: none !important;
-    box-shadow: none !important;
-    margin-bottom: 0 !important;
-    border-radius: 0 !important;
+/* Container with pill background */
+.custom-navbar .navbar-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 22px 48px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 0 0 24px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    width: calc(100% - 80px);
+    min-height: 90px;
 }
 
-nav.custom-navbar.navbar-dark,
-nav.navbar-dark.custom-navbar,
-.custom-navbar.navbar-dark {
-    background: transparent !important;
-    background-color: transparent !important;
+/* Logo */
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+    z-index: 1;
 }
 
-/* Убираем все стили navbar-brand от Bootstrap */
-.custom-navbar .navbar-brand,
-nav.custom-navbar .navbar-brand {
-    display: none !important;
+.navbar-logo:hover {
+    transform: scale(1.08);
 }
 
-/* Убираем стили collapse от Bootstrap */
-.custom-navbar .navbar-collapse,
-.custom-navbar .navbar-nav {
-    display: none !important;
+.logo-emblem {
+    font-size: 32px;
+    font-weight: 900;
+    color: #000;
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Arial', sans-serif;
+    line-height: 1;
 }
 
-.custom-navbar .navbar-container,
-nav.custom-navbar .navbar-container,
-nav.navbar.custom-navbar .navbar-container,
-.custom-navbar > .navbar-container,
-div.navbar-container {
-    max-width: 1400px !important;
-    margin: 0 auto !important;
-    background-color: #ffffff !important;
-    background: #ffffff !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border-radius: 50px !important;
-    padding: 15px 40px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1) !important;
-    position: relative !important;
-    width: calc(100% - 80px) !important;
-    min-height: 70px !important;
+/* Title */
+.navbar-title {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    font-size: 24px;
+    letter-spacing: 2px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #333;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    pointer-events: none;
+    white-space: nowrap;
 }
 
-/* Logo Emblem */
-.custom-navbar .navbar-logo {
-    display: flex !important;
-    align-items: center !important;
-    text-decoration: none !important;
-    transition: transform 0.3s ease !important;
-    z-index: 1 !important;
+/* Icons */
+.navbar-icons {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    z-index: 1;
 }
 
-.custom-navbar .navbar-logo:hover {
-    transform: scale(1.1) !important;
+.navbar-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: #333;
+    text-decoration: none;
+    font-size: 20px;
+    transition: transform 0.3s ease, color 0.3s ease;
+    position: relative;
 }
 
-.custom-navbar .logo-emblem,
-nav.custom-navbar .logo-emblem {
-    font-size: 32px !important;
-    font-weight: 900 !important;
-    color: #000 !important;
-    background-color: transparent !important;
-    width: 45px !important;
-    height: 45px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 8px !important;
-    font-family: 'Arial', sans-serif !important;
-    letter-spacing: 0 !important;
-    line-height: 1 !important;
+.navbar-icon:hover {
+    color: #000;
+    transform: scale(1.1);
 }
 
-/* Site Title */
-.custom-navbar .navbar-title,
-nav.custom-navbar .navbar-title,
-nav.navbar.custom-navbar .navbar-title,
-.custom-navbar h1.navbar-title {
-    font-size: 24px !important;
-    font-weight: 600 !important;
-    color: #333 !important;
-    margin: 0 !important;
-    letter-spacing: 2px !important;
-    font-family: 'Georgia', 'Times New Roman', serif !important;
-    text-transform: uppercase !important;
-    position: absolute !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    pointer-events: none !important;
-    white-space: nowrap !important;
+/* Cart badge */
+.cart-icon {
+    position: relative;
 }
 
-/* Icons Container */
-.custom-navbar .navbar-icons {
-    display: flex !important;
-    align-items: center !important;
-    gap: 25px !important;
-    z-index: 1 !important;
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #dc3545;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
 }
 
-/* Individual Icons */
-.custom-navbar .navbar-icon {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-decoration: none !important;
-    color: #333 !important;
-    font-size: 20px !important;
-    width: 40px !important;
-    height: 40px !important;
-    transition: all 0.3s ease !important;
-    position: relative !important;
+/* Profile avatar */
+.profile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #4da6ff;
+    padding: 2px;
+    background: #fff;
 }
 
-.custom-navbar .navbar-icon:hover {
-    color: #000 !important;
-    transform: scale(1.1) !important;
+.profile-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
-/* Search Icon */
-.custom-navbar .navbar-icon i.fa-search {
-    font-size: 20px !important;
-}
-
-/* Cart Icon with Badge */
-.custom-navbar .cart-icon {
-    position: relative !important;
-}
-
-.custom-navbar .cart-badge {
-    position: absolute !important;
-    top: -5px !important;
-    right: -5px !important;
-    background-color: #dc3545 !important;
-    color: white !important;
-    border-radius: 50% !important;
-    width: 20px !important;
-    height: 20px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    border: 2px solid white !important;
-}
-
-/* Profile Avatar */
-.custom-navbar .profile-icon {
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 50% !important;
-    overflow: hidden !important;
-    border: 2px solid #4da6ff !important;
-    padding: 2px !important;
-    background-color: white !important;
-}
-
-.custom-navbar .profile-avatar {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    border-radius: 50% !important;
-}
-
-/* Responsive Design */
+/* Responsive */
 @media (max-width: 992px) {
-    .navbar-container {
+    .custom-navbar {
+        padding: 15px 30px;
+    }
+
+    .custom-navbar .navbar-container {
         padding: 12px 30px;
         border-radius: 40px;
     }
-    
+
     .navbar-title {
         font-size: 20px;
-        letter-spacing: 1px;
     }
-    
+
     .logo-emblem {
         font-size: 28px;
         width: 40px;
         height: 40px;
     }
-    
+
     .navbar-icons {
         gap: 20px;
     }
-    
+
     .navbar-icon {
         width: 36px;
         height: 36px;
@@ -226,41 +179,32 @@ nav.navbar.custom-navbar .navbar-title,
     .custom-navbar {
         padding: 15px 20px;
     }
-    
-    .navbar-container {
+
+    .custom-navbar .navbar-container {
         padding: 10px 20px;
         border-radius: 35px;
-    }
-    
-    .navbar-title {
-        font-size: 16px;
-        letter-spacing: 0.5px;
-        position: static;
-        transform: none;
-        margin: 0 10px;
-    }
-    
-    .navbar-container {
         flex-wrap: wrap;
         justify-content: center;
     }
-    
-    .logo-emblem {
-        font-size: 24px;
-        width: 35px;
-        height: 35px;
+
+    .navbar-title {
+        position: static;
+        transform: none;
+        margin: 10px 0;
+        font-size: 16px;
+        letter-spacing: 0.5px;
     }
-    
+
     .navbar-icons {
         gap: 15px;
     }
-    
+
     .navbar-icon {
         width: 32px;
         height: 32px;
         font-size: 16px;
     }
-    
+
     .profile-icon {
         width: 32px;
         height: 32px;

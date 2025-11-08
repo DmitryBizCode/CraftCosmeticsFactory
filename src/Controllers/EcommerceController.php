@@ -33,4 +33,8 @@ class EcommerceController
     {
         return $this->templateService->render('pages/indexPage', ["homeNavBar" => 1,"footer" => 1]);
     }
+    public function getProfile(): string
+    {
+        return $this->templateService->render('pages/profileDashboard', ["homeNavBar" => 1, "footer" => null]);
+    }
 }

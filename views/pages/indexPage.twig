@@ -2,6 +2,24 @@
 
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleIndex.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryHeaders = document.querySelectorAll('.filter-category-header[data-toggle="subcategories"]');
+            categoryHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const categoryItem = this.closest('.filter-category-item');
+                    const subcategories = categoryItem.querySelector('.filter-subcategories');
+                    const toggle = this.querySelector('.filter-toggle');
+                    
+                    if (subcategories) {
+                        categoryItem.classList.toggle('active');
+                        subcategories.classList.toggle('expanded');
+                        toggle.textContent = subcategories.classList.contains('expanded') ? '−' : '+';
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -16,16 +34,15 @@
 <!-- Search Section -->
 <section class="search-section">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <h2 class="search-title">Give All You Need</h2>
-            </div>
-            <div class="col-md-6">
-                <form class="search-form">
-                    <input type="text" placeholder="Q Search on Stuffsus" class="search-input">
-                    <button type="submit" class="search-btn">Search</button>
-                </form>
-            </div>
+        <div class="search-bar-container">
+            <h2 class="search-title">Give All You Need</h2>
+            <form class="search-form">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search on Stuffsus" class="search-input">
+                </div>
+                <button type="submit" class="search-btn">Search</button>
+            </form>
         </div>
     </div>
 </section>
@@ -38,42 +55,69 @@
             <div class="col-md-3 sidebar-filter">
                 <h3 class="filter-title">Category</h3>
                 <div class="filter-list">
-                    <label class="filter-item">
-                        <input type="checkbox" checked>
-                        <span>All Product</span>
-                        <span class="badge">12</span>
-                    </label>
-                    <label class="filter-item">
-                        <input type="checkbox">
-                        <span>For Home</span>
-                    </label>
-                    <label class="filter-item">
-                        <input type="checkbox">
-                        <span>For Music</span>
-                    </label>
-                    <label class="filter-item">
-                        <input type="checkbox">
-                        <span>For Phone</span>
-                    </label>
-                    <label class="filter-item">
-                        <input type="checkbox">
-                        <span>For Storage</span>
-                    </label>
-                </div>
-                <div class="filter-options mt-4">
-                    <h4 class="filter-subtitle">Options</h4>
-                    <label class="filter-item">
-                        <input type="radio" name="filter-option">
-                        <span>New Arrival</span>
-                    </label>
-                    <label class="filter-item">
-                        <input type="radio" name="filter-option">
-                        <span>Best Seller</span>
-                    </label>
-                    <label class="filter-item">
-                        <input type="radio" name="filter-option">
-                        <span>On Discount</span>
-                    </label>
+                    <!-- All Product - Expanded -->
+                    <div class="filter-category-item active">
+                        <div class="filter-category-header" data-toggle="subcategories">
+                            <i class="fas fa-shopping-bag filter-icon"></i>
+                            <span class="filter-category-name">All Product</span>
+                            <span class="filter-badge">02</span>
+                            <span class="filter-toggle">−</span>
+                        </div>
+                        <div class="filter-subcategories expanded">
+                            <div class="filter-subcategory-item">
+                                <i class="fas fa-home filter-subicon"></i>
+                                <span>For Home</span>
+                            </div>
+                            <div class="filter-subcategory-item">
+                                <i class="fas fa-music filter-subicon"></i>
+                                <span>For Music</span>
+                            </div>
+                            <div class="filter-subcategory-item">
+                                <i class="fas fa-mobile-alt filter-subicon"></i>
+                                <span>For Phone</span>
+                            </div>
+                            <div class="filter-subcategory-item">
+                                <i class="fas fa-server filter-subicon"></i>
+                                <span>For Storage</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- New Arrival -->
+                    <div class="filter-category-item">
+                        <div class="filter-category-header" data-toggle="subcategories">
+                            <i class="fas fa-search filter-icon"></i>
+                            <span class="filter-category-name">New Arrival</span>
+                            <span class="filter-toggle">+</span>
+                        </div>
+                        <div class="filter-subcategories">
+                            <!-- Subcategories can be added here if needed -->
+                        </div>
+                    </div>
+                    
+                    <!-- Best Seller -->
+                    <div class="filter-category-item">
+                        <div class="filter-category-header" data-toggle="subcategories">
+                            <i class="fas fa-star filter-icon"></i>
+                            <span class="filter-category-name">Best Seller</span>
+                            <span class="filter-toggle">+</span>
+                        </div>
+                        <div class="filter-subcategories">
+                            <!-- Subcategories can be added here if needed -->
+                        </div>
+                    </div>
+                    
+                    <!-- On Discount -->
+                    <div class="filter-category-item">
+                        <div class="filter-category-header" data-toggle="subcategories">
+                            <i class="fas fa-percent filter-icon"></i>
+                            <span class="filter-category-name">On Discount</span>
+                            <span class="filter-toggle">+</span>
+                        </div>
+                        <div class="filter-subcategories">
+                            <!-- Subcategories can be added here if needed -->
+                        </div>
+                    </div>
                 </div>
             </div>
 

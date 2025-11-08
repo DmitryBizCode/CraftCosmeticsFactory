@@ -1,0 +1,197 @@
+{% extends '/templates/base_concept.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleProfile.css">
+{% endblock %}
+
+{% block content %}
+<section class="profile-page">
+    <div class="profile-layout">
+        <aside class="profile-sidebar">
+            <span class="profile-sidebar-line"></span>
+            <nav class="profile-nav">
+                <a href="#" class="profile-nav-item active" title="Discover">
+                    <i class="fas fa-home"></i>
+                </a>
+                <a href="#" class="profile-nav-item" title="Purchases">
+                    <i class="fas fa-shopping-bag"></i>
+                </a>
+                <a href="#" class="profile-nav-item" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="profile-content">
+            <div class="profile-heading">
+                <h1>Profile</h1>
+                <p>Track your preferences, loyalty tiers and latest cosmetic orders.</p>
+                <div class="profile-heading-divider"></div>
+            </div>
+
+            <div class="profile-summary">
+                <section class="profile-card profile-overview">
+                    <div class="profile-user">
+                        <div class="profile-user-head">
+                            <h2 class="profile-name">Valeria Beznosiuk</h2>
+                            <span class="profile-status">Premium User</span>
+                        </div>
+                        <div class="profile-avatar-wrapper">
+                            <div class="profile-avatar-ring">
+                                <img src="/image/3.jpg" alt="Maria Fernanda" class="profile-avatar-large">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="profile-card profile-details">
+                    <div class="profile-details-heading">
+                        <h3>Bio &amp; Beauty preferences</h3>
+                        <span class="profile-online-indicator" title="Online"></span>
+                    </div>
+                    <div class="profile-details-grid">
+                        <div class="profile-field">
+                            <span class="field-label">Favorite Routine</span>
+                            <span class="field-value">Nighttime Glow, Hydrating Masks</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="field-label">Skin Type</span>
+                            <span class="field-value">Combination / Sensitive</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="field-label">Preferred Ingredients</span>
+                            <span class="field-value">Hyaluronic Acid, Green Tea, Peptides</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="field-label">Allergies</span>
+                            <span class="field-value">No Parabens, No Sulfates</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="field-label">Top Brands</span>
+                            <span class="field-value">GlowLab, PureCraft, Velvet Skin</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="field-label">Average Basket</span>
+                            <span class="field-value">$86.40</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="field-label">Last Purchase</span>
+                            <span class="field-value">18 Nov 2025 • GlowLab Night Serum</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="field-label">Subscription</span>
+                            <span class="field-chip success">Auto-refill active</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="field-label">Loyalty points</span>
+                            <span class="field-chip info">6 230 pts</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="field-label">Favourite scents</span>
+                            <span class="field-tags">#Citrus • #Lavender • #Jasmine</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <section class="profile-grid-two">
+                <section class="profile-card profile-social">
+                    <div class="profile-social-header">
+                        <div class="profile-social-title">
+                            <span class="profile-social-icon"><i class="fas fa-share-alt"></i></span>
+                            <div>
+                                <h3>Social channels</h3>
+                                <p class="profile-social-note">Share your routines with the community</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-social-links big">
+                        <a href="#"><i class="fab fa-youtube"></i> @glowbymaria</a>
+                        <a href="#"><i class="fab fa-instagram"></i> @maria.glow</a>
+                        <a href="#"><i class="fab fa-tiktok"></i> @skincare_maria</a>
+                    </div>
+                </section>
+
+                <section class="profile-card profile-reminders">
+                    <h3>Care reminders</h3>
+                    <ul class="profile-reminder-list">
+                        <li>
+                            <span>Refill GlowLab Night Serum</span>
+                            <span class="reminder-chip">Ships in 4 days</span>
+                        </li>
+                        <li>
+                            <span>Schedule skin diagnostic</span>
+                            <span class="reminder-chip secondary">Recommended monthly</span>
+                        </li>
+                        <li>
+                            <span>Redeem loyalty gift box</span>
+                            <span class="reminder-chip success">Available now</span>
+                        </li>
+                    </ul>
+                </section>
+            </section>
+
+            <section class="profile-card profile-orders">
+                <div class="profile-productions-header">
+                    <h3>Last orders</h3>
+                    <button class="profile-button accent">View all orders</button>
+                </div>
+                <table class="profile-table">
+                    <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Date</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td><span class="order-id">84A4</span></td>
+                        <td>18 Nov 2025</td>
+                        <td>3 items</td>
+                        <td><span class="order-amount">$128.00 (USD)</span></td>
+                        <td><span class="order-status success">Completed</span></td>
+                        <td>GlowLab Night Serum, Velvet Skin Mask</td>
+                    </tr>
+                    <tr>
+                        <td><span class="order-id">61F0</span></td>
+                        <td>04 Nov 2025</td>
+                        <td>2 items</td>
+                        <td><span class="order-amount">$76.40 (USD)</span></td>
+                        <td><span class="order-status success">Completed</span></td>
+                        <td>PureCraft Tonic, GlowLab Cleanser</td>
+                    </tr>
+                    <tr>
+                        <td><span class="order-id">61F5</span></td>
+                        <td>20 Oct 2025</td>
+                        <td>4 items</td>
+                        <td><span class="order-amount">$154.80 (USD)</span></td>
+                        <td><span class="order-status pending">Pending</span></td>
+                        <td>Auto-refill subscription renewal</td>
+                    </tr>
+                    <tr>
+                        <td><span class="order-id">42F3</span></td>
+                        <td>02 Oct 2025</td>
+                        <td>1 item</td>
+                        <td><span class="order-amount">$28.00 (USD)</span></td>
+                        <td><span class="order-status cancelled">Cancelled</span></td>
+                        <td>Velvet Skin Sheet Mask bundle</td>
+                    </tr>
+                    <tr>
+                        <td><span class="order-id">17A1</span></td>
+                        <td>15 Sep 2025</td>
+                        <td>3 items</td>
+                        <td><span class="order-amount">$112.50 (USD)</span></td>
+                        <td><span class="order-status success">Completed</span></td>
+                        <td>GlowLab Day Cream, Travel set</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</section>
+{% endblock %}
