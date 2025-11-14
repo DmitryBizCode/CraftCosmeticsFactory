@@ -99,7 +99,9 @@ class Router
                     $content = $this->getContainerController()->getDetail($id,$data,$id_containers);
                     break;
                 }
-            // no break
+            case 'salesPage':
+                $content = $this->ecommerceController->getEcommerceHomePage();
+                break;
             default:
                 $content = $this->ecommerceController->autorization();
                 break;

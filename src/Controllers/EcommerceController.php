@@ -29,7 +29,7 @@ class EcommerceController
         header('Location: ' . $url, true, 302);
         exit();
     }
-    public function getHome(): string
+    public function getEcommerceHomePage(): string
     {
         return $this->templateService->render('pages/indexPage', ["homeNavBar" => 1,"footer" => 1]);
     }
