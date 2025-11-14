@@ -1,0 +1,301 @@
+{% extends '/templates/base_concept.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleCart.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Quantity controls
+            const quantityButtons = document.querySelectorAll('.quantity-btn');
+            quantityButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const input = this.parentElement.querySelector('.quantity-input');
+                    const currentValue = parseInt(input.value) || 0;
+                    
+                    if (this.classList.contains('quantity-decrease')) {
+                        if (currentValue > 1) {
+                            input.value = currentValue - 1;
+                            updateTotal(this.closest('.cart-item'));
+                        }
+                    } else if (this.classList.contains('quantity-increase')) {
+                        input.value = currentValue + 1;
+                        updateTotal(this.closest('.cart-item'));
+                    }
+                    updateOrderSummary();
+                });
+            });
+
+            // Quantity input change
+            const quantityInputs = document.querySelectorAll('.quantity-input');
+            quantityInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const value = parseInt(this.value) || 1;
+                    if (value < 1) this.value = 1;
+                    updateTotal(this.closest('.cart-item'));
+                    updateOrderSummary();
+                });
+            });
+
+            // Remove item
+            const removeButtons = document.querySelectorAll('.remove-item');
+            removeButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const cartItem = this.closest('.cart-item');
+                    cartItem.remove();
+                    updateOrderSummary();
+                });
+            });
+
+            // Update total for a single item
+            function updateTotal(cartItem) {
+                const quantity = parseInt(cartItem.querySelector('.quantity-input').value) || 1;
+                const priceText = cartItem.querySelector('.item-price').textContent;
+                const price = parseFloat(priceText.replace('$', '').replace(',', ''));
+                const total = (price * quantity).toFixed(2);
+                cartItem.querySelector('.item-total').textContent = '$' + total;
+            }
+
+            // Voucher discount rates
+            let currentDiscountRate = 0;
+            const voucherCodes = {
+                'lera': 0.1,  // 10% discount
+                'lerasex': 0.15  // 15% discount
+            };
+
+            // Update order summary
+            function updateOrderSummary() {
+                let subtotal = 0;
+                document.querySelectorAll('.cart-item').forEach(item => {
+                    const totalText = item.querySelector('.item-total').textContent;
+                    const total = parseFloat(totalText.replace('$', '').replace(',', ''));
+                    subtotal += total;
+                });
+
+                const discount = subtotal * currentDiscountRate;
+                const deliveryFee = 50.00;
+                const finalTotal = subtotal - discount + deliveryFee;
+
+                document.querySelector('.subtotal-amount').textContent = '$' + subtotal.toFixed(2);
+                
+                // Show/hide discount row
+                const discountRow = document.getElementById('discount-row');
+                const discountLabel = discountRow.querySelector('.discount-label');
+                
+                if (currentDiscountRate > 0) {
+                    discountRow.style.display = 'flex';
+                    const discountPercent = Math.round(currentDiscountRate * 100);
+                    discountLabel.textContent = 'Discount (' + discountPercent + '%)';
+                    document.querySelector('.discount-amount').textContent = '-$' + discount.toFixed(2);
+                } else {
+                    discountRow.style.display = 'none';
+                }
+                
+                document.querySelector('.delivery-amount').textContent = '$' + deliveryFee.toFixed(2);
+                document.querySelector('.final-total').textContent = '$' + finalTotal.toFixed(2);
+            }
+
+            // Apply voucher
+            const applyVoucherBtn = document.querySelector('.apply-voucher-btn');
+            const voucherInput = document.getElementById('voucher-input');
+            
+            if (applyVoucherBtn) {
+                applyVoucherBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const voucherCode = voucherInput.value.trim().toLowerCase();
+                    
+                    if (voucherCode === 'lera') {
+                        currentDiscountRate = voucherCodes['lera'];
+                        updateOrderSummary();
+                        voucherInput.style.borderColor = '#28a745';
+                        setTimeout(() => {
+                            voucherInput.style.borderColor = '#ddd';
+                        }, 2000);
+                    } else if (voucherCode === 'lerasex') {
+                        currentDiscountRate = voucherCodes['lerasex'];
+                        updateOrderSummary();
+                        voucherInput.style.borderColor = '#28a745';
+                        setTimeout(() => {
+                            voucherInput.style.borderColor = '#ddd';
+                        }, 2000);
+                    } else if (voucherCode === '') {
+                        currentDiscountRate = 0;
+                        updateOrderSummary();
+                    } else {
+                        currentDiscountRate = 0;
+                        updateOrderSummary();
+                        voucherInput.style.borderColor = '#dc3545';
+                        setTimeout(() => {
+                            voucherInput.style.borderColor = '#ddd';
+                        }, 2000);
+                    }
+                });
+
+                // Clear discount when voucher input is cleared
+                voucherInput.addEventListener('input', function() {
+                    if (this.value.trim() === '') {
+                        currentDiscountRate = 0;
+                        updateOrderSummary();
+                    }
+                });
+            }
+
+            // Initial calculation
+            updateOrderSummary();
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+
+<!-- Cart Page Section -->
+<section class="cart-page-section">
+    <div class="container">
+        <div class="cart-header">
+            <h1 class="cart-title">Shopping Cart</h1>
+        </div>
+
+        <div class="cart-content">
+            <!-- Left Column - Cart Items -->
+            <div class="cart-items-column">
+                <div class="cart-table-header">
+                    <div class="table-header-cell">Product Code</div>
+                    <div class="table-header-cell">Quantity</div>
+                    <div class="table-header-cell">Total</div>
+                    <div class="table-header-cell">Action</div>
+                </div>
+
+                <!-- Cart Item 1 -->
+                <div class="cart-item">
+                    <div class="item-info">
+                        <img src="/image/1.jpg" alt="Furniture Set" class="item-image">
+                        <div class="item-details">
+                            <h3 class="item-name">Furniture Set</h3>
+                            <p class="item-specs">Set: Colour: Coffee</p>
+                        </div>
+                    </div>
+                    <div class="item-quantity">
+                        <button class="quantity-btn quantity-decrease">−</button>
+                        <input type="number" class="quantity-input" value="4" min="1">
+                        <button class="quantity-btn quantity-increase">+</button>
+                    </div>
+                    <div class="item-price-cell">
+                        <span class="item-price">$109.25</span>
+                        <span class="item-total">$437.00</span>
+                    </div>
+                    <div class="item-action">
+                        <button class="remove-item" title="Remove item">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cart Item 2 -->
+                <div class="cart-item">
+                    <div class="item-info">
+                        <img src="/image/2.jpg" alt="Vintage Dining Set" class="item-image">
+                        <div class="item-details">
+                            <h3 class="item-name">Vintage Dining Set</h3>
+                            <p class="item-specs">Set: Colour: Brown</p>
+                        </div>
+                    </div>
+                    <div class="item-quantity">
+                        <button class="quantity-btn quantity-decrease">−</button>
+                        <input type="number" class="quantity-input" value="2" min="1">
+                        <button class="quantity-btn quantity-increase">+</button>
+                    </div>
+                    <div class="item-price-cell">
+                        <span class="item-price">$472.50</span>
+                        <span class="item-total">$945.00</span>
+                    </div>
+                    <div class="item-action">
+                        <button class="remove-item" title="Remove item">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cart Item 3 -->
+                <div class="cart-item">
+                    <div class="item-info">
+                        <img src="/image/3.jpg" alt="Studio Chair" class="item-image">
+                        <div class="item-details">
+                            <h3 class="item-name">Studio Chair</h3>
+                            <p class="item-specs">Set: Colour: Deep Green</p>
+                        </div>
+                    </div>
+                    <div class="item-quantity">
+                        <button class="quantity-btn quantity-decrease">−</button>
+                        <input type="number" class="quantity-input" value="7" min="1">
+                        <button class="quantity-btn quantity-increase">+</button>
+                    </div>
+                    <div class="item-price-cell">
+                        <span class="item-price">$85.29</span>
+                        <span class="item-total">$597.03</span>
+                    </div>
+                    <div class="item-action">
+                        <button class="remove-item" title="Remove item">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button class="btn-update-cart">Update Cart</button>
+            </div>
+
+            <!-- Right Column - Order Summary -->
+            <div class="order-summary-column">
+                <div class="order-summary-card">
+                    <h2 class="summary-title">Order Summary</h2>
+
+                    <div class="cost-breakdown">
+                        <div class="cost-row">
+                            <span class="cost-label">Sub Total</span>
+                            <span class="cost-value subtotal-amount">$1,979.03</span>
+                        </div>
+                        <div class="cost-row discount-row" id="discount-row" style="display: none;">
+                            <span class="cost-label discount-label">Discount</span>
+                            <span class="cost-value discount-amount">-$0.00</span>
+                        </div>
+                        <div class="cost-row">
+                            <span class="cost-label">Delivery fee</span>
+                            <span class="cost-value delivery-amount">$50.00</span>
+                        </div>
+                    </div>
+
+                    <div class="voucher-section">
+                        <label class="voucher-label">Discount voucher</label>
+                        <div class="voucher-input-group">
+                            <input type="text" class="voucher-input" placeholder="Enter voucher code" id="voucher-input">
+                            <button class="apply-voucher-btn">Apply</button>
+                        </div>
+                    </div>
+
+                    <div class="final-total-section">
+                        <span class="final-total-label">Total</span>
+                        <span class="final-total final-total-amount">$2,029.03</span>
+                    </div>
+
+                    <div class="warranty-info">
+                        <i class="fas fa-check-circle"></i>
+                        <span>90 Day Limited Warranty against manufacturer's defects. <a href="#" class="warranty-link">Details</a></span>
+                    </div>
+
+                    <button class="btn-checkout">Checkout Now</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="cart-bottom-section">
+            <div class="bottom-content">
+                <div class="bottom-text">
+                    <h3 class="bottom-title">Build custom furniture</h3>
+                    <h2 class="bottom-subtitle">Craft Own Furniture</h2>
+                </div>
+                <button class="btn-lets-talk">Lets Talk!</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+

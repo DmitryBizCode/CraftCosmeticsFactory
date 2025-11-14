@@ -2,60 +2,71 @@
 
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleSign.css">
-    <script src="/src/supportJS/SwipeSignForm.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginBtn = document.getElementById('login');
+            const signupBtn = document.getElementById('signup');
+
+            if (loginBtn) {
+                loginBtn.addEventListener('click', (e) => {
+                    let parent = e.target.parentNode.parentNode;
+                    Array.from(e.target.parentNode.parentNode.classList).find((element) => {
+                        if(element !== "slide-up") {
+                            parent.classList.add('slide-up')
+                        }else{
+                            if (signupBtn && signupBtn.parentNode) {
+                                signupBtn.parentNode.classList.add('slide-up')
+                            }
+                            parent.classList.remove('slide-up')
+                        }
+                    });
+                });
+            }
+
+            if (signupBtn) {
+                signupBtn.addEventListener('click', (e) => {
+                    let parent = e.target.parentNode;
+                    Array.from(e.target.parentNode.classList).find((element) => {
+                        if(element !== "slide-up") {
+                            parent.classList.add('slide-up')
+                        }else{
+                            if (loginBtn && loginBtn.parentNode && loginBtn.parentNode.parentNode) {
+                                loginBtn.parentNode.parentNode.classList.add('slide-up')
+                            }
+                            parent.classList.remove('slide-up')
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
-    <div class="form-sign">
-        <div class="container right-panel-active">
-            <!-- Sign Up -->
-            <div class="container__form container--signup">
-                <form action="/index.php?action=profile&sign=1" method="POST" class="form" id="form1">
-                    <h2 class="form__title">Sign Up</h2>
-                    <input type="text" name="name" placeholder="Name" class="input" required />
-                    <input type="text" name="surname" placeholder="Surname (optional)" class="input" required />
-                    <input type="email" name="email" placeholder="Email" class="input" required />
-                    <input type="password" name="password" placeholder="Password" class="input" required />
-                    <input type="text" name="address" placeholder="Address (optional)" class="input" required />
-                    <input type="tel" name="phone_number" placeholder="Phone Number" class="input" required />
-
-                    <!-- Country Selection -->
-                    <select name="country" class="input" required>
-                        <option value="" disabled selected>Select Country</option>
-                        <option value="Ukraine">Ukraine</option>
-                        <option value="Poland">Poland</option>
-                        <option value="Germany">Germany</option>
-                        <option value="United Kingdom">United Kingdom</option>
-                        <option value="Japan">Japan</option>
-                        <!-- Add more countries as needed -->
-                    </select>
-
-                    <button type="submit" class="btn">Sign Up</button>
-                </form>
+<div class="form-structor">
+    <div class="signup">
+        <h2 class="form-title" id="signup"><span>or</span>Sign up</h2>
+        <form action="/index.php?action=profile&sign=1" method="POST">
+            <div class="form-holder">
+                <input type="text" name="full_name" class="input" placeholder="First Name - Last Name" required />
+                <input type="email" name="email" class="input" placeholder="Email" required />
+                <input type="tel" name="phone_number" class="input" placeholder="Phone Number (optional)" />
+                <input type="password" name="password" class="input" placeholder="Password" required />
             </div>
-
-            <!-- Sign In -->
-            <div class="container__form container--signin">
-                <form action="/index.php?action=profile&sign=0" method="POST" class="form" id="form2">
-                    <h2 class="form__title">Sign In</h2>
-                    <input type="email" name="email" placeholder="Email" class="input" required />
-                    <input type="password" name="password" placeholder="Password" class="input" required />
-                    <a href="#" class="link">Forgot your password?</a>
-                    <button type="submit" class="btn">Sign In</button>
-                </form>
-            </div>
-
-            <!-- Overlay -->
-            <div class="container__overlay">
-                <div class="overlay">
-                    <div class="overlay__panel overlay--left">
-                        <button class="btn" id="signIn">Sign In</button>
-                    </div>
-                    <div class="overlay__panel overlay--right">
-                        <button class="btn" id="signUp">Sign Up</button>
-                    </div>
+            <button type="submit" class="submit-btn">Sign up</button>
+        </form>
+    </div>
+    <div class="login slide-up">
+        <div class="center">
+            <h2 class="form-title" id="login"><span>or</span>Log in</h2>
+            <form action="/index.php?action=profile&sign=0" method="POST">
+                <div class="form-holder">
+                    <input type="email" name="email" class="input" placeholder="Email" required />
+                    <input type="password" name="password" class="input" placeholder="Password" required />
                 </div>
-            </div>
+                <button type="submit" class="submit-btn">Log in</button>
+            </form>
         </div>
     </div>
+</div>
 {% endblock %}

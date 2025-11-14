@@ -23,7 +23,6 @@
 .settings-heading {
     display: flex;
     flex-direction: column;
-    /* gap: 4px; */
     padding-bottom: 24px;
     margin-bottom: 0;
 }

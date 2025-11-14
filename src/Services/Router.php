@@ -24,14 +24,16 @@ class Router
     public function route(string $action = null, string $id = null, string $method = 'GET', array $data = [], array $image = [], bool $sign = null, int $id_containers = null): void
     {
         switch ($action) {
-            case 'sign':
-                if ($method == 'POST') {
-                    //$this->getContainerController()->create($data, $image);
-                    break;
-                } else {
-                    $content = $this->getContainerController()->getSign();
-                    break;
-                }
+            case 'autorization':
+                $content = $this->ecommerceController->autorization();
+                break;
+            // case 'signin':
+            //     $content = $this->ecommerceController->autorizationSignIn();
+            //     break;
+            // case 'signup':
+            //     $content = $this->ecommerceController->autorizationSignUp();
+            //     break;
+
             // no break
             case 'contact':
                 if ($method == 'POST') {
@@ -77,6 +79,10 @@ class Router
                 //     break;
                 // }
             // no break
+            case 'cart':
+                $content = $this->ecommerceController->getCart();
+                break;
+
             case 'rental':
                 if ($method == 'POST') {
                     $content = $this->getContainerController()->rental($id,$data);
@@ -95,8 +101,10 @@ class Router
                 }
             // no break
             default:
-                $content = $this->ecommerceController->getHome();
+                $content = $this->ecommerceController->autorization();
                 break;
+                // $content = $this->ecommerceController->getHome();
+                // break;
         }
         echo $content;
     }

@@ -26,8 +26,8 @@
 
 .orders-overview {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
 }
 
 .orders-card {
@@ -39,6 +39,7 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+    min-height: 160px;
 }
 
 .balance-card {
@@ -48,9 +49,63 @@
     box-shadow: 0 20px 40px rgba(28, 173, 123, 0.35);
 }
 
-.loan-card {
-    grid-column: span 2;
-    background: #ffffff;
+.conversion-card {
+    background: linear-gradient(135deg, #f5f8ff 0%, #ffffff 100%);
+}
+
+.pending-card {
+    background: linear-gradient(135deg, #fff7e6 0%, #ffffff 100%);
+}
+
+.spend-card .card-head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.spend-card .card-head span {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(11, 42, 25, 0.6);
+}
+
+.spend-card .card-head strong {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.mini-chart {
+    width: 100%;
+    height: 80px;
+}
+
+.mini-chart svg {
+    width: 100%;
+    height: 100%;
+}
+
+.mini-area {
+    fill: url(#miniGradient);
+}
+
+.mini-line {
+    fill: none;
+    stroke: #1f9a63;
+    stroke-width: 3;
+    stroke-linecap: round;
+}
+
+.spend-card .card-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    color: #50525a;
+}
+
+.spend-card .card-footer strong {
+    color: #111111;
 }
 
 .balance-card .balance-head {
@@ -192,15 +247,26 @@
     background: linear-gradient(135deg, #ffe8a3, #ffb347);
 }
 
+.orders-chart-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 0.5fr);
+    gap: 18px;
+}
+
 .orders-chart {
     background: #ffffff;
     border-radius: 24px;
-    padding: 22px 26px 20px;
+    padding: 24px 28px 20px;
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.06);
     border: 1px solid #eceff3;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
+}
+
+#ordersChart {
+    width: 100%;
+    min-height: 320px;
 }
 
 .orders-chart header {
@@ -266,7 +332,7 @@
 }
 
 .orders-table-profile {
-    margin-top: 12px;
+    margin-top: 16px;
     background: #ffffff;
     border-radius: 24px;
     padding: 24px 28px;
@@ -395,6 +461,12 @@
     background: rgba(244, 67, 54, 0.2);
 }
 
+.orders-chart-side {
+    display: grid;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
 /* Responsive */
 @media (max-width: 1280px) {
     .profile-page.orders-page .profile-layout {
@@ -403,6 +475,15 @@
 
     .orders-overview {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .orders-chart-section {
+        grid-template-columns: 1fr;
+    }
+
+    .orders-chart-side {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: auto;
     }
 }
 
@@ -413,6 +494,15 @@
 
     .orders-overview {
         grid-template-columns: 1fr;
+    }
+
+    .orders-chart-section {
+        grid-template-columns: 1fr;
+    }
+
+    .orders-chart-side {
+        grid-template-columns: 1fr;
+        gap: 14px;
     }
 
     .orders-card {

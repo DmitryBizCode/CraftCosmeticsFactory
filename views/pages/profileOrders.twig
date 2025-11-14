@@ -19,14 +19,26 @@
             </div>
 
             <section class="orders-overview">
-                <article class="orders-card balance-card">
-                    <div class="balance-head">
-                        <span>Account balance</span>
-                        <strong>$12,540.00</strong>
+                <article class="orders-card spend-card">
+                    <div class="card-head">
+                        <span>Monthly spend</span>
+                        <strong>$5,420</strong>
                     </div>
-                    <div class="balance-footer">
-                        <span>Primary account holder</span>
-                        <strong>Valeria Beznosiuk • CLT-02345</strong>
+                    <div class="mini-chart">
+                        <svg viewBox="0 0 140 60" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="miniGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="rgba(31,154,99,0.35)" />
+                                    <stop offset="100%" stop-color="rgba(31,154,99,0)" />
+                                </linearGradient>
+                            </defs>
+                            <path class="mini-area" d="M0,50 L10,42 L25,46 L40,35 L56,28 L70,24 L85,32 L100,30 L120,18 L140,24 L140,60 L0,60 Z"></path>
+                            <path class="mini-line" d="M0,50 L10,42 L25,46 L40,35 L56,28 L70,24 L85,32 L100,30 L120,18 L140,24"></path>
+                        </svg>
+                    </div>
+                    <div class="card-footer">
+                        <span>Avg order value: <strong>$86</strong></span>
+                        <span>Peak weekday: <strong>Thursday</strong></span>
                     </div>
                 </article>
 
@@ -36,7 +48,7 @@
                         <span>Total transactions amount</span>
                     </header>
                     <strong>$48,230</strong>
-                    <small>Based on `transactions.value` aggregated this quarter.</small>
+                    <small>Aggregated from `transactions.value` Q3</small>
                 </article>
 
                 <article class="orders-card metric-card">
@@ -45,7 +57,7 @@
                         <span>Total orders count</span>
                     </header>
                     <strong>128</strong>
-                    <small>Records coming from `orders` table</small>
+                    <small>`orders` table entries for the last 90 days</small>
                 </article>
 
                 <article class="orders-card metric-card">
@@ -54,45 +66,38 @@
                         <span>Settled invoices</span>
                     </header>
                     <strong>96</strong>
-                    <small>Transactions marked as `Completed`</small>
-                </article>
-
-                <article class="orders-card metric-card">
-                    <header>
-                        <i class="fas fa-percentage"></i>
-                        <span>Conversion rate</span>
-                    </header>
-                    <strong>82%</strong>
-                    <small>Orders paid vs. placed • rolling 30 days</small>
-                </article>
-
-                <article class="orders-card metric-card loan-card">
-                    <header>
-                        <div>
-                            <span>Loan balance</span>
-                            <strong>$3,480</strong>
-                        </div>
-                        <small class="loan-delta">+$180 yesterday</small>
-                    </header>
-                    <ul>
-                        <li><span>Total debit</span><span class="bar bar-debit"></span></li>
-                        <li><span>Total credit</span><span class="bar bar-credit"></span></li>
-                        <li><span>Interest</span><span class="bar bar-interest"></span></li>
-                    </ul>
+                    <small>Transactions with `status = Completed`</small>
                 </article>
             </section>
 
             <section class="orders-chart-section">
-                <article class="orders-chart" data-chart>
+                <article class="orders-chart">
                     <header>
                         <h2>Spending trend</h2>
                         <span>Monthly value aggregated from `transactions.date` & `transactions.value`</span>
                     </header>
-                    <div class="chart-surface" data-chart-surface></div>
-                    <footer>
-                        <ul data-chart-labels></ul>
-                    </footer>
+                    <div id="ordersChart"></div>
                 </article>
+
+                <div class="orders-chart-side">
+                    <article class="orders-card metric-card conversion-card">
+                        <header>
+                            <i class="fas fa-percentage"></i>
+                            <span>Conversion rate</span>
+                        </header>
+                        <strong>82%</strong>
+                        <small>Completed vs total transactions this month</small>
+                    </article>
+
+                    <article class="orders-card metric-card pending-card">
+                        <header>
+                            <i class="fas fa-hourglass-half"></i>
+                            <span>Pending volume</span>
+                        </header>
+                        <strong>$3,780</strong>
+                        <small>Sum of `transactions.value` with status Pending</small>
+                    </article>
+                </div>
             </section>
 
             <section class="orders-table-profile">
@@ -170,10 +175,11 @@
     </div>
 </section>
 
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
     (() => {
-        const chartSurface = document.querySelector('[data-chart-surface]');
-        if (!chartSurface) return;
+        const chartElement = document.querySelector('#ordersChart');
+        if (!chartElement || typeof ApexCharts === 'undefined') return;
 
         const chartData = [
             { label: 'Jan', value: 4280 },
@@ -189,42 +195,63 @@
             { label: 'Nov', value: 7680 }
         ];
 
-        const labelsList = document.querySelector('[data-chart-labels]');
-        if (labelsList) {
-            labelsList.innerHTML = chartData.map(({ label }) => `<li>${label}</li>`).join('');
-        }
+        const options = {
+            chart: {
+                type: 'area',
+                height: 320,
+                toolbar: { show: false },
+                zoom: { enabled: false }
+            },
+            series: [{
+                name: 'Monthly spend',
+                data: chartData.map(({ value }) => value)
+            }],
+            stroke: {
+                curve: 'smooth',
+                width: 3
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.4,
+                    opacityTo: 0.05,
+                    stops: [0, 90, 100]
+                }
+            },
+            colors: ['#1f9a63'],
+            dataLabels: { enabled: false },
+            grid: {
+                borderColor: '#eef1f6',
+                strokeDashArray: 4,
+                padding: { left: 10, right: 10 }
+            },
+            xaxis: {
+                categories: chartData.map(({ label }) => label),
+                axisBorder: { show: false },
+                axisTicks: { show: false },
+                labels: {
+                    style: { colors: '#8b8e96', fontSize: '12px' }
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: { colors: '#8b8e96', fontSize: '12px' },
+                    formatter: (value) => `$${Math.round(value).toLocaleString('en-US')}`
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: (value) => `$${value.toLocaleString('en-US')}`
+                }
+            },
+            markers: {
+                size: 0
+            }
+        };
 
-        const values = chartData.map(({ value }) => value);
-        const maxValue = Math.max(...values) * 1.08;
-
-        const points = values.map((value, index) => {
-            const x = (index / (values.length - 1)) * 100;
-            const y = 90 - (value / maxValue) * 70;
-            return { x, y, value };
-        });
-
-        const linePath = ['M0,100', `Q5,${points[0].y}`, `L${points[0].x},${points[0].y}`]
-            .concat(points.slice(1).map(({ x, y }, i) => {
-                const prev = points[i];
-                const midX = (prev.x + x) / 2;
-                const midY = (prev.y + y) / 2;
-                return `Q${prev.x},${prev.y} ${midX},${midY} T${x},${y}`;
-            })).join(' ');
-
-        const areaPath = `${linePath} L100,100 L0,100 Z`;
-
-        chartSurface.innerHTML = `
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                    <linearGradient id="ordersChartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="rgba(31, 154, 99, 0.25)" />
-                        <stop offset="100%" stop-color="rgba(31, 154, 99, 0)" />
-                    </linearGradient>
-                </defs>
-                <path class="chart-area" d="${areaPath}"></path>
-                <path class="chart-line" d="${linePath}"></path>
-            </svg>
-        `;
+        const chart = new ApexCharts(chartElement, options);
+        chart.render();
     })();
 </script>
 {% endblock %}

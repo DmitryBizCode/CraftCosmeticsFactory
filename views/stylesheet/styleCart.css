@@ -1,0 +1,549 @@
+/* Cart Page Section */
+.cart-page-section {
+    padding: 120px 40px 60px;
+    background-color: #ffffff;
+    min-height: 100vh;
+}
+
+.cart-page-section .container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Cart Header */
+.cart-header {
+    margin-bottom: 40px;
+}
+
+.cart-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Cart Content */
+.cart-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 40px;
+    margin-bottom: 60px;
+}
+
+/* Left Column - Cart Items */
+.cart-items-column {
+    background-color: #ffffff;
+}
+
+.cart-table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 0.5fr;
+    gap: 20px;
+    padding: 15px 0;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.table-header-cell {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Arial', sans-serif;
+}
+
+.table-header-cell:nth-child(1) {
+    padding-left: 0;
+}
+
+.table-header-cell:nth-child(2) {
+    text-align: center;
+}
+
+.table-header-cell:nth-child(3) {
+    text-align: right;
+}
+
+.table-header-cell:nth-child(4) {
+    text-align: center;
+}
+
+/* Cart Item */
+.cart-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 0.5fr;
+    gap: 20px;
+    padding: 25px 0;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: center;
+}
+
+.cart-item:last-of-type {
+    border-bottom: none;
+}
+
+.item-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    grid-column: 1;
+    padding-left: 0;
+}
+
+.item-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+}
+
+.item-details {
+    flex: 1;
+}
+
+.item-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+    font-family: 'Arial', sans-serif;
+}
+
+.item-specs {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Quantity Controls */
+.item-quantity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    grid-column: 2;
+}
+
+.quantity-btn {
+    width: 35px;
+    height: 35px;
+    border: 1px solid #ddd;
+    background-color: #ffffff;
+    color: #333;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Arial', sans-serif;
+}
+
+.quantity-btn:hover {
+    background-color: #f5f5f5;
+    border-color: #999;
+}
+
+.quantity-input {
+    width: 60px;
+    height: 35px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    font-family: 'Arial', sans-serif;
+    -moz-appearance: textfield;
+}
+
+/* Hide number input arrows/spinners */
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.quantity-input:focus {
+    outline: none;
+    border-color: #999;
+}
+
+/* Price Cell */
+.item-price-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    grid-column: 3;
+    justify-self: end;
+}
+
+.item-price {
+    font-size: 14px;
+    color: #999;
+    text-decoration: line-through;
+    font-family: 'Arial', sans-serif;
+}
+
+.item-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Remove Button */
+.item-action {
+    display: flex;
+    justify-content: center;
+    grid-column: 4;
+}
+
+.remove-item {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background-color: transparent;
+    color: #dc3545;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-item:hover {
+    background-color: #ffe0e0;
+    color: #c82333;
+}
+
+/* Update Cart Button */
+.btn-update-cart {
+    margin-top: 30px;
+    padding: 15px 40px;
+    background-color: #000000;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-family: 'Arial', sans-serif;
+}
+
+.btn-update-cart:hover {
+    background-color: #333;
+}
+
+/* Right Column - Order Summary */
+.order-summary-column {
+    position: sticky;
+    top: 120px;
+    height: fit-content;
+}
+
+.order-summary-card {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.summary-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 25px 0;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Voucher Section */
+.voucher-section {
+    margin-top: 15px;
+    margin-bottom: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.voucher-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: #999;
+    margin-bottom: 8px;
+    font-family: 'Arial', sans-serif;
+}
+
+.voucher-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.voucher-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Arial', sans-serif;
+    background-color: #fafafa;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.voucher-input::placeholder {
+    color: #bbb;
+}
+
+.voucher-input:focus {
+    outline: none;
+    border-color: #ccc;
+    background-color: #fff;
+}
+
+.apply-voucher-btn {
+    padding: 8px 16px;
+    background-color: #f5f5f5;
+    color: #666;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Arial', sans-serif;
+    white-space: nowrap;
+}
+
+.apply-voucher-btn:hover {
+    background-color: #e8e8e8;
+    color: #333;
+}
+
+/* Cost Breakdown */
+.cost-breakdown {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.cost-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.cost-row:last-child {
+    margin-bottom: 0;
+}
+
+.cost-label {
+    font-size: 16px;
+    color: #666;
+    font-family: 'Arial', sans-serif;
+}
+
+.cost-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    font-family: 'Arial', sans-serif;
+}
+
+.discount-row .cost-value {
+    color: #28a745;
+}
+
+/* Final Total */
+.final-total-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-top: 15px;
+}
+
+.final-total-label {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+    font-family: 'Arial', sans-serif;
+}
+
+.final-total-amount {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Warranty Info */
+.warranty-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #666;
+    font-family: 'Arial', sans-serif;
+}
+
+.warranty-info i {
+    color: #28a745;
+    font-size: 18px;
+    margin-top: 2px;
+}
+
+.warranty-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.warranty-link:hover {
+    text-decoration: underline;
+}
+
+/* Checkout Button */
+.btn-checkout {
+    width: 100%;
+    padding: 18px;
+    background-color: #000000;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-family: 'Arial', sans-serif;
+}
+
+.btn-checkout:hover {
+    background-color: #333;
+}
+
+/* Bottom Section */
+.cart-bottom-section {
+    margin-top: 60px;
+    padding: 40px 0;
+    border-top: 1px solid #e0e0e0;
+}
+
+.bottom-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bottom-text {
+    flex: 1;
+}
+
+.bottom-title {
+    font-size: 18px;
+    font-weight: 400;
+    color: #666;
+    margin: 0 0 10px 0;
+    font-family: 'Arial', sans-serif;
+}
+
+.bottom-subtitle {
+    font-size: 36px;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+.btn-lets-talk {
+    padding: 15px 40px;
+    background-color: #000000;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-family: 'Arial', sans-serif;
+}
+
+.btn-lets-talk:hover {
+    background-color: #333;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .cart-content {
+        grid-template-columns: 1fr;
+    }
+
+    .order-summary-column {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .cart-page-section {
+        padding: 100px 20px 40px;
+    }
+
+    .cart-title {
+        font-size: 36px;
+    }
+
+    .cart-table-header {
+        display: none;
+    }
+
+    .cart-item {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        padding: 20px 0;
+    }
+
+    .item-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .item-quantity {
+        justify-content: flex-start;
+    }
+
+    .item-price-cell {
+        align-items: flex-start;
+    }
+
+    .item-action {
+        justify-content: flex-start;
+    }
+
+    .bottom-content {
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .bottom-subtitle {
+        font-size: 28px;
+    }
+}
+

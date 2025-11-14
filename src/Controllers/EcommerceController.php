@@ -45,4 +45,12 @@ class EcommerceController
     {
         return $this->templateService->render('pages/profileOrders', ["homeNavBar" => 1, "footer" => null]);
     }
+    public function getCart(): string
+    {
+        return $this->templateService->render('pages/cartPage', ["homeNavBar" => 1, "footer" => null]);
+    }
+    public function autorization(): string
+    {
+        return $this->templateService->render('pages/signPage', ["homeNavBar" => null, "footer" => null]);
+    }
 }
