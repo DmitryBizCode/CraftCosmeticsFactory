@@ -1071,6 +1071,89 @@
     gap: 24px;
 }
 
+/* IoT Statistics - Time Range */
+.admin-stats-time-range {
+    margin-bottom: 20px;
+}
+
+.admin-stats-time-range-label {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-stats-time-range-label-text {
+    font-weight: 500;
+    color: #4a4d55;
+    font-size: 14px;
+}
+
+.admin-stats-time-range-select {
+    padding: 8px 12px;
+    border: 1px solid #dde1ea;
+    border-radius: 8px;
+    background-color: #fff;
+    font-size: 14px;
+    color: #111111;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 160px;
+}
+
+.admin-stats-time-range-select:hover {
+    border-color: #111111;
+    background-color: #f8f9fb;
+}
+
+.admin-stats-time-range-select:focus {
+    outline: none;
+    border-color: #111111;
+    box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.1);
+    background-color: #fff;
+}
+
+/* IoT Statistics - Critical Warnings */
+.admin-stats-critical-warnings {
+    text-align: right;
+    padding: 8px 12px;
+    background-color: #fff5f5;
+    border-radius: 6px;
+    border: 1px solid #ffcccc;
+}
+
+.admin-stats-critical-warnings-label {
+    font-size: 10px;
+    color: #6b6f78;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.admin-stats-critical-warnings-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+/* IoT Statistics - Chart Container */
+.admin-stats-chart-container {
+    position: relative;
+    height: 200px;
+    margin-bottom: 16px;
+}
+
+.admin-stats-chart-container-tall {
+    height: 350px;
+    margin-bottom: 12px;
+}
+
+.admin-stats-chart-container-tall canvas {
+    height: 350px !important;
+    max-height: 350px !important;
+}
+
 .admin-stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -1091,7 +1174,7 @@
 }
 
 .admin-stats-card-large canvas {
-    max-height: 250px;
+    max-height: 200px;
     margin-bottom: 16px;
 }
 

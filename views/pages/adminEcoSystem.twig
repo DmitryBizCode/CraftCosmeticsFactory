@@ -11,6 +11,13 @@
             const criticalWarnings = {}; // Зберігаємо активні попередження
             let isEcoSystemActive = {{ ecoSystem.is_active ? 'true' : 'false' }};
             
+            // Функція для отримання інтервалу генерації (в мілісекундах)
+            function getGenerationInterval() {
+                const intervalInput = document.getElementById('generation-interval');
+                const seconds = intervalInput ? parseInt(intervalInput.value) || 30 : 30;
+                return Math.max(1, seconds) * 1000; // Конвертуємо секунди в мілісекунди
+            }
+            
             // Функція для показу критичного попередження
             function showCriticalWarning(sensorId, warningType, value, distanceToMin, distanceToMax) {
                 const sensor = sensors.find(s => s.id === sensorId);
@@ -260,13 +267,13 @@
                         .catch(error => console.error('Error generating value:', error));
                 };
 
-                // Генерація даних кожні 30 секунд (тільки якщо процес активний)
+                // Генерація даних з налаштовуваним інтервалом (тільки якщо процес активний)
                 if (isEcoSystemActive) {
                     intervals[sensorId] = setInterval(function() {
                         if (isEcoSystemActive) {
                             window.generateValue(sensorId);
                         }
-                    }, 30000);
+                    }, getGenerationInterval());
                 }
 
                 // Початкове оновлення
@@ -362,7 +369,7 @@
                                             if (isEcoSystemActive) {
                                                 window.generateValue(sensorId);
                                             }
-                                        }, 30000);
+                                        }, getGenerationInterval());
                                     }
                                 }
                                 
@@ -399,10 +406,38 @@
                             if (isEcoSystemActive) {
                                 window.generateValue(sensorId);
                             }
-                        }, 30000);
+                        }, getGenerationInterval());
                     }
                 });
             };
+            
+            // Обробка зміни інтервалу генерації
+            const generationIntervalInput = document.getElementById('generation-interval');
+            if (generationIntervalInput) {
+                generationIntervalInput.addEventListener('change', function() {
+                    const newInterval = parseInt(this.value) || 30;
+                    if (newInterval < 1) {
+                        this.value = 30;
+                        showNotification('Interval must be at least 1 second', 'error');
+                        return;
+                    }
+                    
+                    // Оновлюємо всі активні інтервали
+                    if (isEcoSystemActive) {
+                        Object.keys(intervals).forEach(function(sensorId) {
+                            if (intervals[sensorId]) {
+                                clearInterval(intervals[sensorId]);
+                                intervals[sensorId] = setInterval(function() {
+                                    if (isEcoSystemActive) {
+                                        window.generateValue(parseInt(sensorId));
+                                    }
+                                }, getGenerationInterval());
+                            }
+                        });
+                        showNotification(`Generation interval updated to ${newInterval} seconds`, 'success');
+                    }
+                });
+            }
 
             // Очищення інтервалів при закритті сторінки
             window.addEventListener('beforeunload', function() {
@@ -594,7 +629,17 @@
                                         </div>
                                         <div style="margin-bottom: 10px;">
                                             <strong>Range:</strong> 
-                                            {{ (sensor.start_value ?? sensor.iot_start_value ?? 0) }} - {{ (sensor.end_value ?? sensor.iot_end_value ?? 100) }}
+                                            {% set startVal = (sensor.start_value ?? sensor.iot_start_value ?? 0) %}
+                                            {% set endVal = (sensor.end_value ?? sensor.iot_end_value ?? 100) %}
+                                            {% if startVal < 0 and endVal < 0 %}
+                                                ({{ startVal|number_format(1) }}) to ({{ endVal|number_format(1) }})
+                                            {% elseif startVal < 0 %}
+                                                ({{ startVal|number_format(1) }}) to {{ endVal|number_format(1) }}
+                                            {% elseif endVal < 0 %}
+                                                {{ startVal|number_format(1) }} to ({{ endVal|number_format(1) }})
+                                            {% else %}
+                                                {{ startVal|number_format(1) }} to {{ endVal|number_format(1) }}
+                                            {% endif %}
                                         </div>
                                         <label>
                                             <span>Set Value:</span>
@@ -638,6 +683,24 @@
                             {% if timeToComplete %}
                                 <p><strong>Time to Complete:</strong> {{ timeToComplete }}</p>
                             {% endif %}
+                            
+                            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecf2;">
+                                <label style="display: flex; flex-direction: column; gap: 6px;">
+                                    <span style="font-size: 13px; color: #4a4d55; font-weight: 500;">
+                                        <strong>Generation Interval (seconds):</strong>
+                                    </span>
+                                    <input type="number" 
+                                           id="generation-interval" 
+                                           min="1" 
+                                           step="1" 
+                                           value="30" 
+                                           style="padding: 8px 12px; border: 1px solid #dde1ea; border-radius: 8px; font-size: 14px; width: 100%; max-width: 150px;"
+                                           placeholder="30">
+                                    <small style="font-size: 11px; color: #6b6f78; margin-top: 2px;">
+                                        Interval for automatic data generation (default: 30 seconds)
+                                    </small>
+                                </label>
+                            </div>
                             
                             {% if ecoSystem.date_start %}
                                 <p><strong>Started:</strong> 

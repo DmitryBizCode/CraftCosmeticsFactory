@@ -329,7 +329,8 @@ class AdminController
             // Оновлюємо IoT сенсори
             $ecoSystem = $this->recipeService->getEcoSystemByRecipeId($id);
             if ($ecoSystem) {
-                $this->recipeService->clearEcoSystemIotSensors($ecoSystem['id']);
+                // Отримуємо новий список IoT датчиків
+                $newIotIds = [];
                 if (isset($data['iot_sensors']) && !empty($data['iot_sensors'])) {
                     // Перевіряємо, чи це JSON рядок або масив
                     if (is_string($data['iot_sensors'])) {
@@ -344,11 +345,14 @@ class AdminController
                     if (is_array($iotSensors) && !empty($iotSensors)) {
                         foreach ($iotSensors as $iotId) {
                             if (!empty($iotId)) {
-                                $this->recipeService->addIotSensorToEcoSystem($ecoSystem['id'], (int)$iotId);
+                                $newIotIds[] = (int)$iotId;
                             }
                         }
                     }
                 }
+                
+                // Оновлюємо датчики інкрементально (видаляємо тільки видалені, додаємо тільки нові)
+                $this->recipeService->updateEcoSystemIotSensors($ecoSystem['id'], $newIotIds);
             }
 
             header('Location: index.php?action=adminRecipes&success=updated');
@@ -637,6 +641,11 @@ class AdminController
             // Зберігаємо нове значення
             $this->iotEcoService->addValue($iotEcoId, $result['value']);
 
+            // Якщо значення критичне, збільшуємо лічильник
+            if ($result['is_critical']) {
+                $this->iotEcoService->incrementCriticalWarnings($iotEcoId);
+            }
+
             echo json_encode([
                 'success' => true,
                 'value' => $result['value'],
@@ -743,6 +752,11 @@ class AdminController
             } elseif ($distanceToMax <= $criticalThreshold) {
                 $isCritical = true;
                 $warningType = 'max';
+            }
+            
+            // Якщо значення критичне, збільшуємо лічильник
+            if ($isCritical) {
+                $this->iotEcoService->incrementCriticalWarnings($iotEcoId);
             }
             
             echo json_encode([
@@ -895,11 +909,72 @@ class AdminController
     /** Сторінка статистики IoT датчиків */
     public function getAdminIotStats(int $recipeId): string
     {
+        $recipe = $this->recipeService->getById($recipeId);
+        if (!$recipe) {
+            header('Location: index.php?action=adminRecipes&error=' . urlencode('Recipe not found'));
+            exit;
+        }
+
+        $ecoSystem = $this->recipeService->getEcoSystemByRecipeId($recipeId);
+        if (!$ecoSystem) {
+            header('Location: index.php?action=adminRecipes&error=' . urlencode('Eco system not found'));
+            exit;
+        }
+
+        // Отримуємо IoT сенсори для цієї eco_system
+        $iotSensors = $this->iotEcoService->getIotSensorsByEcoSystemId($ecoSystem['id']);
+        
+        // Отримуємо параметр period з GET (за замовчуванням 7 днів)
+        // Також підтримуємо старий параметр 'days' для зворотної сумісності
+        if (isset($_GET['period'])) {
+            $period = $_GET['period'];
+        } elseif (isset($_GET['days'])) {
+            $period = (string)(int)$_GET['days'];
+        } else {
+            $period = '7';
+        }
+        
+        // Визначаємо dateFrom для статистики
+        if ($period === 'hour') {
+            $dateFrom = date('Y-m-d H:i:s', strtotime('-1 hour'));
+        } elseif ($period === 'day') {
+            $dateFrom = date('Y-m-d H:i:s', strtotime('-1 day'));
+        } else {
+            $days = (int)$period;
+            if ($days <= 0) {
+                $days = 7;
+            }
+            $dateFrom = date('Y-m-d H:i:s', strtotime("-{$days} days"));
+        }
+        
+        $sensorsStats = [];
+        foreach ($iotSensors as $sensor) {
+            // Отримуємо статистику з реальної БД
+            $stats = $this->iotEcoService->getStatisticsForSensor($sensor['id'], $dateFrom);
+            $histogram = $this->iotEcoService->getHistogramData($sensor['id'], $period);
+            
+            $sensorsStats[] = [
+                'id' => $sensor['id'],
+                'name' => $sensor['iot_name'],
+                'start_value' => $sensor['iot_start_value'] ?? 0,
+                'end_value' => $sensor['iot_end_value'] ?? 100,
+                'critical_warnings_count' => (int)($sensor['critical_warnings_count'] ?? 0),
+                'avg' => $stats['avg'],
+                'min' => $stats['min'],
+                'max' => $stats['max'],
+                'count' => $stats['count'],
+                'histogram' => $histogram,
+            ];
+        }
+
         return $this->templateService->render('pages/adminIotStats', [
             'homeNavBar' => null,
             'footer' => null,
             'currentPage' => 'recipes',
             'recipeId' => $recipeId,
+            'recipe' => $recipe,
+            'sensorsStats' => $sensorsStats,
+            'period' => $period,
         ]);
     }
 

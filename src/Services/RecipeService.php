@@ -263,6 +263,46 @@ class RecipeService
         return $stmt->execute([':eco_system_id' => $ecoSystemId]);
     }
 
+    /**
+     * Оновити IoT датчики в eco_system (видалити тільки видалені, додати тільки нові)
+     */
+    public function updateEcoSystemIotSensors(int $ecoSystemId, array $newIotIds): bool
+    {
+        try {
+            // Отримуємо поточні датчики
+            $stmt = $this->pdo->prepare("SELECT iot_id FROM iot_eco WHERE eco_system_id = :eco_system_id");
+            $stmt->execute([':eco_system_id' => $ecoSystemId]);
+            $currentIotIds = array_map(function($row) {
+                return (int)$row['iot_id'];
+            }, $stmt->fetchAll(PDO::FETCH_ASSOC));
+            
+            $newIotIds = array_map('intval', $newIotIds);
+            
+            // Знаходимо датчики для видалення (є в поточних, але немає в нових)
+            $toDelete = array_diff($currentIotIds, $newIotIds);
+            
+            // Знаходимо датчики для додавання (є в нових, але немає в поточних)
+            $toAdd = array_diff($newIotIds, $currentIotIds);
+            
+            // Видаляємо тільки ті, які потрібно видалити
+            if (!empty($toDelete)) {
+                $placeholders = implode(',', array_fill(0, count($toDelete), '?'));
+                $stmt = $this->pdo->prepare("DELETE FROM iot_eco WHERE eco_system_id = ? AND iot_id IN ($placeholders)");
+                $stmt->execute(array_merge([$ecoSystemId], $toDelete));
+            }
+            
+            // Додаємо тільки нові датчики
+            foreach ($toAdd as $iotId) {
+                $this->addIotSensorToEcoSystem($ecoSystemId, $iotId);
+            }
+            
+            return true;
+        } catch (\Exception $e) {
+            error_log("Error updating eco system IoT sensors: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function generateImageHash(string $originalName): string
     {
         $extension = pathinfo($originalName, PATHINFO_EXTENSION);
