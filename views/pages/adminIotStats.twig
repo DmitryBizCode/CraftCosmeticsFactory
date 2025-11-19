@@ -1,0 +1,173 @@
+{% extends '/templates/base_admin.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mock historical data
+            const historicalData = {
+                temperature: {
+                    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                    values: [18, 20, 22, 21, 23, 24, 22],
+                    avg: 21.4,
+                    min: 18,
+                    max: 24
+                },
+                humidity: {
+                    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                    values: [45, 50, 55, 52, 58, 60, 55],
+                    avg: 53.6,
+                    min: 45,
+                    max: 60
+                },
+                lighting: {
+                    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                    values: [100, 200, 400, 350, 500, 600, 450],
+                    avg: 371.4,
+                    min: 100,
+                    max: 600
+                }
+            };
+
+            // Create statistics charts
+            Object.keys(historicalData).forEach(function(sensorType) {
+                const ctx = document.getElementById('stats-chart-' + sensorType);
+                if (!ctx) return;
+
+                const data = historicalData[sensorType];
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: sensorType.charAt(0).toUpperCase() + sensorType.slice(1),
+                            data: data.values,
+                            backgroundColor: '#111111',
+                            borderColor: '#111111',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Update statistics display
+            Object.keys(historicalData).forEach(function(sensorType) {
+                const data = historicalData[sensorType];
+                const avgEl = document.getElementById('avg-' + sensorType);
+                const minEl = document.getElementById('min-' + sensorType);
+                const maxEl = document.getElementById('max-' + sensorType);
+                
+                if (avgEl) avgEl.textContent = data.avg.toFixed(1);
+                if (minEl) minEl.textContent = data.min;
+                if (maxEl) maxEl.textContent = data.max;
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+<section class="admin-page admin-page-dashboard">
+    <div class="admin-dashboard">
+        <div class="admin-layout">
+            {% include 'partials/adminSidebar.twig' %}
+
+            <main class="admin-main">
+                <header class="admin-main-header">
+                    <div>
+                        <h1>IoT Sensors Statistics</h1>
+                        <p>Recipe: <strong>Organic Face Cream</strong> (ID: {{ recipeId }}) - Last 7 days</p>
+                    </div>
+                    <div>
+                        <a href="index.php?action=adminEcoSystem&recipe_id={{ recipeId }}" class="admin-btn admin-btn-edit">Eco-System Control</a>
+                        <a href="index.php?action=adminRecipes" class="admin-btn admin-btn-secondary">Back to Recipes</a>
+                    </div>
+                </header>
+
+                <section class="admin-iot-stats">
+                    <div class="admin-stats-grid">
+                        <div class="admin-stats-card-large">
+                            <h3>Temperature Sensor</h3>
+                            <canvas id="stats-chart-temperature"></canvas>
+                            <div class="admin-stats-metrics">
+                                <div class="admin-metric">
+                                    <span class="admin-metric-label">Average:</span>
+                                    <span class="admin-metric-value" id="avg-temperature">21.4</span>°C
+                                </div>
+                                <div class="admin-metric">
+                                    <span class="admin-metric-label">Min:</span>
+                                    <span class="admin-metric-value" id="min-temperature">18</span>°C
+                                </div>
+                                <div class="admin-metric">
+                                    <span class="admin-metric-label">Max:</span>
+                                    <span class="admin-metric-value" id="max-temperature">24</span>°C
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-stats-card-large">
+                            <h3>Humidity Sensor</h3>
+                            <canvas id="stats-chart-humidity"></canvas>
+                            <div class="admin-stats-metrics">
+                                <div class="admin-metric">
+                                    <span class="admin-metric-label">Average:</span>
+                                    <span class="admin-metric-value" id="avg-humidity">53.6</span>%
+                                </div>
+                                <div class="admin-metric">
+                                    <span class="admin-metric-label">Min:</span>
+                                    <span class="admin-metric-value" id="min-humidity">45</span>%
+                                </div>
+                                <div class="admin-metric">
+                                    <span class="admin-metric-label">Max:</span>
+                                    <span class="admin-metric-value" id="max-humidity">60</span>%
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-stats-card-large">
+                            <h3>Lighting Sensor</h3>
+                            <canvas id="stats-chart-lighting"></canvas>
+                            <div class="admin-stats-metrics">
+                                <div class="admin-metric">
+                                    <span class="admin-metric-label">Average:</span>
+                                    <span class="admin-metric-value" id="avg-lighting">371.4</span> lux
+                                </div>
+                                <div class="admin-metric">
+                                    <span class="admin-metric-label">Min:</span>
+                                    <span class="admin-metric-value" id="min-lighting">100</span> lux
+                                </div>
+                                <div class="admin-metric">
+                                    <span class="admin-metric-label">Max:</span>
+                                    <span class="admin-metric-value" id="max-lighting">600</span> lux
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-stats-controls">
+                        <label class="admin-label">
+                            <span>Time Range</span>
+                            <select class="admin-filter-select">
+                                <option>Last 7 days</option>
+                                <option>Last 30 days</option>
+                                <option>Last 3 months</option>
+                                <option>Custom range</option>
+                            </select>
+                        </label>
+                        <button class="admin-btn admin-btn-save">Export Data</button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

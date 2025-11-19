@@ -1,0 +1,179 @@
+{% extends '/templates/base_admin.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('.admin-recipe-form form');
+            if (!form) return;
+
+            const addButton = document.querySelector('.admin-add-button');
+            const cards = document.querySelectorAll('.admin-recipe-card');
+
+            const fieldId = form.querySelector('input[name="id"]');
+            const fieldName = form.querySelector('input[name="name"]');
+            const fieldTimeToComplete = form.querySelector('input[name="time_to_complete"]');
+            const fieldDescription = form.querySelector('textarea[name="description"]');
+            const fieldProducts = form.querySelector('select[name="products[]"]');
+            const fieldIotSensors = form.querySelector('select[name="iot_sensors[]"]');
+
+            function fillFormFromCard(card) {
+                fieldId.value = card.dataset.id || '';
+                fieldName.value = card.dataset.name || '';
+                fieldTimeToComplete.value = card.dataset.timeToComplete || '';
+                fieldDescription.value = card.dataset.description || '';
+                // TODO: Fill selected products and IoT sensors
+            }
+
+            cards.forEach(function (card) {
+                const editBtn = card.querySelector('.admin-btn-edit');
+                const deleteBtn = card.querySelector('.admin-btn-delete');
+                const ecoBtn = card.querySelector('.admin-btn-eco');
+
+                if (editBtn) {
+                    editBtn.addEventListener('click', function () {
+                        fillFormFromCard(card);
+                        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                }
+
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', function () {
+                        const name = card.dataset.name || 'this recipe';
+                        if (confirm('Are you sure you want to delete ' + name + '? This is a visual operation only.')) {
+                            card.classList.add('admin-recipe-card-deleted');
+                            setTimeout(function () {
+                                card.remove();
+                            }, 200);
+                        }
+                    });
+                }
+
+                if (ecoBtn) {
+                    ecoBtn.addEventListener('click', function () {
+                        const recipeId = card.dataset.id || '';
+                        window.location.href = 'index.php?action=adminEcoSystem&recipe_id=' + recipeId;
+                    });
+                }
+            });
+
+            addButton?.addEventListener('click', function () {
+                form.reset();
+                fieldId.value = '';
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+<section class="admin-page admin-page-dashboard">
+    <div class="admin-dashboard">
+        <div class="admin-layout">
+            {% include 'partials/adminSidebar.twig' %}
+
+            <main class="admin-main">
+                <header class="admin-main-header">
+                    <div>
+                        <h1>Recipes</h1>
+                        <p>Manage recipes that consist of products and have their own eco-system with IoT sensors.</p>
+                    </div>
+                    <button class="admin-add-button">+ New Recipe</button>
+                </header>
+
+                <section class="admin-products">
+                    <div class="admin-products-list">
+                        <article class="admin-recipe-card"
+                                 data-id="1"
+                                 data-name="Organic Face Cream"
+                                 data-time-to-complete="2025-03-15T10:00"
+                                 data-description="Premium organic face cream with natural ingredients.">
+                            <div class="admin-product-image-placeholder"></div>
+                            <div class="admin-product-info">
+                                <h3>Organic Face Cream</h3>
+                                <p class="admin-product-meta">Products: 5 · IoT Sensors: 3 · Time: 2 hours</p>
+                                <p class="admin-product-price">Active Eco-System</p>
+                            </div>
+                            <div class="admin-product-actions">
+                                <button class="admin-btn admin-btn-edit">Edit</button>
+                                <button class="admin-btn admin-btn-eco">Eco System</button>
+                                <button class="admin-btn admin-btn-delete">Delete</button>
+                            </div>
+                        </article>
+
+                        <article class="admin-recipe-card"
+                                 data-id="2"
+                                 data-name="Herbal Body Lotion"
+                                 data-time-to-complete="2025-03-15T12:00"
+                                 data-description="Herbal body lotion with essential oils.">
+                            <div class="admin-product-image-placeholder"></div>
+                            <div class="admin-product-info">
+                                <h3>Herbal Body Lotion</h3>
+                                <p class="admin-product-meta">Products: 4 · IoT Sensors: 2 · Time: 1.5 hours</p>
+                                <p class="admin-product-price">Active Eco-System</p>
+                            </div>
+                            <div class="admin-product-actions">
+                                <button class="admin-btn admin-btn-edit">Edit</button>
+                                <button class="admin-btn admin-btn-eco">Eco System</button>
+                                <button class="admin-btn admin-btn-delete">Delete</button>
+                            </div>
+                        </article>
+                    </div>
+
+                    <aside class="admin-product-form admin-recipe-form">
+                        <h2>Recipe Form</h2>
+                        <p class="admin-form-hint">Create or edit a recipe. Select products and IoT sensors to form the eco-system.</p>
+
+                        <form>
+                            <input type="hidden" name="id">
+
+                            <label class="admin-label">
+                                <span>Recipe Name</span>
+                                <input type="text" name="name" placeholder="Organic Face Cream" required>
+                            </label>
+
+                            <label class="admin-label">
+                                <span>Time to Complete</span>
+                                <input type="datetime-local" name="time_to_complete" required>
+                            </label>
+
+                            <label class="admin-label">
+                                <span>Description</span>
+                                <textarea name="description" rows="3" placeholder="Recipe description..."></textarea>
+                            </label>
+
+                            <label class="admin-label">
+                                <span>Select Products (Ingredients)</span>
+                                <select name="products[]" multiple size="5" required>
+                                    <option value="1">Minimal Face Cream (100ml)</option>
+                                    <option value="2">Gentle Body Lotion (250ml)</option>
+                                    <option value="3">Serum for Glow (30ml)</option>
+                                    <option value="4">Organic Oil (50ml)</option>
+                                    <option value="5">Essential Extract (10ml)</option>
+                                </select>
+                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Hold Ctrl/Cmd to select multiple products</small>
+                            </label>
+
+                            <label class="admin-label">
+                                <span>Select IoT Sensors</span>
+                                <select name="iot_sensors[]" multiple size="4">
+                                    <option value="1">Temperature Sensor</option>
+                                    <option value="2">Humidity Sensor</option>
+                                    <option value="3">Lighting Sensor</option>
+                                </select>
+                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Select sensors for eco-system monitoring</small>
+                            </label>
+
+                            <div class="admin-form-actions">
+                                <button type="submit" class="admin-btn admin-btn-save">Save Recipe (mockup)</button>
+                                <button type="button" class="admin-btn admin-btn-secondary">Clear</button>
+                            </div>
+                        </form>
+                    </aside>
+                </section>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

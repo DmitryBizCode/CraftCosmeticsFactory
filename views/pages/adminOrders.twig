@@ -1,0 +1,83 @@
+{% extends '/templates/base_admin.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+{% endblock %}
+
+{% block content %}
+<section class="admin-page admin-page-dashboard">
+    <div class="admin-dashboard">
+        <div class="admin-layout">
+            {% include 'partials/adminSidebar.twig' %}
+
+            <main class="admin-main">
+                <header class="admin-main-header">
+                    <div>
+                        <h1>All Orders</h1>
+                        <p>Visual list of orders from the <code>orders</code> table (id, quantity, client_id, recipe_id).</p>
+                    </div>
+                    <div class="admin-filters-row">
+                        <select class="admin-filter-select">
+                            <option>All Statuses</option>
+                            <option>New</option>
+                            <option>Processing</option>
+                            <option>Completed</option>
+                            <option>Cancelled</option>
+                        </select>
+                        <input type="text" class="admin-filter-input" placeholder="Search by ID / client">
+                    </div>
+                </header>
+
+                <section class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Client (client_id)</th>
+                                <th>Recipe (recipe_id)</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#101</td>
+                                <td>12</td>
+                                <td>5</td>
+                                <td>3</td>
+                                <td><span class="badge badge-status-new">New</span></td>
+                                <td class="admin-table-actions">
+                                    <button class="admin-btn admin-btn-edit">Details / Change Status</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#102</td>
+                                <td>18</td>
+                                <td>NULL</td>
+                                <td>1</td>
+                                <td><span class="badge badge-status-processing">Processing</span></td>
+                                <td class="admin-table-actions">
+                                    <button class="admin-btn admin-btn-edit">Details / Change Status</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#103</td>
+                                <td>7</td>
+                                <td>2</td>
+                                <td>10</td>
+                                <td><span class="badge badge-status-done">Completed</span></td>
+                                <td class="admin-table-actions">
+                                    <button class="admin-btn admin-btn-edit">Details / Change Status</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+

@@ -1,0 +1,214 @@
+{% extends '/templates/base_admin.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('.admin-product-form form');
+            if (!form) return;
+
+            const addButton = document.querySelector('.admin-add-button');
+            const cards = document.querySelectorAll('.admin-product-card');
+
+            const fieldId = form.querySelector('input[name="id"]');
+            const fieldName = form.querySelector('input[name="name"]');
+            const fieldQuantity = form.querySelector('input[name="quantity"]');
+            const fieldUnit = form.querySelector('select[name="unit"]');
+            const fieldTemperature = form.querySelector('input[name="temperature"]');
+            const fieldLightening = form.querySelector('input[name="lightening"]');
+            const fieldDescription = form.querySelector('textarea[name="description"]');
+            const fieldAllergen = form.querySelector('input[name="allergen"]');
+
+            function fillFormFromCard(card) {
+                fieldId.value = card.dataset.id || '';
+                fieldName.value = card.dataset.name || '';
+                fieldQuantity.value = card.dataset.quantity || '';
+                fieldUnit.value = card.dataset.unit || 'g';
+                fieldTemperature.value = card.dataset.temperature || '';
+                fieldLightening.value = card.dataset.lightening || '';
+                fieldDescription.value = card.dataset.description || '';
+                fieldAllergen.checked = card.dataset.allergen === '1';
+            }
+
+            cards.forEach(function (card) {
+                const editBtn = card.querySelector('.admin-btn-edit');
+                const deleteBtn = card.querySelector('.admin-btn-delete');
+
+                if (editBtn) {
+                    editBtn.addEventListener('click', function () {
+                        fillFormFromCard(card);
+                        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                }
+
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', function () {
+                        const name = card.dataset.name || 'this product';
+                        if (confirm('Are you sure you want to delete ' + name + '? This is a visual operation only.')) {
+                            card.classList.add('admin-product-card-deleted');
+                            setTimeout(function () {
+                                card.remove();
+                            }, 200);
+                        }
+                    });
+                }
+            });
+
+            addButton?.addEventListener('click', function () {
+                form.reset();
+                fieldId.value = '';
+                fieldUnit.value = 'g';
+                fieldAllergen.checked = false;
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+<section class="admin-page admin-page-dashboard">
+    <div class="admin-dashboard">
+        <div class="admin-layout">
+            {% include 'partials/adminSidebar.twig' %}
+
+            <main class="admin-main">
+                <header class="admin-main-header">
+                    <div>
+                        <h1>Products (Ingredients)</h1>
+                        <p>Manage individual products/ingredients that can be used in recipes.</p>
+                    </div>
+                    <button class="admin-add-button">+ New Product</button>
+                </header>
+
+                <section class="admin-products">
+                    <div class="admin-products-list">
+                        <article class="admin-product-card"
+                                 data-id="1"
+                                 data-name="Minimal Face Cream"
+                                 data-quantity="100"
+                                 data-unit="ml"
+                                 data-temperature="20"
+                                 data-lightening="50"
+                                 data-description="Ніжний крем для обличчя для щоденного використання."
+                                 data-allergen="0">
+                            <div class="admin-product-image-placeholder"></div>
+                            <div class="admin-product-info">
+                                <h3>Minimal Face Cream</h3>
+                                <p class="admin-product-meta">Category: Skincare · SKU: SK-001</p>
+                                <p class="admin-product-price">$32.00</p>
+                            </div>
+                            <div class="admin-product-actions">
+                                <button class="admin-btn admin-btn-edit">Edit</button>
+                                <button class="admin-btn admin-btn-delete">Delete</button>
+                            </div>
+                        </article>
+
+                        <article class="admin-product-card"
+                                 data-id="2"
+                                 data-name="Gentle Body Lotion"
+                                 data-quantity="250"
+                                 data-unit="ml"
+                                 data-temperature="18"
+                                 data-lightening="40"
+                                 data-description="Лосьйон для тіла з легкою текстурою."
+                                 data-allergen="0">
+                            <div class="admin-product-image-placeholder"></div>
+                            <div class="admin-product-info">
+                                <h3>Gentle Body Lotion</h3>
+                                <p class="admin-product-meta">Category: Body · SKU: BD-014</p>
+                                <p class="admin-product-price">$24.50</p>
+                            </div>
+                            <div class="admin-product-actions">
+                                <button class="admin-btn admin-btn-edit">Edit</button>
+                                <button class="admin-btn admin-btn-delete">Delete</button>
+                            </div>
+                        </article>
+
+                        <article class="admin-product-card"
+                                 data-id="3"
+                                 data-name="Serum for Glow"
+                                 data-quantity="30"
+                                 data-unit="ml"
+                                 data-temperature="16"
+                                 data-lightening="30"
+                                 data-description="Сироватка для сяйва шкіри."
+                                 data-allergen="1">
+                            <div class="admin-product-image-placeholder"></div>
+                            <div class="admin-product-info">
+                                <h3>Serum for Glow</h3>
+                                <p class="admin-product-meta">Category: Serum · SKU: SR-210</p>
+                                <p class="admin-product-price">$39.90</p>
+                            </div>
+                            <div class="admin-product-actions">
+                                <button class="admin-btn admin-btn-edit">Edit</button>
+                                <button class="admin-btn admin-btn-delete">Delete</button>
+                            </div>
+                        </article>
+                    </div>
+
+                    <aside class="admin-product-form">
+                        <h2>Product Form</h2>
+                        <p class="admin-form-hint">Fields configured for the <code>products</code> table (mockup, no DB).</p>
+
+                        <form>
+                            <input type="hidden" name="id">
+
+                            <label class="admin-label">
+                                <span>Name</span>
+                                <input type="text" name="name" placeholder="Minimal Face Cream" required>
+                            </label>
+
+                            <div class="admin-label-row">
+                                <label class="admin-label admin-label-inline">
+                                    <span>Quantity</span>
+                                    <input type="number" name="quantity" min="0" step="0.01" placeholder="100" required>
+                                </label>
+
+                                <label class="admin-label admin-label-inline">
+                                    <span>Unit</span>
+                                    <select name="unit" required>
+                                        <option value="g">g</option>
+                                        <option value="kg">kg</option>
+                                        <option value="ml" selected>ml</option>
+                                        <option value="l">l</option>
+                                        <option value="pcs">pcs</option>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div class="admin-label-row">
+                                <label class="admin-label admin-label-inline">
+                                    <span>Temperature (°C)</span>
+                                    <input type="number" name="temperature" step="0.1" placeholder="20">
+                                </label>
+
+                                <label class="admin-label admin-label-inline">
+                                    <span>Lightening (%)</span>
+                                    <input type="number" name="lightening" min="0" max="100" step="1" placeholder="50">
+                                </label>
+                            </div>
+
+                            <label class="admin-label">
+                                <span>Description</span>
+                                <textarea name="description" rows="3" placeholder="Gentle cream for daily use..."></textarea>
+                            </label>
+
+                            <label class="admin-label admin-label-checkbox">
+                                <input type="checkbox" name="allergen">
+                                <span>Contains allergens</span>
+                            </label>
+
+                            <div class="admin-form-actions">
+                                <button type="submit" class="admin-btn admin-btn-save">Save (mockup)</button>
+                                <button type="button" class="admin-btn admin-btn-secondary">Clear</button>
+                            </div>
+                        </form>
+                    </aside>
+                </section>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+

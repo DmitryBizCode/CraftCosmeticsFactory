@@ -1,0 +1,98 @@
+{% extends '/templates/base_admin.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+{% endblock %}
+
+{% block content %}
+<section class="admin-page admin-page-dashboard">
+    <div class="admin-dashboard">
+        <div class="admin-layout">
+            {% include 'partials/adminSidebar.twig' %}
+
+            <main class="admin-main">
+                <header class="admin-main-header">
+                    <div>
+                        <h1>Users</h1>
+                        <p>List of clients and staff (tables <code>clients</code> and <code>staff</code>).</p>
+                    </div>
+                </header>
+
+                <section class="admin-users">
+                    <div class="admin-users-column">
+                        <h2 class="admin-users-title">Clients</h2>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>12</td>
+                                    <td>Anna Smith</td>
+                                    <td>anna@example.com</td>
+                                    <td><span class="badge badge-status-active">Active</span></td>
+                                    <td class="admin-table-actions">
+                                        <button class="admin-btn admin-btn-edit">Edit</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>18</td>
+                                    <td>John Doe</td>
+                                    <td>john@example.com</td>
+                                    <td><span class="badge badge-status-inactive">Inactive</span></td>
+                                    <td class="admin-table-actions">
+                                        <button class="admin-btn admin-btn-edit">Edit</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="admin-users-column">
+                        <h2 class="admin-users-title">Staff</h2>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Manager One</td>
+                                    <td>Manager</td>
+                                    <td><span class="badge badge-status-active">Active</span></td>
+                                    <td class="admin-table-actions">
+                                        <button class="admin-btn admin-btn-edit">Edit</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td>Operator Two</td>
+                                    <td>Operator</td>
+                                    <td><span class="badge badge-status-active">Active</span></td>
+                                    <td class="admin-table-actions">
+                                        <button class="admin-btn admin-btn-edit">Edit</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+

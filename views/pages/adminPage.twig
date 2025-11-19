@@ -1,0 +1,33 @@
+{% extends '/templates/base_admin.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+{% endblock %}
+
+{% block content %}
+<section class="admin-page">
+    <div class="admin-login-wrapper">
+        <form class="admin-login-form">
+            <h1 class="admin-title">Admin Panel</h1>
+            <p class="admin-subtitle">Sign in as <strong>admin / admin</strong> to access the admin panel (no backend yet).</p>
+
+            <label class="admin-label">
+                <span>Login</span>
+                <input type="text" name="username" placeholder="admin" required>
+            </label>
+
+            <label class="admin-label">
+                <span>Password</span>
+                <input type="password" name="password" placeholder="admin" required>
+            </label>
+
+            <p class="admin-login-hint">* login and password are not validated by backend yet, this is a visual mockup only.</p>
+
+            <button type="submit" class="admin-login-button">Sign in</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+
+

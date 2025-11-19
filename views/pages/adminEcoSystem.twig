@@ -1,0 +1,173 @@
+{% extends '/templates/base_admin.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mock data for IoT sensors
+            const sensorData = {
+                temperature: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    values: [18, 20, 22, 24, 23, 21],
+                    min: 16,
+                    max: 25
+                },
+                humidity: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    values: [45, 50, 55, 60, 58, 52],
+                    min: 40,
+                    max: 70
+                },
+                lighting: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    values: [100, 200, 400, 600, 500, 300],
+                    min: 100,
+                    max: 800
+                }
+            };
+
+            // Create charts
+            Object.keys(sensorData).forEach(function(sensorType) {
+                const ctx = document.getElementById('chart-' + sensorType);
+                if (!ctx) return;
+
+                const data = sensorData[sensorType];
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: sensorType.charAt(0).toUpperCase() + sensorType.slice(1),
+                            data: data.values,
+                            borderColor: '#111111',
+                            backgroundColor: 'rgba(17, 17, 17, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                min: data.min - 10,
+                                max: data.max + 10
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Control IoT sensors
+            const controlButtons = document.querySelectorAll('.admin-iot-control-btn');
+            controlButtons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const sensorId = this.dataset.sensorId;
+                    const action = this.dataset.action;
+                    const input = this.closest('.admin-iot-control-item').querySelector('input[type="number"]');
+                    
+                    if (action === 'set') {
+                        const value = parseFloat(input.value);
+                        if (!isNaN(value)) {
+                            alert('Setting ' + sensorId + ' to ' + value + ' (mockup)');
+                        }
+                    } else if (action === 'reset') {
+                        input.value = '';
+                        alert('Resetting ' + sensorId + ' (mockup)');
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+<section class="admin-page admin-page-dashboard">
+    <div class="admin-dashboard">
+        <div class="admin-layout">
+            {% include 'partials/adminSidebar.twig' %}
+
+            <main class="admin-main">
+                <header class="admin-main-header">
+                    <div>
+                        <h1>Eco-System Control</h1>
+                        <p>Recipe: <strong>Organic Face Cream</strong> (ID: {{ recipeId }})</p>
+                    </div>
+                    <div>
+                        <a href="index.php?action=adminIotStats&recipe_id={{ recipeId }}" class="admin-btn admin-btn-edit">View Statistics</a>
+                        <a href="index.php?action=adminRecipes" class="admin-btn admin-btn-secondary">Back to Recipes</a>
+                    </div>
+                </header>
+
+                <section class="admin-eco-system">
+                    <div class="admin-eco-charts">
+                        <div class="admin-chart-card">
+                            <h3>Temperature Sensor</h3>
+                            <canvas id="chart-temperature"></canvas>
+                            <div class="admin-iot-control-item">
+                                <label>
+                                    <span>Set Value:</span>
+                                    <input type="number" step="0.1" placeholder="20.0" min="16" max="25">
+                                </label>
+                                <div class="admin-iot-control-buttons">
+                                    <button class="admin-iot-control-btn admin-btn admin-btn-save" data-sensor-id="temperature" data-action="set">Set</button>
+                                    <button class="admin-iot-control-btn admin-btn admin-btn-secondary" data-sensor-id="temperature" data-action="reset">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-chart-card">
+                            <h3>Humidity Sensor</h3>
+                            <canvas id="chart-humidity"></canvas>
+                            <div class="admin-iot-control-item">
+                                <label>
+                                    <span>Set Value:</span>
+                                    <input type="number" step="0.1" placeholder="50.0" min="40" max="70">
+                                </label>
+                                <div class="admin-iot-control-buttons">
+                                    <button class="admin-iot-control-btn admin-btn admin-btn-save" data-sensor-id="humidity" data-action="set">Set</button>
+                                    <button class="admin-iot-control-btn admin-btn admin-btn-secondary" data-sensor-id="humidity" data-action="reset">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="admin-chart-card">
+                            <h3>Lighting Sensor</h3>
+                            <canvas id="chart-lighting"></canvas>
+                            <div class="admin-iot-control-item">
+                                <label>
+                                    <span>Set Value:</span>
+                                    <input type="number" step="1" placeholder="400" min="100" max="800">
+                                </label>
+                                <div class="admin-iot-control-buttons">
+                                    <button class="admin-iot-control-btn admin-btn admin-btn-save" data-sensor-id="lighting" data-action="set">Set</button>
+                                    <button class="admin-iot-control-btn admin-btn admin-btn-secondary" data-sensor-id="lighting" data-action="reset">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="admin-eco-info">
+                        <h2>Eco-System Info</h2>
+                        <div class="admin-info-card">
+                            <p><strong>Status:</strong> <span style="color: #28a745;">Active</span></p>
+                            <p><strong>Started:</strong> 2025-03-01 10:00</p>
+                            <p><strong>Expected End:</strong> 2025-03-01 12:00</p>
+                            <p><strong>Client:</strong> Anna Smith (ID: 12)</p>
+                            <p><strong>Staff:</strong> Manager One (ID: 3)</p>
+                        </div>
+
+                        <h3 style="margin-top: 24px;">Connected Products</h3>
+                        <ul class="admin-products-list-mini">
+                            <li>Minimal Face Cream (100ml)</li>
+                            <li>Organic Oil (50ml)</li>
+                            <li>Essential Extract (10ml)</li>
+                        </ul>
+                    </aside>
+                </section>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

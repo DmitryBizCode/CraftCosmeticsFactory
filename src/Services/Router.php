@@ -4,13 +4,17 @@ namespace App\Services;
 
 use App\Controllers\ContainerController;
 use App\Controllers\EcommerceController;
+use App\Controllers\AdminController;
+
 class Router
 {
     private ?ContainerController $containerController = null;
     private EcommerceController $ecommerceController;
+    private AdminController $adminController;
     public function __construct()
     {
         $this->ecommerceController = new EcommerceController();
+        $this->adminController = new AdminController();
     }
     
     private function getContainerController(): ContainerController
@@ -26,6 +30,36 @@ class Router
         switch ($action) {
             case 'autorization':
                 $content = $this->ecommerceController->autorization();
+                break;
+            case 'admin':
+                // Вхід в адмінку тільки по URL: index.php?action=admin (сторінка логіну)
+                $content = $this->adminController->getAdminLogin();
+                break;
+            case 'adminProducts':
+                $content = $this->adminController->getAdminProducts();
+                break;
+            case 'adminRecipes':
+                $content = $this->adminController->getAdminRecipes();
+                break;
+            case 'adminEcoSystem':
+                $recipeId = isset($_GET['recipe_id']) ? (int)$_GET['recipe_id'] : 0;
+                $content = $this->adminController->getAdminEcoSystem($recipeId);
+                break;
+            case 'adminIotStats':
+                $recipeId = isset($_GET['recipe_id']) ? (int)$_GET['recipe_id'] : 0;
+                $content = $this->adminController->getAdminIotStats($recipeId);
+                break;
+            case 'adminOrders':
+                $content = $this->adminController->getAdminOrders();
+                break;
+            case 'adminStats':
+                $content = $this->adminController->getAdminStats();
+                break;
+            case 'adminUsers':
+                $content = $this->adminController->getAdminUsers();
+                break;
+            case 'adminIot':
+                $content = $this->adminController->getAdminIot();
                 break;
             // case 'signin':
             //     $content = $this->ecommerceController->autorizationSignIn();

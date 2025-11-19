@@ -1,0 +1,871 @@
+/* Базова сторінка логіну адміністратора */
+.admin-page {
+    min-height: 100vh;
+    padding: 40px 20px;
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+}
+
+.admin-page:not(.admin-page-dashboard) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-login-wrapper {
+    max-width: 420px;
+    width: 100%;
+}
+
+.admin-login-form {
+    background-color: #ffffff;
+    border-radius: 24px;
+    padding: 32px 32px 28px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eceff3;
+}
+
+.admin-title {
+    margin: 0 0 8px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #111111;
+}
+
+.admin-subtitle {
+    margin: 0 0 24px;
+    font-size: 14px;
+    color: #6b6f78;
+}
+
+.admin-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #444;
+}
+
+.admin-label span {
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.admin-label input,
+.admin-label textarea,
+.admin-label select {
+    border-radius: 12px;
+    border: 1px solid #dde1ea;
+    padding: 10px 12px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.admin-label input:focus,
+.admin-label textarea:focus,
+.admin-label select:focus {
+    border-color: #111111;
+    box-shadow: 0 0 0 1px #11111110;
+    background-color: #ffffff;
+}
+
+.admin-login-error {
+    min-height: 18px;
+    margin: 4px 0 8px;
+    font-size: 12px;
+    color: #dc3545;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.admin-login-error.visible {
+    opacity: 1;
+}
+
+.admin-login-hint {
+    margin: 0 0 16px;
+    font-size: 12px;
+    color: #868b94;
+}
+
+.admin-login-button {
+    width: 100%;
+    border-radius: 999px;
+    border: none;
+    padding: 12px 20px;
+    background-color: #111111;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.admin-login-button:hover {
+    background-color: #222222;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+}
+
+.admin-login-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Dashboard */
+.admin-dashboard {
+    margin-top: 0;
+}
+
+.admin-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.admin-sidebar {
+    background-color: #ffffff;
+    border-radius: 24px;
+    padding: 24px 22px;
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eceff3;
+}
+
+.admin-sidebar-title {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #111111;
+}
+
+.admin-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 14px;
+    padding: 10px 14px;
+    border: 1px solid transparent;
+    background: linear-gradient(160deg, #f8f9fb 0%, #e9ecf2 100%);
+    font-size: 13px;
+    font-weight: 500;
+    color: #4a4d55;
+    cursor: pointer;
+    text-align: left;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.admin-nav-item i {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+}
+
+.admin-nav-item span {
+    flex: 1;
+}
+
+.admin-nav-item:hover:not(:disabled) {
+    background: linear-gradient(160deg, #ffffff 0%, #eef0f4 100%);
+    color: #16181c;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.admin-nav-item.active {
+    background: linear-gradient(160deg, #eef0f5 0%, #ffffff 100%);
+    color: #111111;
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.admin-nav-item:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.admin-main {
+    background-color: #ffffff;
+    border-radius: 24px;
+    padding: 24px 26px 26px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eceff3;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.admin-main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.admin-main-header h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    color: #111111;
+}
+
+.admin-main-header p {
+    margin: 0;
+    font-size: 13px;
+    color: #6b6f78;
+}
+
+.admin-add-button {
+    border-radius: 999px;
+    border: none;
+    padding: 10px 20px;
+    background-color: #111111;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-add-button:hover {
+    background-color: #222222;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+}
+
+.admin-products {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 22px;
+}
+
+/* універсальна сітка для двох колонок (IoT, інші розділи) */
+.admin-iot-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 22px;
+    min-width: 0;
+}
+
+.admin-iot-column {
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.admin-products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.admin-product-card {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 14px;
+    border-radius: 18px;
+    border: 1px solid #edf0f5;
+    background-color: #fdfdfd;
+    transition: box-shadow 0.2s ease, transform 0.1s ease, border-color 0.2s ease;
+}
+
+.admin-product-card:hover {
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    border-color: #dde2eb;
+}
+
+.admin-product-image-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #e4e9ee 0%, #f5f7fa 100%);
+}
+
+.admin-product-info h3 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    color: #16181c;
+}
+
+.admin-product-meta {
+    margin: 0 0 6px;
+    font-size: 12px;
+    color: #7d828c;
+}
+
+.admin-product-price {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111111;
+}
+
+.admin-product-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-btn {
+    border-radius: 999px;
+    border: 1px solid #dde1ea;
+    background-color: #ffffff;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-btn-edit:hover {
+    background-color: #f4f5fa;
+}
+
+.admin-btn-delete {
+    border-color: rgba(220, 53, 69, 0.3);
+    color: #c82333;
+}
+
+.admin-btn-delete:hover {
+    background-color: #fff2f2;
+}
+
+.admin-product-form {
+    padding: 16px 18px 18px;
+    border-radius: 18px;
+    background-color: #f8f9fb;
+    border: 1px dashed #d4d9e3;
+}
+
+.admin-product-form h2 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: #111111;
+}
+
+.admin-form-hint {
+    margin: 0 0 16px;
+    font-size: 12px;
+    color: #6b6f78;
+}
+
+.admin-label-inline {
+    display: inline-flex;
+    width: 48%;
+}
+
+.admin-label-row {
+    display: flex;
+    gap: 4%;
+}
+
+.admin-label-inline + .admin-label-inline {
+    margin-left: 0;
+}
+
+.admin-file-input {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px dashed #c6cbd8;
+    background-color: #ffffff;
+    font-size: 13px;
+    color: #7d828c;
+    text-align: center;
+}
+
+.admin-form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.admin-btn-save {
+    border-radius: 999px;
+    border: none;
+    padding: 8px 16px;
+    background-color: #111111;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-btn-secondary {
+    border-radius: 999px;
+    border: 1px solid #dde1ea;
+    padding: 8px 16px;
+    background-color: #ffffff;
+    color: #444;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Таблиці / бейджі, які використовуються на різних адмін-сторінках */
+.admin-table-wrapper {
+    margin-top: 8px;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.admin-table-wrapper-mt {
+    margin-top: 18px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background-color: #ffffff;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.admin-table thead {
+    background-color: #f3f4f7;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #edf0f5;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.admin-table th {
+    font-weight: 600;
+    color: #555a63;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.admin-table tbody tr:hover {
+    background-color: #fafbff;
+}
+
+.admin-table-actions {
+    text-align: right;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-status-new,
+.badge-status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.badge-status-processing {
+    background-color: #cce5ff;
+    color: #004085;
+}
+
+.badge-status-done,
+.badge-status-approved,
+.badge-status-active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.badge-status-rejected,
+.badge-status-inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.badge-status {
+    /* базовий клас для транзакцій, доповнюється модифікаторами */
+}
+
+.admin-stats-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 10px;
+}
+
+.admin-stats-card {
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f8f9fb 0%, #e9ecf2 100%);
+    border: 1px solid #dde1ea;
+}
+
+.admin-stats-label {
+    font-size: 12px;
+    color: #6b6f78;
+}
+
+.admin-stats-value {
+    display: block;
+    margin-top: 6px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111111;
+}
+
+.admin-stats-sub {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #7d828c;
+}
+
+.admin-filters-row {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-filter-select,
+.admin-filter-input {
+    border-radius: 999px;
+    border: 1px solid #dde1ea;
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.admin-users {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+}
+
+.admin-users-title {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+.admin-iot-subtitle {
+    margin-top: 24px;
+}
+
+@media (max-width: 992px) {
+    .admin-stats-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-users {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-iot-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Адаптив */
+@media (max-width: 992px) {
+    .admin-page {
+        padding: 110px 20px 40px;
+    }
+
+    .admin-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-sidebar {
+        order: 2;
+    }
+
+    .admin-main {
+        order: 1;
+    }
+
+    .admin-products {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .admin-login-form {
+        padding: 24px 20px;
+    }
+
+    .admin-main-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-add-button {
+        width: 100%;
+    }
+
+    .admin-product-card {
+        grid-template-columns: 60px 1fr;
+        grid-template-rows: auto auto;
+    }
+
+    .admin-product-actions {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+
+    .admin-label-inline,
+    .admin-label-inline + .admin-label-inline {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+/* Recipe Cards */
+.admin-recipe-card {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 14px;
+    border-radius: 18px;
+    border: 1px solid #edf0f5;
+    background-color: #fdfdfd;
+    transition: box-shadow 0.2s ease, transform 0.1s ease, border-color 0.2s ease;
+}
+
+.admin-recipe-card:hover {
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    border-color: #dde2eb;
+}
+
+.admin-btn-eco {
+    background-color: #28a745;
+    color: #ffffff;
+    border-color: #28a745;
+}
+
+.admin-btn-eco:hover {
+    background-color: #218838;
+}
+
+/* Eco-System Control */
+.admin-eco-system {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 22px;
+    min-width: 0;
+}
+
+.admin-eco-charts {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+.admin-chart-card {
+    background-color: #f8f9fb;
+    border-radius: 18px;
+    padding: 20px;
+    border: 1px solid #edf0f5;
+}
+
+.admin-chart-card h3 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    color: #111111;
+}
+
+.admin-chart-card canvas {
+    max-height: 200px;
+    margin-bottom: 16px;
+}
+
+.admin-iot-control-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-iot-control-item label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: #6b6f78;
+}
+
+.admin-iot-control-item input {
+    border-radius: 10px;
+    border: 1px solid #dde1ea;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.admin-iot-control-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.admin-iot-control-buttons .admin-btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.admin-eco-info {
+    background-color: #f8f9fb;
+    border-radius: 18px;
+    padding: 20px;
+    border: 1px solid #edf0f5;
+    height: fit-content;
+}
+
+.admin-eco-info h2 {
+    margin: 0 0 16px;
+    font-size: 18px;
+    color: #111111;
+}
+
+.admin-eco-info h3 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: #4a4d55;
+}
+
+.admin-info-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #e9ecf2;
+}
+
+.admin-info-card p {
+    margin: 8px 0;
+    font-size: 13px;
+    color: #4a4d55;
+}
+
+.admin-products-list-mini {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-products-list-mini li {
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e9ecf2;
+    font-size: 13px;
+    color: #4a4d55;
+}
+
+/* IoT Statistics */
+.admin-iot-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.admin-stats-card-large {
+    background-color: #f8f9fb;
+    border-radius: 18px;
+    padding: 20px;
+    border: 1px solid #edf0f5;
+}
+
+.admin-stats-card-large h3 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    color: #111111;
+}
+
+.admin-stats-card-large canvas {
+    max-height: 250px;
+    margin-bottom: 16px;
+}
+
+.admin-stats-metrics {
+    display: flex;
+    justify-content: space-around;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #e9ecf2;
+}
+
+.admin-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.admin-metric-label {
+    font-size: 11px;
+    color: #6b6f78;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.admin-metric-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111111;
+}
+
+.admin-stats-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    padding: 20px;
+    background-color: #f8f9fb;
+    border-radius: 18px;
+    border: 1px solid #edf0f5;
+}
+
+.admin-stats-controls .admin-label {
+    flex: 1;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .admin-eco-system {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-stats-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

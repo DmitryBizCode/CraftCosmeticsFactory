@@ -1,0 +1,37 @@
+<aside class="admin-sidebar">
+    <h2 class="admin-sidebar-title">Admin CMS</h2>
+    <nav class="admin-sidebar-nav">
+        <a href="index.php?action=adminProducts"
+           class="admin-nav-item {% if currentPage == 'products' %}active{% endif %}">
+            <i class="fas fa-box"></i>
+            <span>Products</span>
+        </a>
+        <a href="index.php?action=adminRecipes"
+           class="admin-nav-item {% if currentPage == 'recipes' %}active{% endif %}">
+            <i class="fas fa-book"></i>
+            <span>Recipes</span>
+        </a>
+        <a href="index.php?action=adminOrders"
+           class="admin-nav-item {% if currentPage == 'orders' %}active{% endif %}">
+            <i class="fas fa-shopping-cart"></i>
+            <span>Orders</span>
+        </a>
+        <a href="index.php?action=adminStats"
+           class="admin-nav-item {% if currentPage == 'stats' %}active{% endif %}">
+            <i class="fas fa-chart-line"></i>
+            <span>Statistics</span>
+        </a>
+        <a href="index.php?action=adminUsers"
+           class="admin-nav-item {% if currentPage == 'users' %}active{% endif %}">
+            <i class="fas fa-users"></i>
+            <span>Users</span>
+        </a>
+        <a href="index.php?action=adminIot"
+           class="admin-nav-item {% if currentPage == 'iot' %}active{% endif %}">
+            <i class="fas fa-microchip"></i>
+            <span>IoT / Eco</span>
+        </a>
+    </nav>
+</aside>
+
+

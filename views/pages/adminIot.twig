@@ -1,0 +1,142 @@
+{% extends '/templates/base_admin.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+{% endblock %}
+
+{% block content %}
+<section class="admin-page admin-page-dashboard">
+    <div class="admin-dashboard">
+        <div class="admin-layout">
+            {% include 'partials/adminSidebar.twig' %}
+
+            <main class="admin-main">
+                <header class="admin-main-header">
+                    <div>
+                        <h1>IoT and Eco System Management</h1>
+                        <p>
+                            Visual panel for working with tables
+                            <code>iot</code>, <code>eco_system</code>, <code>iot_eco</code>
+                            and binding sensors to products.
+                        </p>
+                    </div>
+                </header>
+
+                <section class="admin-iot-grid">
+                    <div class="admin-iot-column">
+                        <h2 class="admin-users-title">Sensors (iot table)</h2>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Start Value</th>
+                                    <th>End Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>Temperature</td>
+                                    <td>-10</td>
+                                    <td>30</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>Humidity</td>
+                                    <td>30</td>
+                                    <td>70</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Lighting</td>
+                                    <td>100</td>
+                                    <td>800</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h2 class="admin-users-title admin-iot-subtitle">Active Eco Sessions (eco_system)</h2>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Start Date (date_start)</th>
+                                    <th>Client (client_id)</th>
+                                    <th>Staff (staff_id)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>10</td>
+                                    <td>2025-03-01 10:00</td>
+                                    <td>12</td>
+                                    <td>3</td>
+                                </tr>
+                                <tr>
+                                    <td>11</td>
+                                    <td>2025-03-01 12:30</td>
+                                    <td>18</td>
+                                    <td>4</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <aside class="admin-product-form admin-iot-column">
+                        <h2>Bind Sensors to Product</h2>
+                        <p class="admin-form-hint">
+                            Form mockup for working with <code>iot_eco</code> and IoT fields in products
+                            (no backend yet).
+                        </p>
+
+                        <form>
+                            <label class="admin-label">
+                                <span>Product ID</span>
+                                <input type="number" name="product_id" min="1" placeholder="1">
+                            </label>
+
+                            <label class="admin-label">
+                                <span>Eco System (eco_system_id)</span>
+                                <input type="number" name="eco_system_id" min="1" placeholder="10">
+                            </label>
+
+                            <label class="admin-label">
+                                <span>Sensor (iot_id)</span>
+                                <select name="iot_id">
+                                    <option value="1">1 · Temperature</option>
+                                    <option value="2">2 · Humidity</option>
+                                    <option value="3">3 · Lighting</option>
+                                </select>
+                            </label>
+
+                            <div class="admin-label-row">
+                                <label class="admin-label admin-label-inline">
+                                    <span>Min Value (start_value)</span>
+                                    <input type="number" step="0.1" name="start_value" placeholder="-5">
+                                </label>
+                                <label class="admin-label admin-label-inline">
+                                    <span>Max Value (end_value)</span>
+                                    <input type="number" step="0.1" name="end_value" placeholder="25">
+                                </label>
+                            </div>
+
+                            <label class="admin-label">
+                                <span>Description</span>
+                                <textarea name="description" rows="3" placeholder="Sensor operating conditions for this product..."></textarea>
+                            </label>
+
+                            <div class="admin-form-actions">
+                                <button type="submit" class="admin-btn admin-btn-save">Save Binding (mockup)</button>
+                                <button type="button" class="admin-btn admin-btn-secondary">Clear</button>
+                            </div>
+                        </form>
+                    </aside>
+                </section>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+

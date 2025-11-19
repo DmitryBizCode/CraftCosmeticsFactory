@@ -1,0 +1,139 @@
+{% extends '/templates/base_admin.twig' %}
+
+{% block linksScript %}
+    <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const statusSelects = document.querySelectorAll('.admin-transaction-status-select');
+            statusSelects.forEach(function (select) {
+                select.addEventListener('change', function () {
+                    const badge = this.closest('tr').querySelector('.badge-status');
+                    if (!badge) return;
+
+                    const value = this.value;
+                    badge.textContent = value;
+                    badge.className = 'badge badge-status';
+                    if (value === 'Approved') badge.classList.add('badge-status-approved');
+                    else if (value === 'Pending') badge.classList.add('badge-status-pending');
+                    else if (value === 'Rejected') badge.classList.add('badge-status-rejected');
+                });
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+<section class="admin-page admin-page-dashboard">
+    <div class="admin-dashboard">
+        <div class="admin-layout">
+            {% include 'partials/adminSidebar.twig' %}
+
+            <main class="admin-main">
+                <header class="admin-main-header">
+                    <div>
+                        <h1>Sales Statistics</h1>
+                        <p>Transactions from the <code>transactions</code> table (value, currency, date, status, description, staff_id, client_id).</p>
+                    </div>
+                </header>
+
+                <section class="admin-stats-cards">
+                    <div class="admin-stats-card">
+                        <span class="admin-stats-label">Today's Turnover</span>
+                        <strong class="admin-stats-value">$1 240</strong>
+                        <span class="admin-stats-sub">8 transactions</span>
+                    </div>
+                    <div class="admin-stats-card">
+                        <span class="admin-stats-label">Pending</span>
+                        <strong class="admin-stats-value">$320</strong>
+                        <span class="admin-stats-sub">3 transactions pending approval</span>
+                    </div>
+                    <div class="admin-stats-card">
+                        <span class="admin-stats-label">Approved</span>
+                        <strong class="admin-stats-value">$5 780</strong>
+                        <span class="admin-stats-sub">last 7 days</span>
+                    </div>
+                </section>
+
+                <section class="admin-table-wrapper admin-table-wrapper-mt">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date</th>
+                                <th>Client (client_id)</th>
+                                <th>Manager (staff_id)</th>
+                                <th>Amount (value)</th>
+                                <th>Currency</th>
+                                <th>Status</th>
+                                <th>Description</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#501</td>
+                                <td>2025-03-01</td>
+                                <td>12</td>
+                                <td>3</td>
+                                <td>120.00</td>
+                                <td>USD</td>
+                                <td>
+                                    <span class="badge badge-status badge-status-pending">Pending</span>
+                                </td>
+                                <td>Payment for order #101</td>
+                                <td class="admin-table-actions">
+                                    <select class="admin-transaction-status-select">
+                                        <option value="Pending" selected>Pending</option>
+                                        <option value="Approved">Approved</option>
+                                        <option value="Rejected">Rejected</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#502</td>
+                                <td>2025-03-01</td>
+                                <td>18</td>
+                                <td>4</td>
+                                <td>320.50</td>
+                                <td>USD</td>
+                                <td>
+                                    <span class="badge badge-status badge-status-approved">Approved</span>
+                                </td>
+                                <td>Prepayment for eco-session</td>
+                                <td class="admin-table-actions">
+                                    <select class="admin-transaction-status-select">
+                                        <option value="Pending">Pending</option>
+                                        <option value="Approved" selected>Approved</option>
+                                        <option value="Rejected">Rejected</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#503</td>
+                                <td>2025-02-28</td>
+                                <td>7</td>
+                                <td>2</td>
+                                <td>89.90</td>
+                                <td>EUR</td>
+                                <td>
+                                    <span class="badge badge-status badge-status-rejected">Rejected</span>
+                                </td>
+                                <td>Rejected card transaction</td>
+                                <td class="admin-table-actions">
+                                    <select class="admin-transaction-status-select">
+                                        <option value="Pending">Pending</option>
+                                        <option value="Approved">Approved</option>
+                                        <option value="Rejected" selected>Rejected</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+
