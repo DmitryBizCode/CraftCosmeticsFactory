@@ -10,14 +10,16 @@
             const addButton = document.querySelector('.admin-add-button');
             const cards = document.querySelectorAll('.admin-product-card');
 
-            const fieldId = form.querySelector('input[name="id"]');
-            const fieldName = form.querySelector('input[name="name"]');
-            const fieldQuantity = form.querySelector('input[name="quantity"]');
-            const fieldUnit = form.querySelector('select[name="unit"]');
-            const fieldTemperature = form.querySelector('input[name="temperature"]');
-            const fieldLightening = form.querySelector('input[name="lightening"]');
-            const fieldDescription = form.querySelector('textarea[name="description"]');
-            const fieldAllergen = form.querySelector('input[name="allergen"]');
+            const fieldId = document.getElementById('product-id');
+            const fieldName = document.getElementById('product-name');
+            const fieldQuantity = document.getElementById('product-quantity');
+            const fieldUnit = document.getElementById('product-unit');
+            const fieldTemperature = document.getElementById('product-temperature');
+            const fieldLightening = document.getElementById('product-lightening');
+            const fieldDescription = document.getElementById('product-description');
+            const fieldAllergen = document.getElementById('product-allergen');
+            const submitBtn = document.getElementById('product-submit-btn');
+            const clearBtn = document.getElementById('product-clear-btn');
 
             function fillFormFromCard(card) {
                 fieldId.value = card.dataset.id || '';
@@ -28,6 +30,15 @@
                 fieldLightening.value = card.dataset.lightening || '';
                 fieldDescription.value = card.dataset.description || '';
                 fieldAllergen.checked = card.dataset.allergen === '1';
+                updateSubmitButton();
+            }
+
+            function updateSubmitButton() {
+                if (fieldId.value && fieldId.value !== '') {
+                    submitBtn.textContent = 'Save Edit';
+                } else {
+                    submitBtn.textContent = 'Create';
+                }
             }
 
             cards.forEach(function (card) {
@@ -41,17 +52,7 @@
                     });
                 }
 
-                if (deleteBtn) {
-                    deleteBtn.addEventListener('click', function () {
-                        const name = card.dataset.name || 'this product';
-                        if (confirm('Are you sure you want to delete ' + name + '? This is a visual operation only.')) {
-                            card.classList.add('admin-product-card-deleted');
-                            setTimeout(function () {
-                                card.remove();
-                            }, 200);
-                        }
-                    });
-                }
+                // Delete is now handled by link with confirmation
             });
 
             addButton?.addEventListener('click', function () {
@@ -59,8 +60,20 @@
                 fieldId.value = '';
                 fieldUnit.value = 'g';
                 fieldAllergen.checked = false;
+                updateSubmitButton();
                 form.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
+
+            clearBtn?.addEventListener('click', function () {
+                form.reset();
+                fieldId.value = '';
+                fieldUnit.value = 'g';
+                fieldAllergen.checked = false;
+                updateSubmitButton();
+            });
+
+            // Update button text on page load
+            updateSubmitButton();
         });
     </script>
 {% endblock %}
@@ -80,93 +93,102 @@
                     <button class="admin-add-button">+ New Product</button>
                 </header>
 
+                {% if success is defined and success is not empty %}
+                    <div class="admin-success-message" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #155724; font-size: 13px;">
+                        {% if success == 'created' %}
+                            Product created successfully!
+                        {% elseif success == 'updated' %}
+                            Product updated successfully!
+                        {% elseif success == 'deleted' %}
+                            Product deleted successfully!
+                        {% endif %}
+                    </div>
+                    <script>
+                        setTimeout(function() {
+                            const msg = document.querySelector('.admin-success-message');
+                            if (msg) {
+                                msg.style.transition = 'opacity 0.3s ease';
+                                msg.style.opacity = '0';
+                                setTimeout(function() {
+                                    msg.remove();
+                                }, 300);
+                            }
+                        }, 3000);
+                    </script>
+                {% endif %}
+
                 <section class="admin-products">
                     <div class="admin-products-list">
-                        <article class="admin-product-card"
-                                 data-id="1"
-                                 data-name="Minimal Face Cream"
-                                 data-quantity="100"
-                                 data-unit="ml"
-                                 data-temperature="20"
-                                 data-lightening="50"
-                                 data-description="Ніжний крем для обличчя для щоденного використання."
-                                 data-allergen="0">
-                            <div class="admin-product-image-placeholder"></div>
-                            <div class="admin-product-info">
-                                <h3>Minimal Face Cream</h3>
-                                <p class="admin-product-meta">Category: Skincare · SKU: SK-001</p>
-                                <p class="admin-product-price">$32.00</p>
-                            </div>
-                            <div class="admin-product-actions">
-                                <button class="admin-btn admin-btn-edit">Edit</button>
-                                <button class="admin-btn admin-btn-delete">Delete</button>
-                            </div>
-                        </article>
-
-                        <article class="admin-product-card"
-                                 data-id="2"
-                                 data-name="Gentle Body Lotion"
-                                 data-quantity="250"
-                                 data-unit="ml"
-                                 data-temperature="18"
-                                 data-lightening="40"
-                                 data-description="Лосьйон для тіла з легкою текстурою."
-                                 data-allergen="0">
-                            <div class="admin-product-image-placeholder"></div>
-                            <div class="admin-product-info">
-                                <h3>Gentle Body Lotion</h3>
-                                <p class="admin-product-meta">Category: Body · SKU: BD-014</p>
-                                <p class="admin-product-price">$24.50</p>
-                            </div>
-                            <div class="admin-product-actions">
-                                <button class="admin-btn admin-btn-edit">Edit</button>
-                                <button class="admin-btn admin-btn-delete">Delete</button>
-                            </div>
-                        </article>
-
-                        <article class="admin-product-card"
-                                 data-id="3"
-                                 data-name="Serum for Glow"
-                                 data-quantity="30"
-                                 data-unit="ml"
-                                 data-temperature="16"
-                                 data-lightening="30"
-                                 data-description="Сироватка для сяйва шкіри."
-                                 data-allergen="1">
-                            <div class="admin-product-image-placeholder"></div>
-                            <div class="admin-product-info">
-                                <h3>Serum for Glow</h3>
-                                <p class="admin-product-meta">Category: Serum · SKU: SR-210</p>
-                                <p class="admin-product-price">$39.90</p>
-                            </div>
-                            <div class="admin-product-actions">
-                                <button class="admin-btn admin-btn-edit">Edit</button>
-                                <button class="admin-btn admin-btn-delete">Delete</button>
-                            </div>
-                        </article>
+                        {% if products %}
+                            {% for product in products %}
+                                <article class="admin-product-card"
+                                         data-id="{{ product.id }}"
+                                         data-name="{{ product.name }}"
+                                         data-quantity="{{ product.quantity }}"
+                                         data-unit="{{ product.unit }}"
+                                         data-temperature="{{ product.temperature ?? '' }}"
+                                         data-lightening="{{ product.lightening ?? '' }}"
+                                         data-description="{{ product.description ?? '' }}"
+                                         data-allergen="{{ product.allergen ? '1' : '0' }}">
+                                    <div class="admin-product-info">
+                                        <h3>{{ product.name }}</h3>
+                                        <p class="admin-product-meta">
+                                            Quantity: {{ product.quantity }} {{ product.unit }}
+                                            {% if product.temperature %} · Temp: {{ product.temperature }}°C{% endif %}
+                                            {% if product.lightening %} · Light: {{ product.lightening }}%{% endif %}
+                                        </p>
+                                        {% if product.description %}
+                                            <p class="admin-product-description">{{ product.description }}</p>
+                                        {% endif %}
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                            {% if product.allergen %}
+                                                <span class="admin-allergen-badge admin-allergen-badge-yes">Contains Allergens</span>
+                                            {% else %}
+                                                <span class="admin-allergen-badge admin-allergen-badge-no">No Allergens</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="admin-product-actions">
+                                        <button class="admin-btn admin-btn-edit">Edit</button>
+                                        <button class="admin-btn admin-btn-delete" 
+                                                onclick="if(confirm('Are you sure you want to delete {{ product.name }}?')) { window.location.href='index.php?action=adminProductDelete&id={{ product.id }}'; }">Delete</button>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        {% else %}
+                            <p style="text-align: center; color: #6b6f78; padding: 40px;">No products found. Create your first product!</p>
+                        {% endif %}
                     </div>
 
                     <aside class="admin-product-form">
                         <h2>Product Form</h2>
-                        <p class="admin-form-hint">Fields configured for the <code>products</code> table (mockup, no DB).</p>
+                        <p class="admin-form-hint">Create or edit a product. Fields marked with * are required.</p>
 
-                        <form>
-                            <input type="hidden" name="id">
+                        {% if error %}
+                            <div style="background-color: #fff2f2; border: 1px solid #dc3545; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #dc3545; font-size: 13px;">
+                                {{ error }}
+                            </div>
+                        {% endif %}
+
+                        <form method="POST" action="index.php?action=adminProducts">
+                            <input type="hidden" name="id" id="product-id">
 
                             <label class="admin-label">
-                                <span>Name</span>
-                                <input type="text" name="name" placeholder="Minimal Face Cream" required>
+                                <span>Name *</span>
+                                <input type="text" name="name" id="product-name" placeholder="Minimal Face Cream" required maxlength="120">
+                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Max 120 characters</small>
                             </label>
 
                             <div class="admin-label-row">
                                 <label class="admin-label admin-label-inline">
-                                    <span>Quantity</span>
-                                    <input type="number" name="quantity" min="0" step="0.01" placeholder="100" required>
+                                    <span>Quantity *</span>
+                                    <input type="number" name="quantity" id="product-quantity" min="0" step="0.01" placeholder="100" required>
+                                    <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 10px;">Must be ≥ 0</small>
                                 </label>
 
                                 <label class="admin-label admin-label-inline">
-                                    <span>Unit</span>
-                                    <select name="unit" required>
+                                    <span>Unit *</span>
+                                    <select name="unit" id="product-unit" required>
                                         <option value="g">g</option>
                                         <option value="kg">kg</option>
                                         <option value="ml" selected>ml</option>
@@ -179,28 +201,34 @@
                             <div class="admin-label-row">
                                 <label class="admin-label admin-label-inline">
                                     <span>Temperature (°C)</span>
-                                    <input type="number" name="temperature" step="0.1" placeholder="20">
+                                    <input type="number" name="temperature" id="product-temperature" step="0.1" placeholder="20">
+                                    <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 10px;">Optional</small>
                                 </label>
 
                                 <label class="admin-label admin-label-inline">
                                     <span>Lightening (%)</span>
-                                    <input type="number" name="lightening" min="0" max="100" step="1" placeholder="50">
+                                    <input type="number" name="lightening" id="product-lightening" min="0" max="100" step="1" placeholder="50">
+                                    <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 10px;">Optional (0-100)</small>
                                 </label>
                             </div>
 
                             <label class="admin-label">
                                 <span>Description</span>
-                                <textarea name="description" rows="3" placeholder="Gentle cream for daily use..."></textarea>
+                                <textarea name="description" id="product-description" rows="3" placeholder="Gentle cream for daily use..."></textarea>
+                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Optional text description</small>
                             </label>
 
-                            <label class="admin-label admin-label-checkbox">
-                                <input type="checkbox" name="allergen">
-                                <span>Contains allergens</span>
-                            </label>
+                            <div class="admin-allergen-toggle-wrapper">
+                                <label class="admin-allergen-toggle">
+                                    <input type="checkbox" name="allergen" id="product-allergen">
+                                    <span class="admin-allergen-toggle-slider"></span>
+                                    <span class="admin-allergen-toggle-label">Contains allergens</span>
+                                </label>
+                            </div>
 
                             <div class="admin-form-actions">
-                                <button type="submit" class="admin-btn admin-btn-save">Save (mockup)</button>
-                                <button type="button" class="admin-btn admin-btn-secondary">Clear</button>
+                                <button type="submit" class="admin-btn admin-btn-save" id="product-submit-btn">Create</button>
+                                <button type="button" class="admin-btn admin-btn-secondary" id="product-clear-btn">Clear</button>
                             </div>
                         </form>
                     </aside>

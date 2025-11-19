@@ -36,10 +36,52 @@ class Router
                 $content = $this->adminController->getAdminLogin();
                 break;
             case 'adminProducts':
-                $content = $this->adminController->getAdminProducts();
+                if ($method == 'POST') {
+                    $productId = isset($data['id']) && !empty($data['id']) ? (int)$data['id'] : 0;
+                    if ($productId > 0) {
+                        $content = $this->adminController->updateProduct($productId, $data);
+                    } else {
+                        $content = $this->adminController->createProduct($data);
+                    }
+                } else {
+                    $content = $this->adminController->getAdminProducts();
+                }
+                break;
+            case 'adminProductDelete':
+                $productId = isset($id) ? (int)$id : 0;
+                if ($productId > 0) {
+                    $content = $this->adminController->deleteProduct($productId);
+                } else {
+                    $content = $this->adminController->getAdminProducts();
+                }
                 break;
             case 'adminRecipes':
-                $content = $this->adminController->getAdminRecipes();
+                if ($method == 'POST') {
+                    $recipeId = isset($data['id']) && !empty($data['id']) ? (int)$data['id'] : 0;
+                    if ($recipeId > 0) {
+                        $content = $this->adminController->updateRecipe($recipeId, $data, $image);
+                    } else {
+                        $content = $this->adminController->createRecipe($data, $image);
+                    }
+                } else {
+                    $content = $this->adminController->getAdminRecipes();
+                }
+                break;
+            case 'adminRecipeDelete':
+                $recipeId = isset($id) ? (int)$id : 0;
+                if ($recipeId > 0) {
+                    $content = $this->adminController->deleteRecipe($recipeId);
+                } else {
+                    $content = $this->adminController->getAdminRecipes();
+                }
+                break;
+            case 'adminRecipeDeletePhoto':
+                $recipeId = isset($id) ? (int)$id : 0;
+                if ($recipeId > 0) {
+                    $content = $this->adminController->deleteRecipePhotoAction($recipeId);
+                } else {
+                    $content = $this->adminController->getAdminRecipes();
+                }
                 break;
             case 'adminEcoSystem':
                 $recipeId = isset($_GET['recipe_id']) ? (int)$_GET['recipe_id'] : 0;
@@ -59,7 +101,24 @@ class Router
                 $content = $this->adminController->getAdminUsers();
                 break;
             case 'adminIot':
-                $content = $this->adminController->getAdminIot();
+                if ($method == 'POST') {
+                    $iotId = isset($data['id']) && !empty($data['id']) ? (int)$data['id'] : 0;
+                    if ($iotId > 0) {
+                        $content = $this->adminController->updateIotSensor($iotId, $data);
+                    } else {
+                        $content = $this->adminController->createIotSensor($data);
+                    }
+                } else {
+                    $content = $this->adminController->getAdminIot();
+                }
+                break;
+            case 'adminIotDelete':
+                $iotId = isset($id) ? (int)$id : 0;
+                if ($iotId > 0) {
+                    $content = $this->adminController->deleteIotSensor($iotId);
+                } else {
+                    $content = $this->adminController->getAdminIot();
+                }
                 break;
             // case 'signin':
             //     $content = $this->ecommerceController->autorizationSignIn();

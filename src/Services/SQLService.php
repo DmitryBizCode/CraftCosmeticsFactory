@@ -8,7 +8,7 @@ class SQLService
 {
     private PDO $pdo;
 
-    public function __construct(string $host = null, string $user = 'user', string $pass = '12345qwerty', string $db = 'cosmetics', int $port = 3306)
+    public function __construct(?string $host = null, string $user = 'root', string $pass = 'root', string $db = 'mali_tech', int $port = 3306)
     {
         // Автоматическое определение хоста: в Docker используется имя сервиса 'mysql', локально 'localhost'
         if ($host === null) {

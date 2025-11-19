@@ -2,6 +2,67 @@
 
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('.admin-iot-form form');
+            if (!form) return;
+
+            const addButton = document.querySelector('.admin-add-button');
+            const cards = document.querySelectorAll('.admin-iot-card');
+
+            const fieldId = document.getElementById('iot-id');
+            const fieldName = document.getElementById('iot-name');
+            const fieldStartValue = document.getElementById('iot-start-value');
+            const fieldEndValue = document.getElementById('iot-end-value');
+            const fieldDescription = document.getElementById('iot-description');
+            const submitBtn = document.getElementById('iot-submit-btn');
+            const clearBtn = document.getElementById('iot-clear-btn');
+
+            function fillFormFromCard(card) {
+                fieldId.value = card.dataset.id || '';
+                fieldName.value = card.dataset.name || '';
+                fieldStartValue.value = card.dataset.startValue || '';
+                fieldEndValue.value = card.dataset.endValue || '';
+                fieldDescription.value = card.dataset.description || '';
+                updateSubmitButton();
+            }
+
+            function updateSubmitButton() {
+                if (fieldId.value && fieldId.value !== '') {
+                    submitBtn.textContent = 'Save Edit';
+                } else {
+                    submitBtn.textContent = 'Create';
+                }
+            }
+
+            cards.forEach(function (card) {
+                const editBtn = card.querySelector('.admin-btn-edit');
+                const deleteBtn = card.querySelector('.admin-btn-delete');
+
+                if (editBtn) {
+                    editBtn.addEventListener('click', function () {
+                        fillFormFromCard(card);
+                        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                }
+            });
+
+            addButton?.addEventListener('click', function () {
+                form.reset();
+                fieldId.value = '';
+                updateSubmitButton();
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+
+            clearBtn?.addEventListener('click', function () {
+                form.reset();
+                fieldId.value = '';
+                updateSubmitButton();
+            });
+
+            updateSubmitButton();
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -14,121 +75,145 @@
                 <header class="admin-main-header">
                     <div>
                         <h1>IoT and Eco System Management</h1>
-                        <p>
-                            Visual panel for working with tables
-                            <code>iot</code>, <code>eco_system</code>, <code>iot_eco</code>
-                            and binding sensors to products.
-                        </p>
+                        <p>Manage IoT sensors and view active eco systems.</p>
                     </div>
+                    <button class="admin-add-button">+ New IoT Sensor</button>
                 </header>
+
+                {% if success is defined and success is not empty %}
+                    <div class="admin-success-message" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #155724; font-size: 13px;">
+                        {% if success == 'created' %}
+                            IoT sensor created successfully!
+                        {% elseif success == 'updated' %}
+                            IoT sensor updated successfully!
+                        {% elseif success == 'deleted' %}
+                            IoT sensor deleted successfully!
+                        {% endif %}
+                    </div>
+                    <script>
+                        setTimeout(function() {
+                            const msg = document.querySelector('.admin-success-message');
+                            if (msg) {
+                                msg.style.transition = 'opacity 0.3s ease';
+                                msg.style.opacity = '0';
+                                setTimeout(function() {
+                                    msg.remove();
+                                }, 300);
+                            }
+                        }, 3000);
+                    </script>
+                {% endif %}
 
                 <section class="admin-iot-grid">
                     <div class="admin-iot-column">
-                        <h2 class="admin-users-title">Sensors (iot table)</h2>
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Start Value</th>
-                                    <th>End Value</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>Temperature</td>
-                                    <td>-10</td>
-                                    <td>30</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>Humidity</td>
-                                    <td>30</td>
-                                    <td>70</td>
-                                </tr>
-                                <tr>
-                                    <td>3</td>
-                                    <td>Lighting</td>
-                                    <td>100</td>
-                                    <td>800</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="admin-iot-sensors-section">
+                            <h2 class="admin-users-title">IoT Sensors</h2>
+                            <div class="admin-iot-sensors-list">
+                                {% if iotSensors %}
+                                    {% for sensor in iotSensors %}
+                                        <article class="admin-iot-card"
+                                                 data-id="{{ sensor.id }}"
+                                                 data-name="{{ sensor.name }}"
+                                                 data-start-value="{{ sensor.start_value }}"
+                                                 data-end-value="{{ sensor.end_value }}"
+                                                 data-description="{{ sensor.description ?? '' }}">
+                                            <div class="admin-iot-info">
+                                                <h3>{{ sensor.name }}</h3>
+                                                <p class="admin-iot-meta">
+                                                    Range: ({{ sensor.start_value }}) - ({{ sensor.end_value }})
+                                                </p>
+                                                {% if sensor.description %}
+                                                    <p class="admin-iot-description">{{ sensor.description }}</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="admin-product-actions">
+                                                <button class="admin-btn admin-btn-edit">Edit</button>
+                                                <button class="admin-btn admin-btn-delete" 
+                                                        onclick="if(confirm('Are you sure you want to delete {{ sensor.name }}?')) { window.location.href='index.php?action=adminIotDelete&id={{ sensor.id }}'; }">Delete</button>
+                                            </div>
+                                        </article>
+                                    {% endfor %}
+                                {% else %}
+                                    <p style="text-align: center; color: #6b6f78; padding: 40px;">No IoT sensors found. Create your first sensor!</p>
+                                {% endif %}
+                            </div>
+                        </div>
 
-                        <h2 class="admin-users-title admin-iot-subtitle">Active Eco Sessions (eco_system)</h2>
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Start Date (date_start)</th>
-                                    <th>Client (client_id)</th>
-                                    <th>Staff (staff_id)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>10</td>
-                                    <td>2025-03-01 10:00</td>
-                                    <td>12</td>
-                                    <td>3</td>
-                                </tr>
-                                <tr>
-                                    <td>11</td>
-                                    <td>2025-03-01 12:30</td>
-                                    <td>18</td>
-                                    <td>4</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="admin-eco-sessions-section">
+                            <h2 class="admin-users-title admin-iot-subtitle">Active Eco Sessions (eco_system)</h2>
+                            <div class="admin-table-wrapper">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Recipe ID</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Staff ID</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if ecoSystems %}
+                                            {% for eco in ecoSystems %}
+                                                <tr>
+                                                    <td>{{ eco.id }}</td>
+                                                    <td>{{ eco.recipe_id }}</td>
+                                                    <td>{{ eco.date_start }}</td>
+                                                    <td>{{ eco.date_end ?? 'N/A' }}</td>
+                                                    <td>{{ eco.staff_id ?? 'N/A' }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="5" style="text-align: center; color: #6b6f78; padding: 20px;">No active eco sessions</td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
-                    <aside class="admin-product-form admin-iot-column">
-                        <h2>Bind Sensors to Product</h2>
-                        <p class="admin-form-hint">
-                            Form mockup for working with <code>iot_eco</code> and IoT fields in products
-                            (no backend yet).
-                        </p>
+                    <aside class="admin-product-form admin-iot-form">
+                        <h2>IoT Sensor Form</h2>
+                        <p class="admin-form-hint">Create or edit an IoT sensor. Fields marked with * are required.</p>
 
-                        <form>
-                            <label class="admin-label">
-                                <span>Product ID</span>
-                                <input type="number" name="product_id" min="1" placeholder="1">
-                            </label>
+                        {% if error %}
+                            <div style="background-color: #fff2f2; border: 1px solid #dc3545; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #dc3545; font-size: 13px;">
+                                {{ error }}
+                            </div>
+                        {% endif %}
 
-                            <label class="admin-label">
-                                <span>Eco System (eco_system_id)</span>
-                                <input type="number" name="eco_system_id" min="1" placeholder="10">
-                            </label>
+                        <form method="POST" action="index.php?action=adminIot">
+                            <input type="hidden" name="id" id="iot-id">
 
                             <label class="admin-label">
-                                <span>Sensor (iot_id)</span>
-                                <select name="iot_id">
-                                    <option value="1">1 · Temperature</option>
-                                    <option value="2">2 · Humidity</option>
-                                    <option value="3">3 · Lighting</option>
-                                </select>
+                                <span>Name *</span>
+                                <input type="text" name="name" id="iot-name" placeholder="Temperature Sensor" required maxlength="100">
+                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Max 100 characters</small>
                             </label>
 
                             <div class="admin-label-row">
                                 <label class="admin-label admin-label-inline">
-                                    <span>Min Value (start_value)</span>
-                                    <input type="number" step="0.1" name="start_value" placeholder="-5">
+                                    <span>Start Value *</span>
+                                    <input type="number" name="start_value" id="iot-start-value" step="0.1" placeholder="-10" required>
                                 </label>
+
                                 <label class="admin-label admin-label-inline">
-                                    <span>Max Value (end_value)</span>
-                                    <input type="number" step="0.1" name="end_value" placeholder="25">
+                                    <span>End Value *</span>
+                                    <input type="number" name="end_value" id="iot-end-value" step="0.1" placeholder="30" required>
                                 </label>
                             </div>
 
                             <label class="admin-label">
                                 <span>Description</span>
-                                <textarea name="description" rows="3" placeholder="Sensor operating conditions for this product..."></textarea>
+                                <textarea name="description" id="iot-description" rows="3" placeholder="Sensor description..."></textarea>
+                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Optional text description</small>
                             </label>
 
                             <div class="admin-form-actions">
-                                <button type="submit" class="admin-btn admin-btn-save">Save Binding (mockup)</button>
-                                <button type="button" class="admin-btn admin-btn-secondary">Clear</button>
+                                <button type="submit" class="admin-btn admin-btn-save" id="iot-submit-btn">Create</button>
+                                <button type="button" class="admin-btn admin-btn-secondary" id="iot-clear-btn">Clear</button>
                             </div>
                         </form>
                     </aside>
@@ -138,5 +223,3 @@
     </div>
 </section>
 {% endblock %}
-
-

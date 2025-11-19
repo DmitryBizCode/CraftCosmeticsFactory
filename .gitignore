@@ -48,6 +48,8 @@ mysql-data/
 # Uploads
 image/*
 !image/.gitignore
+!image/recipes/
+!image/recipes/.gitignore
 
 # Старые backup файлы
 *.bak

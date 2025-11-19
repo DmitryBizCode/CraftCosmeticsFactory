@@ -12,22 +12,23 @@ class SqlSupportServiceTemplate
     {
         self::$pdo = $pdo;
     }
-    public static function getAll(string $tableName):array {
-        $stmt = self::$pdo->prepare("SELECT * FROM $tableName");
+    public static function getAll(string $tableName, string $orderBy = 'id DESC'):array {
+        $stmt = self::$pdo->prepare("SELECT * FROM $tableName ORDER BY $orderBy");
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?? [];
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
-    public static function getById(string $tableName, string $idTableName, $id):array {
+    public static function getById(string $tableName, string $idTableName, $id): ?array {
         $stmt = self::$pdo->prepare("SELECT * FROM $tableName WHERE $idTableName = :id");
         $stmt->execute([':id' => $id]);
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?? [];
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ?: null;
     }
-    public static function delete(string $tableName, string $idTableName,int $id): void
+    public static function delete(string $tableName, string $idTableName, int $id): void
     {
         $stmt = self::$pdo->prepare("DELETE FROM $tableName WHERE $idTableName = :id");
-        $stmt->execute(['id' => $id]);
+        $stmt->execute([':id' => $id]);
     }
 
 }

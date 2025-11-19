@@ -9,20 +9,317 @@
 
             const addButton = document.querySelector('.admin-add-button');
             const cards = document.querySelectorAll('.admin-recipe-card');
+            const productsContainer = document.getElementById('selected-products');
 
-            const fieldId = form.querySelector('input[name="id"]');
-            const fieldName = form.querySelector('input[name="name"]');
-            const fieldTimeToComplete = form.querySelector('input[name="time_to_complete"]');
-            const fieldDescription = form.querySelector('textarea[name="description"]');
-            const fieldProducts = form.querySelector('select[name="products[]"]');
-            const fieldIotSensors = form.querySelector('select[name="iot_sensors[]"]');
+            const fieldId = document.getElementById('recipe-id');
+            const fieldName = document.getElementById('recipe-name');
+            const fieldTimeHours = document.getElementById('time-hours');
+            const fieldTimeMinutes = document.getElementById('time-minutes');
+            const fieldTimeSeconds = document.getElementById('time-seconds');
+            const fieldDescription = document.getElementById('recipe-description');
+            const fieldPhoto = document.getElementById('recipe-photo');
+            const photoPreview = document.getElementById('photo-preview');
+            const photoDeleteBtn = document.getElementById('photo-delete-btn');
+            const submitBtn = document.getElementById('recipe-submit-btn');
+            const clearBtn = document.getElementById('recipe-clear-btn');
+
+            let selectedProducts = [];
+            let selectedIotSensors = [];
+
+            // Функції для показу/приховування повідомлень про помилки
+            function showProductError(message) {
+                const errorDiv = document.getElementById('product-error-message');
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = 'block';
+                    setTimeout(() => {
+                        errorDiv.style.display = 'none';
+                    }, 4000);
+                }
+            }
+
+            function showIotError(message) {
+                const errorDiv = document.getElementById('iot-error-message');
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = 'block';
+                    setTimeout(() => {
+                        errorDiv.style.display = 'none';
+                    }, 4000);
+                }
+            }
+
+            function updateSubmitButton() {
+                if (fieldId.value && fieldId.value !== '') {
+                    submitBtn.textContent = 'Save Edit';
+                } else {
+                    submitBtn.textContent = 'Create';
+                }
+            }
+
+            function renderSelectedProducts() {
+                productsContainer.innerHTML = '';
+                if (selectedProducts.length === 0) {
+                    // Не показуємо нічого, контейнер буде прихований через CSS :empty
+                    return;
+                }
+                selectedProducts.forEach(function(product, index) {
+                    const div = document.createElement('div');
+                    div.className = 'admin-selected-product';
+                    div.innerHTML = `
+                        <span>${product.name} - ${product.quantity} ${product.unit}</span>
+                        <button type="button" class="admin-btn-remove-product" data-index="${index}">×</button>
+                    `;
+                    productsContainer.appendChild(div);
+                });
+                updateProductsInput();
+            }
+
+            function renderSelectedIotSensors() {
+                const iotContainer = document.getElementById('selected-iot-sensors');
+                if (!iotContainer) return;
+                iotContainer.innerHTML = '';
+                if (selectedIotSensors.length === 0) {
+                    // Не показуємо нічого, контейнер буде прихований через CSS :empty
+                    return;
+                }
+                selectedIotSensors.forEach(function(sensor, index) {
+                    const div = document.createElement('div');
+                    div.className = 'admin-selected-product';
+                    div.innerHTML = `
+                        <span>${sensor.name}</span>
+                        <button type="button" class="admin-btn-remove-product" data-index="${index}" data-type="iot">×</button>
+                    `;
+                    iotContainer.appendChild(div);
+                });
+                updateIotSensorsInput();
+            }
+
+            function updateIotSensorsInput() {
+                const hiddenInput = document.getElementById('iot-sensors-json');
+                hiddenInput.value = JSON.stringify(selectedIotSensors.map(s => s.id));
+            }
+
+            function updateProductsInput() {
+                const hiddenInput = document.getElementById('products-json');
+                hiddenInput.value = JSON.stringify(selectedProducts);
+            }
+
+            // Забороняємо введення дробових чисел в поле кількості
+            const quantityInput = document.getElementById('product-quantity-input');
+            if (quantityInput) {
+                quantityInput.addEventListener('input', function(e) {
+                    // Видаляємо крапку та кому
+                    let value = e.target.value;
+                    value = value.replace(/[.,]/g, '');
+                    if (e.target.value !== value) {
+                        e.target.value = value;
+                    }
+                });
+                
+                // Забороняємо введення крапки та коми
+                quantityInput.addEventListener('keydown', function(e) {
+                    if (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            function addProduct() {
+                const productSelect = document.getElementById('product-select');
+                const productId = productSelect.value;
+                const quantityValue = quantityInput.value.trim();
+
+                if (!productId) {
+                    showProductError('Please select a product');
+                    productSelect.focus();
+                    productSelect.style.borderColor = '#dc3545';
+                    setTimeout(() => {
+                        productSelect.style.borderColor = '';
+                    }, 2000);
+                    return;
+                }
+
+                if (!quantityValue || quantityValue === '' || quantityValue === '0') {
+                    showProductError('Please enter a valid quantity (must be greater than 0)');
+                    quantityInput.focus();
+                    quantityInput.style.borderColor = '#dc3545';
+                    setTimeout(() => {
+                        quantityInput.style.borderColor = '';
+                    }, 2000);
+                    return;
+                }
+
+                const quantity = parseInt(quantityValue, 10);
+                if (quantity <= 0 || isNaN(quantity) || !Number.isInteger(parseFloat(quantityValue))) {
+                    showProductError('Please enter a whole number (integer) greater than 0');
+                    quantityInput.focus();
+                    quantityInput.style.borderColor = '#dc3545';
+                    setTimeout(() => {
+                        quantityInput.style.borderColor = '';
+                    }, 2000);
+                    return;
+                }
+                
+                // Перевіряємо, чи не містить дробову частину
+                if (quantityValue.includes('.') || quantityValue.includes(',')) {
+                    showProductError('Please enter a whole number only (no decimals)');
+                    quantityInput.focus();
+                    quantityInput.style.borderColor = '#dc3545';
+                    setTimeout(() => {
+                        quantityInput.style.borderColor = '';
+                    }, 2000);
+                    return;
+                }
+
+                const productOption = productSelect.options[productSelect.selectedIndex];
+                const productName = productOption.text.split(' (')[0];
+                const productUnit = productOption.text.match(/\(([^)]+)\)/)?.[1] || '';
+
+                // Перевіряємо, чи продукт вже додано
+                const existingProductIndex = selectedProducts.findIndex(p => p.id === productId);
+                
+                if (existingProductIndex !== -1) {
+                    // Якщо продукт вже є, оновлюємо його кількість
+                    selectedProducts[existingProductIndex].quantity = quantity;
+                    showProductError('Product already added. Quantity updated.');
+                } else {
+                    // Якщо продукту немає, додаємо новий
+                    selectedProducts.push({
+                        id: productId,
+                        name: productName,
+                        quantity: quantity,
+                        unit: productUnit
+                    });
+                }
+
+                renderSelectedProducts();
+                productSelect.value = '';
+                quantityInput.value = '';
+                
+                // Приховуємо повідомлення про помилку через 2 секунди (якщо це було оновлення)
+                setTimeout(() => {
+                    const errorDiv = document.getElementById('product-error-message');
+                    if (errorDiv) {
+                        errorDiv.style.display = 'none';
+                    }
+                }, 2000);
+            }
+
+            document.getElementById('add-product-btn')?.addEventListener('click', addProduct);
+
+            productsContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('admin-btn-remove-product') && !e.target.dataset.type) {
+                    const index = parseInt(e.target.dataset.index);
+                    selectedProducts.splice(index, 1);
+                    renderSelectedProducts();
+                }
+            });
+
+            function addIotSensor() {
+                const iotSelect = document.getElementById('iot-sensor-select');
+                const iotId = iotSelect.value;
+
+                if (!iotId) {
+                    showIotError('Please select an IoT sensor');
+                    iotSelect.focus();
+                    iotSelect.style.borderColor = '#dc3545';
+                    setTimeout(() => {
+                        iotSelect.style.borderColor = '';
+                    }, 2000);
+                    return;
+                }
+
+                // Перевіряємо чи вже додано
+                if (selectedIotSensors.find(s => s.id === parseInt(iotId))) {
+                    showIotError('This sensor is already added');
+                    iotSelect.focus();
+                    iotSelect.style.borderColor = '#dc3545';
+                    setTimeout(() => {
+                        iotSelect.style.borderColor = '';
+                    }, 2000);
+                    return;
+                }
+
+                const sensorOption = iotSelect.options[iotSelect.selectedIndex];
+                const sensorName = sensorOption.text;
+
+                selectedIotSensors.push({
+                    id: parseInt(iotId),
+                    name: sensorName
+                });
+
+                renderSelectedIotSensors();
+                iotSelect.value = '';
+                // Приховуємо повідомлення про помилку при успішному додаванні
+                const errorDiv = document.getElementById('iot-error-message');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+            }
+
+            document.getElementById('add-iot-btn')?.addEventListener('click', addIotSensor);
+
+            document.getElementById('selected-iot-sensors')?.addEventListener('click', function(e) {
+                if (e.target.classList.contains('admin-btn-remove-product') && e.target.dataset.type === 'iot') {
+                    const index = parseInt(e.target.dataset.index);
+                    selectedIotSensors.splice(index, 1);
+                    renderSelectedIotSensors();
+                }
+            });
 
             function fillFormFromCard(card) {
                 fieldId.value = card.dataset.id || '';
                 fieldName.value = card.dataset.name || '';
-                fieldTimeToComplete.value = card.dataset.timeToComplete || '';
+                
+                // Парсимо час з годин в окремі компоненти
+                const totalHours = parseFloat(card.dataset.timeToComplete || 0);
+                const totalSeconds = Math.round(totalHours * 3600);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                
+                document.getElementById('time-hours').value = hours;
+                document.getElementById('time-minutes').value = minutes;
+                document.getElementById('time-seconds').value = seconds;
+                
                 fieldDescription.value = card.dataset.description || '';
-                // TODO: Fill selected products and IoT sensors
+                
+                // Завантажуємо продукти та IoT сенсори
+                const productsData = card.dataset.products || '[]';
+                selectedProducts = JSON.parse(productsData);
+                renderSelectedProducts();
+                
+                const iotData = card.dataset.iotSensors || '[]';
+                const iotIds = JSON.parse(iotData);
+                selectedIotSensors = [];
+                if (iotIds.length > 0) {
+                    const iotSelect = document.getElementById('iot-sensor-select');
+                    if (iotSelect) {
+                        Array.from(iotSelect.options).forEach(opt => {
+                            if (opt.value && iotIds.includes(parseInt(opt.value))) {
+                                selectedIotSensors.push({
+                                    id: parseInt(opt.value),
+                                    name: opt.text
+                                });
+                            }
+                        });
+                    }
+                }
+                renderSelectedIotSensors();
+                
+                // Фото
+                const photo = card.dataset.photo || '';
+                if (photo) {
+                    photoPreview.src = '/image/recipes/' + photo;
+                    photoPreview.style.display = 'block';
+                    photoDeleteBtn.style.display = 'block';
+                } else {
+                    photoPreview.style.display = 'none';
+                    photoDeleteBtn.style.display = 'none';
+                }
+                
+                updateSubmitButton();
             }
 
             cards.forEach(function (card) {
@@ -40,11 +337,8 @@
                 if (deleteBtn) {
                     deleteBtn.addEventListener('click', function () {
                         const name = card.dataset.name || 'this recipe';
-                        if (confirm('Are you sure you want to delete ' + name + '? This is a visual operation only.')) {
-                            card.classList.add('admin-recipe-card-deleted');
-                            setTimeout(function () {
-                                card.remove();
-                            }, 200);
+                        if (confirm('Are you sure you want to delete ' + name + '?')) {
+                            window.location.href = 'index.php?action=adminRecipeDelete&id=' + card.dataset.id;
                         }
                     });
                 }
@@ -60,8 +354,63 @@
             addButton?.addEventListener('click', function () {
                 form.reset();
                 fieldId.value = '';
+                fieldTimeHours.value = '0';
+                fieldTimeMinutes.value = '0';
+                fieldTimeSeconds.value = '0';
+                selectedProducts = [];
+                selectedIotSensors = [];
+                renderSelectedProducts();
+                renderSelectedIotSensors();
+                photoPreview.style.display = 'none';
+                photoDeleteBtn.style.display = 'none';
+                updateSubmitButton();
                 form.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
+
+            clearBtn?.addEventListener('click', function () {
+                form.reset();
+                fieldId.value = '';
+                fieldTimeHours.value = '0';
+                fieldTimeMinutes.value = '0';
+                fieldTimeSeconds.value = '0';
+                selectedProducts = [];
+                selectedIotSensors = [];
+                renderSelectedProducts();
+                renderSelectedIotSensors();
+                photoPreview.style.display = 'none';
+                photoDeleteBtn.style.display = 'none';
+                updateSubmitButton();
+            });
+
+            fieldPhoto.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        photoPreview.src = e.target.result;
+                        photoPreview.style.display = 'block';
+                        photoDeleteBtn.style.display = 'none'; // При завантаженні нового фото приховуємо кнопку видалення
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            photoDeleteBtn.addEventListener('click', function() {
+                if (fieldId.value) {
+                    if (confirm('Delete photo?')) {
+                        window.location.href = 'index.php?action=adminRecipeDeletePhoto&id=' + fieldId.value;
+                    }
+                } else {
+                    photoPreview.style.display = 'none';
+                    fieldPhoto.value = '';
+                }
+            });
+
+            updateSubmitButton();
+            
+            // Ініціалізуємо відображення при завантаженні сторінки
+            renderSelectedProducts();
+            renderSelectedIotSensors();
         });
     </script>
 {% endblock %}
@@ -81,92 +430,179 @@
                     <button class="admin-add-button">+ New Recipe</button>
                 </header>
 
+                {% if success is defined and success is not empty %}
+                    <div class="admin-success-message" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #155724; font-size: 13px;">
+                        {% if success == 'created' %}
+                            Recipe created successfully!
+                        {% elseif success == 'updated' %}
+                            Recipe updated successfully!
+                        {% elseif success == 'deleted' %}
+                            Recipe deleted successfully!
+                        {% elseif success == 'photo_deleted' %}
+                            Photo deleted successfully!
+                        {% endif %}
+                    </div>
+                    <script>
+                        setTimeout(function() {
+                            const msg = document.querySelector('.admin-success-message');
+                            if (msg) {
+                                msg.style.transition = 'opacity 0.3s ease';
+                                msg.style.opacity = '0';
+                                setTimeout(function() {
+                                    msg.remove();
+                                }, 300);
+                            }
+                        }, 3000);
+                    </script>
+                {% endif %}
+
                 <section class="admin-products">
                     <div class="admin-products-list">
-                        <article class="admin-recipe-card"
-                                 data-id="1"
-                                 data-name="Organic Face Cream"
-                                 data-time-to-complete="2025-03-15T10:00"
-                                 data-description="Premium organic face cream with natural ingredients.">
-                            <div class="admin-product-image-placeholder"></div>
-                            <div class="admin-product-info">
-                                <h3>Organic Face Cream</h3>
-                                <p class="admin-product-meta">Products: 5 · IoT Sensors: 3 · Time: 2 hours</p>
-                                <p class="admin-product-price">Active Eco-System</p>
-                            </div>
-                            <div class="admin-product-actions">
-                                <button class="admin-btn admin-btn-edit">Edit</button>
-                                <button class="admin-btn admin-btn-eco">Eco System</button>
-                                <button class="admin-btn admin-btn-delete">Delete</button>
-                            </div>
-                        </article>
-
-                        <article class="admin-recipe-card"
-                                 data-id="2"
-                                 data-name="Herbal Body Lotion"
-                                 data-time-to-complete="2025-03-15T12:00"
-                                 data-description="Herbal body lotion with essential oils.">
-                            <div class="admin-product-image-placeholder"></div>
-                            <div class="admin-product-info">
-                                <h3>Herbal Body Lotion</h3>
-                                <p class="admin-product-meta">Products: 4 · IoT Sensors: 2 · Time: 1.5 hours</p>
-                                <p class="admin-product-price">Active Eco-System</p>
-                            </div>
-                            <div class="admin-product-actions">
-                                <button class="admin-btn admin-btn-edit">Edit</button>
-                                <button class="admin-btn admin-btn-eco">Eco System</button>
-                                <button class="admin-btn admin-btn-delete">Delete</button>
-                            </div>
-                        </article>
+                        {% if recipes %}
+                            {% for recipe in recipes %}
+                                <article class="admin-recipe-card"
+                                         data-id="{{ recipe.id }}"
+                                         data-name="{{ recipe.name }}"
+                                         data-time-to-complete="{{ recipe.time_to_complete }}"
+                                         data-description="{{ recipe.description ?? '' }}"
+                                         data-photo="{{ recipe.photo ?? '' }}"
+                                         data-products="{{ recipe.products_json }}"
+                                         data-iot-sensors="{{ recipe.iot_sensors_json }}">
+                                    {% if recipe.photo %}
+                                        <img src="/image/recipes/{{ recipe.photo }}" alt="{{ recipe.name }}" class="admin-recipe-photo">
+                                    {% endif %}
+                                    <div class="admin-product-info">
+                                        <h3>{{ recipe.name }}</h3>
+                                        <p class="admin-product-meta">
+                                            Products: {{ recipe.products|length }} · 
+                                            IoT Sensors: {{ recipe.iot_sensors|length }} · 
+                                            Time: {% if recipe.time_to_complete < 0.0167 %}{{ (recipe.time_to_complete * 3600)|round }} sec{% elseif recipe.time_to_complete < 1 %}{{ (recipe.time_to_complete * 60)|round(1) }} min{% elseif recipe.time_to_complete < 24 %}{{ recipe.time_to_complete|round(1) }} hours{% else %}{{ (recipe.time_to_complete / 24)|round(1) }} days{% endif %}
+                                        </p>
+                                        {% if recipe.description %}
+                                            <p class="admin-product-description">{{ recipe.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="admin-product-actions">
+                                        <button class="admin-btn admin-btn-edit">Edit</button>
+                                        <button class="admin-btn admin-btn-eco">Eco System</button>
+                                        <button class="admin-btn admin-btn-delete" 
+                                                onclick="if(confirm('Are you sure you want to delete {{ recipe.name }}?')) { window.location.href='index.php?action=adminRecipeDelete&id={{ recipe.id }}'; }">Delete</button>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        {% else %}
+                            <p style="text-align: center; color: #6b6f78; padding: 40px;">No recipes found. Create your first recipe!</p>
+                        {% endif %}
                     </div>
 
                     <aside class="admin-product-form admin-recipe-form">
                         <h2>Recipe Form</h2>
-                        <p class="admin-form-hint">Create or edit a recipe. Select products and IoT sensors to form the eco-system.</p>
+                        <p class="admin-form-hint">Create or edit a recipe. Select products with quantities and IoT sensors.</p>
 
-                        <form>
-                            <input type="hidden" name="id">
+                        {% if error %}
+                            <div style="background-color: #fff2f2; border: 1px solid #dc3545; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #dc3545; font-size: 13px;">
+                                {{ error }}
+                            </div>
+                        {% endif %}
+
+                        <form method="POST" action="index.php?action=adminRecipes" enctype="multipart/form-data">
+                            <input type="hidden" name="id" id="recipe-id">
+                            <input type="hidden" name="products" id="products-json" value="[]">
+                            <input type="hidden" name="iot_sensors" id="iot-sensors-json" value="[]">
 
                             <label class="admin-label">
-                                <span>Recipe Name</span>
-                                <input type="text" name="name" placeholder="Organic Face Cream" required>
+                                <span>Recipe Name *</span>
+                                <input type="text" name="name" id="recipe-name" placeholder="Organic Face Cream" required maxlength="100">
+                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Max 100 characters</small>
                             </label>
 
-                            <label class="admin-label">
-                                <span>Time to Complete</span>
-                                <input type="datetime-local" name="time_to_complete" required>
-                            </label>
+                            <div class="admin-label">
+                                <span>Time to Complete *</span>
+                                <div class="admin-time-inputs">
+                                    <label class="admin-time-label">
+                                        <span>Hours</span>
+                                        <input type="number" name="time_hours" id="time-hours" min="0" step="1" placeholder="0" value="0">
+                                    </label>
+                                    <label class="admin-time-label">
+                                        <span>Minutes</span>
+                                        <input type="number" name="time_minutes" id="time-minutes" min="0" max="59" step="1" placeholder="0" value="0">
+                                    </label>
+                                    <label class="admin-time-label">
+                                        <span>Seconds</span>
+                                        <input type="number" name="time_seconds" id="time-seconds" min="0" max="59" step="1" placeholder="0" value="0">
+                                    </label>
+                                </div>
+                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Enter time components separately</small>
+                            </div>
 
                             <label class="admin-label">
                                 <span>Description</span>
-                                <textarea name="description" rows="3" placeholder="Recipe description..."></textarea>
+                                <textarea name="description" id="recipe-description" rows="3" placeholder="Recipe description..."></textarea>
                             </label>
 
                             <label class="admin-label">
-                                <span>Select Products (Ingredients)</span>
-                                <select name="products[]" multiple size="5" required>
-                                    <option value="1">Minimal Face Cream (100ml)</option>
-                                    <option value="2">Gentle Body Lotion (250ml)</option>
-                                    <option value="3">Serum for Glow (30ml)</option>
-                                    <option value="4">Organic Oil (50ml)</option>
-                                    <option value="5">Essential Extract (10ml)</option>
-                                </select>
-                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Hold Ctrl/Cmd to select multiple products</small>
+                                <span>Photo</span>
+                                <div class="admin-photo-upload-wrapper">
+                                    <label for="recipe-photo" class="admin-photo-upload-btn">
+                                        <i class="fas fa-upload"></i>
+                                        <span>Choose Photo</span>
+                                    </label>
+                                    <input type="file" name="photo" id="recipe-photo" accept="image/*" style="display: none;">
+                                    <small style="display: block; margin-top: 8px; color: #6b6f78; font-size: 11px;">Optional image for recipe</small>
+                                </div>
+                                <div style="margin-top: 12px;">
+                                    <img id="photo-preview" src="" alt="Preview" style="max-width: 200px; max-height: 200px; display: none; border-radius: 8px; border: 1px solid #dde1ea;">
+                                    <button type="button" id="photo-delete-btn" class="admin-btn admin-btn-delete" style="display: none; margin-top: 8px;">Delete Photo</button>
+                                </div>
                             </label>
 
-                            <label class="admin-label">
-                                <span>Select IoT Sensors</span>
-                                <select name="iot_sensors[]" multiple size="4">
-                                    <option value="1">Temperature Sensor</option>
-                                    <option value="2">Humidity Sensor</option>
-                                    <option value="3">Lighting Sensor</option>
-                                </select>
-                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Select sensors for eco-system monitoring</small>
-                            </label>
+                            <div class="admin-products-selection">
+                                <label class="admin-label">
+                                    <span>Select Products (Ingredients) *</span>
+                                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                        <select id="product-select" style="flex: 1;">
+                                            <option value="">Select product...</option>
+                                            {% if products %}
+                                                {% for product in products %}
+                                                    <option value="{{ product.id }}">{{ product.name }} ({{ product.quantity }} {{ product.unit }})</option>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </select>
+                                        <input type="number" id="product-quantity-input" min="1" step="1" placeholder="Qty" style="width: 100px;">
+                                        <button type="button" id="add-product-btn" class="admin-btn admin-btn-save">Add</button>
+                                    </div>
+                                    <div id="product-error-message" class="admin-field-error-message" style="display: none;"></div>
+                                    <div id="selected-products" class="admin-selected-products-list"></div>
+                                    <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Add products with quantities</small>
+                                </label>
+                            </div>
+
+                            <div class="admin-iot-selection">
+                                <label class="admin-label">
+                                    <span>Select IoT Sensors</span>
+                                    <div class="admin-iot-select-wrapper">
+                                        <select id="iot-sensor-select" class="admin-iot-select">
+                                            <option value="">Select sensor...</option>
+                                            {% if iotSensors %}
+                                                {% for sensor in iotSensors %}
+                                                    <option value="{{ sensor.id }}">{{ sensor.name }} ({{ sensor.start_value }} - {{ sensor.end_value }})</option>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </select>
+                                        <button type="button" id="add-iot-btn" class="admin-btn admin-btn-save admin-iot-add-btn">
+                                            <i class="fas fa-plus"></i> Add
+                                        </button>
+                                    </div>
+                                    <div id="iot-error-message" class="admin-field-error-message" style="display: none;"></div>
+                                    <div id="selected-iot-sensors" class="admin-selected-products-list"></div>
+                                    <input type="hidden" name="iot_sensors" id="iot-sensors-json" value="[]">
+                                    <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Click to select and add IoT sensors for eco-system monitoring</small>
+                                </label>
+                            </div>
 
                             <div class="admin-form-actions">
-                                <button type="submit" class="admin-btn admin-btn-save">Save Recipe (mockup)</button>
-                                <button type="button" class="admin-btn admin-btn-secondary">Clear</button>
+                                <button type="submit" class="admin-btn admin-btn-save" id="recipe-submit-btn">Create</button>
+                                <button type="button" class="admin-btn admin-btn-secondary" id="recipe-clear-btn">Clear</button>
                             </div>
                         </form>
                     </aside>
@@ -176,4 +612,3 @@
     </div>
 </section>
 {% endblock %}
-
