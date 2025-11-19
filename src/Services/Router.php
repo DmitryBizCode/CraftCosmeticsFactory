@@ -25,7 +25,7 @@ class Router
         return $this->containerController;
     }
 
-    public function route(string $action = null, string $id = null, string $method = 'GET', array $data = [], array $image = [], bool $sign = null, int $id_containers = null): void
+    public function route(?string $action = null, ?string $id = null, string $method = 'GET', array $data = [], array $image = [], ?bool $sign = null, ?int $id_containers = null): void
     {
         switch ($action) {
             case 'autorization':
@@ -86,6 +86,48 @@ class Router
             case 'adminEcoSystem':
                 $recipeId = isset($_GET['recipe_id']) ? (int)$_GET['recipe_id'] : 0;
                 $content = $this->adminController->getAdminEcoSystem($recipeId);
+                break;
+            case 'adminEcoSystemGenerate':
+                // API endpoint для генерації нового значення
+                $iotEcoId = isset($_GET['iot_eco_id']) ? (int)$_GET['iot_eco_id'] : 0;
+                $content = $this->adminController->generateIotValue($iotEcoId);
+                break;
+            case 'adminEcoSystemSetValue':
+                // API endpoint для встановлення значення вручну
+                if ($method === 'POST') {
+                    $iotEcoId = isset($data['iot_eco_id']) ? (int)$data['iot_eco_id'] : 0;
+                    $value = isset($data['value']) ? (float)$data['value'] : 0;
+                    $content = $this->adminController->setIotValue($iotEcoId, $value);
+                }
+                break;
+            case 'adminEcoSystemGetData':
+                // API endpoint для отримання даних для графіків
+                $iotEcoId = isset($_GET['iot_eco_id']) ? (int)$_GET['iot_eco_id'] : 0;
+                $content = $this->adminController->getIotData($iotEcoId);
+                break;
+            case 'adminEcoSystemToggle':
+                // API endpoint для запуску/зупинки eco_system
+                if ($method === 'POST') {
+                    $ecoSystemId = isset($data['eco_system_id']) ? (int)$data['eco_system_id'] : 0;
+                    $isActive = isset($data['is_active']) ? (bool)$data['is_active'] : false;
+                    $content = $this->adminController->toggleEcoSystem($ecoSystemId, $isActive);
+                }
+                break;
+            case 'adminEcoSystemUpdateDescription':
+                // API endpoint для оновлення опису eco_system
+                if ($method === 'POST') {
+                    $ecoSystemId = isset($data['eco_system_id']) ? (int)$data['eco_system_id'] : 0;
+                    $description = isset($data['description']) ? (string)$data['description'] : '';
+                    $content = $this->adminController->updateEcoSystemDescription($ecoSystemId, $description);
+                }
+                break;
+            case 'adminEcoSystemUpdateStaff':
+                // API endpoint для оновлення staff_id eco_system
+                if ($method === 'POST') {
+                    $ecoSystemId = isset($data['eco_system_id']) ? (int)$data['eco_system_id'] : 0;
+                    $staffId = isset($data['staff_id']) && !empty($data['staff_id']) ? (int)$data['staff_id'] : null;
+                    $content = $this->adminController->updateEcoSystemStaff($ecoSystemId, $staffId);
+                }
                 break;
             case 'adminIotStats':
                 $recipeId = isset($_GET['recipe_id']) ? (int)$_GET['recipe_id'] : 0;

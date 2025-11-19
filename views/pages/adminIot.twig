@@ -3,6 +3,39 @@
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
     <script>
+        // Функція для показу повідомлень (замість alert)
+        function showNotification(message, type = 'info') {
+            // Видаляємо попереднє повідомлення, якщо є
+            const existing = document.getElementById('notification-message');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.id = 'notification-message';
+            notification.className = 'notification notification-' + type;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                    <span class="notification-text">${message}</span>
+                    <button class="notification-close" onclick="this.closest('.notification').remove()">×</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Показуємо з анімацією
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Автоматично приховуємо через 5 секунд
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.querySelector('.admin-iot-form form');
             if (!form) return;
@@ -45,6 +78,14 @@
                         form.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     });
                 }
+
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', function() {
+                        const sensorId = this.dataset.sensorId;
+                        const sensorName = this.dataset.sensorName;
+                        showDeleteConfirmation(sensorName, sensorId);
+                    });
+                }
             });
 
             addButton?.addEventListener('click', function () {
@@ -62,6 +103,57 @@
 
             updateSubmitButton();
         });
+
+        // Функція для показу підтвердження видалення
+        function showDeleteConfirmation(sensorName, sensorId) {
+            // Видаляємо попереднє підтвердження, якщо є
+            const existing = document.getElementById('delete-confirmation');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'delete-confirmation';
+            overlay.className = 'delete-confirmation-overlay';
+            
+            const content = document.createElement('div');
+            content.className = 'delete-confirmation-content';
+            content.innerHTML = `
+                <div class="delete-confirmation-header">
+                    <span class="delete-confirmation-icon">⚠️</span>
+                    <h3>Confirm Deletion</h3>
+                </div>
+                <div class="delete-confirmation-body">
+                    <p>Are you sure you want to delete <strong>${sensorName}</strong>?</p>
+                    <p class="delete-confirmation-warning">This action cannot be undone.</p>
+                </div>
+                <div class="delete-confirmation-footer">
+                    <button class="delete-confirm-btn delete-confirm-yes">Yes, Delete</button>
+                    <button class="delete-confirm-btn delete-confirm-no">Cancel</button>
+                </div>
+            `;
+            
+            overlay.appendChild(content);
+            document.body.appendChild(overlay);
+            
+            // Обробка кнопок
+            const yesBtn = content.querySelector('.delete-confirm-yes');
+            const noBtn = content.querySelector('.delete-confirm-no');
+            
+            yesBtn.addEventListener('click', function() {
+                overlay.remove();
+                window.location.href = 'index.php?action=adminIotDelete&id=' + sensorId;
+            });
+            
+            noBtn.addEventListener('click', function() {
+                overlay.remove();
+            });
+            
+            // Показуємо з анімацією
+            setTimeout(() => {
+                overlay.classList.add('show');
+            }, 10);
+        }
     </script>
 {% endblock %}
 
@@ -81,26 +173,16 @@
                 </header>
 
                 {% if success is defined and success is not empty %}
-                    <div class="admin-success-message" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #155724; font-size: 13px;">
-                        {% if success == 'created' %}
-                            IoT sensor created successfully!
-                        {% elseif success == 'updated' %}
-                            IoT sensor updated successfully!
-                        {% elseif success == 'deleted' %}
-                            IoT sensor deleted successfully!
-                        {% endif %}
-                    </div>
                     <script>
-                        setTimeout(function() {
-                            const msg = document.querySelector('.admin-success-message');
-                            if (msg) {
-                                msg.style.transition = 'opacity 0.3s ease';
-                                msg.style.opacity = '0';
-                                setTimeout(function() {
-                                    msg.remove();
-                                }, 300);
-                            }
-                        }, 3000);
+                        document.addEventListener('DOMContentLoaded', function() {
+                            {% if success == 'created' %}
+                                showNotification('IoT sensor created successfully!', 'success');
+                            {% elseif success == 'updated' %}
+                                showNotification('IoT sensor updated successfully!', 'success');
+                            {% elseif success == 'deleted' %}
+                                showNotification('IoT sensor deleted successfully!', 'success');
+                            {% endif %}
+                        });
                     </script>
                 {% endif %}
 
@@ -122,6 +204,9 @@
                                                 <p class="admin-iot-meta">
                                                     Range: ({{ sensor.start_value }}) - ({{ sensor.end_value }})
                                                 </p>
+                                                <p class="admin-iot-meta" style="margin-top: 6px; color: #6b6f78;">
+                                                    <strong>Used in recipes:</strong> {{ sensor.recipe_count|default(0) }}
+                                                </p>
                                                 {% if sensor.description %}
                                                     <p class="admin-iot-description">{{ sensor.description }}</p>
                                                 {% endif %}
@@ -129,7 +214,8 @@
                                             <div class="admin-product-actions">
                                                 <button class="admin-btn admin-btn-edit">Edit</button>
                                                 <button class="admin-btn admin-btn-delete" 
-                                                        onclick="if(confirm('Are you sure you want to delete {{ sensor.name }}?')) { window.location.href='index.php?action=adminIotDelete&id={{ sensor.id }}'; }">Delete</button>
+                                                        data-sensor-id="{{ sensor.id }}"
+                                                        data-sensor-name="{{ sensor.name }}">Delete</button>
                                             </div>
                                         </article>
                                     {% endfor %}

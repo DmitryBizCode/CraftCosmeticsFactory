@@ -978,13 +978,15 @@
 
 .admin-chart-card canvas {
     max-height: 200px;
-    margin-bottom: 16px;
+    margin-bottom: 0;
 }
 
 .admin-iot-control-item {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-top: 0;
+    padding-top: 0px;
 }
 
 .admin-iot-control-item label {
@@ -1226,4 +1228,584 @@
         flex-direction: column;
         align-items: stretch;
     }
+}
+
+/* Критичні попередження (iframe-подібний блок) */
+.critical-warning-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.critical-warning-content {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    border: 2px solid #ff6b6b;
+    animation: slideIn 0.4s ease-out;
+    color: #333;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.critical-warning-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 15px;
+}
+
+.critical-warning-icon {
+    font-size: 48px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.critical-warning-header h2 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.critical-warning-body {
+    margin-bottom: 25px;
+}
+
+.critical-warning-body p {
+    margin: 12px 0;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.critical-warning-body strong {
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.critical-warning-message {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    border-left: 4px solid #fff;
+    margin-top: 20px !important;
+}
+
+.critical-warning-action {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    text-align: center;
+    margin-top: 20px !important;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+}
+
+.critical-warning-close {
+    background-color: #fff;
+    color: #dc3545;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.critical-warning-close:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Покращені стилі для критичного попередження */
+.critical-warning-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 16px;
+}
+
+.critical-warning-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background-color: #fff5f5;
+    border-radius: 12px;
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
+}
+
+.critical-warning-icon {
+    font-size: 32px;
+}
+
+.critical-warning-title h2 {
+    margin: 0 0 4px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #dc3545;
+    letter-spacing: 0.5px;
+}
+
+.critical-warning-subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: #6b6f78;
+    font-weight: 400;
+}
+
+.critical-warning-sensor-info {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.critical-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.critical-info-label {
+    font-size: 11px;
+    color: #6b6f78;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.critical-info-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111111;
+}
+
+.critical-value-highlight {
+    color: #dc3545;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+}
+
+.critical-warning-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+    background-color: #fff5f5;
+    border-radius: 12px;
+    border-left: 4px solid #dc3545;
+    margin-bottom: 16px;
+}
+
+.critical-message-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.critical-message-text {
+    flex: 1;
+}
+
+.critical-message-main {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    margin: 0 0 8px !important;
+    color: #dc3545;
+}
+
+.critical-message-detail {
+    font-size: 14px !important;
+    margin: 0 !important;
+    color: #6b6f78;
+    line-height: 1.5;
+}
+
+.critical-message-detail strong {
+    font-size: 16px;
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.critical-warning-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.critical-action-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.critical-action-text {
+    flex: 1;
+}
+
+.critical-action-text p {
+    margin: 4px 0 !important;
+    font-size: 14px;
+    color: #6b6f78;
+}
+
+.critical-action-text p:first-child {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #111111;
+}
+
+.critical-warning-footer {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e9ecef;
+}
+
+.critical-warning-close {
+    background-color: #f8f9fa;
+    color: #6b6f78;
+    border: 1px solid #e9ecef;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.critical-warning-close:hover {
+    background-color: #e9ecef;
+    color: #111111;
+    border-color: #dee2e6;
+}
+
+.critical-warning-close i {
+    font-size: 14px;
+}
+
+/* Мінімалістичні стилі для кнопок в header */
+.admin-header-actions {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.admin-header-link {
+    color: #6b6f78;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.admin-header-link:hover {
+    color: #111111;
+    border-bottom-color: #111111;
+}
+
+.admin-header-link:active {
+    color: #111111;
+}
+
+/* Стилі для повідомлень (замість alert) */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 300px;
+    max-width: 500px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 10001;
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s ease;
+    border-left: 4px solid #007bff;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification-success {
+    border-left-color: #28a745;
+}
+
+.notification-error {
+    border-left-color: #dc3545;
+}
+
+.notification-info {
+    border-left-color: #17a2b8;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+}
+
+.notification-icon {
+    font-size: 24px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.notification-success .notification-icon {
+    background-color: #d4edda;
+    color: #28a745;
+}
+
+.notification-error .notification-icon {
+    background-color: #f8d7da;
+    color: #dc3545;
+}
+
+.notification-info .notification-icon {
+    background-color: #d1ecf1;
+    color: #17a2b8;
+}
+
+.notification-text {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.notification-close:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+/* Модальне вікно підтвердження видалення */
+.delete-confirmation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    animation: fadeIn 0.2s ease-in;
+    backdrop-filter: blur(2px);
+}
+
+.delete-confirmation-overlay.show {
+    display: flex;
+}
+
+.delete-confirmation-content {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s ease-out;
+    border: 1px solid #e9ecef;
+}
+
+.delete-confirmation-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.delete-confirmation-icon {
+    font-size: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background-color: #fff5f5;
+    border-radius: 12px;
+}
+
+.delete-confirmation-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111111;
+    letter-spacing: -0.3px;
+}
+
+.delete-confirmation-body {
+    margin-bottom: 24px;
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border-left: 3px solid #dc3545;
+}
+
+.delete-confirmation-body p {
+    margin: 8px 0;
+    font-size: 15px;
+    color: #333;
+    line-height: 1.6;
+}
+
+.delete-confirmation-body p:first-child {
+    font-size: 16px;
+    font-weight: 500;
+    color: #111111;
+    margin-bottom: 12px;
+}
+
+.delete-confirmation-body strong {
+    font-weight: 600;
+    color: #dc3545;
+}
+
+.delete-confirmation-warning {
+    font-size: 13px !important;
+    color: #6b6f78 !important;
+    font-style: italic;
+    margin-top: 8px !important;
+    padding-top: 8px;
+    border-top: 1px solid #e9ecef;
+}
+
+.delete-confirmation-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 8px;
+}
+
+.delete-confirm-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    min-width: 120px;
+}
+
+.delete-confirm-yes {
+    background-color: #dc3545;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.delete-confirm-yes:hover {
+    background-color: #c82333;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    transform: translateY(-1px);
+}
+
+.delete-confirm-yes:active {
+    transform: translateY(0);
+}
+
+.delete-confirm-no {
+    background-color: #f8f9fa;
+    color: #6b6f78;
+    border: 1px solid #e9ecef;
+}
+
+.delete-confirm-no:hover {
+    background-color: #e9ecef;
+    color: #111111;
+    border-color: #dee2e6;
 }

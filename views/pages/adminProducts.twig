@@ -3,6 +3,39 @@
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
     <script>
+        // Функція для показу повідомлень (замість alert)
+        function showNotification(message, type = 'info') {
+            // Видаляємо попереднє повідомлення, якщо є
+            const existing = document.getElementById('notification-message');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.id = 'notification-message';
+            notification.className = 'notification notification-' + type;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                    <span class="notification-text">${message}</span>
+                    <button class="notification-close" onclick="this.closest('.notification').remove()">×</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Показуємо з анімацією
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Автоматично приховуємо через 5 секунд
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.querySelector('.admin-product-form form');
             if (!form) return;
@@ -74,7 +107,69 @@
 
             // Update button text on page load
             updateSubmitButton();
+            
+            // Обробка кнопок видалення з підтвердженням
+            document.querySelectorAll('.admin-btn-delete').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const productId = this.dataset.productId;
+                    const productName = this.dataset.productName;
+                    
+                    // Показуємо модальне вікно підтвердження
+                    showDeleteConfirmation(productName, productId);
+                });
+            });
         });
+        
+        // Функція для показу підтвердження видалення
+        function showDeleteConfirmation(productName, productId) {
+            // Видаляємо попереднє підтвердження, якщо є
+            const existing = document.getElementById('delete-confirmation');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'delete-confirmation';
+            overlay.className = 'delete-confirmation-overlay';
+            
+            const content = document.createElement('div');
+            content.className = 'delete-confirmation-content';
+            content.innerHTML = `
+                <div class="delete-confirmation-header">
+                    <span class="delete-confirmation-icon">⚠️</span>
+                    <h3>Confirm Deletion</h3>
+                </div>
+                <div class="delete-confirmation-body">
+                    <p>Are you sure you want to delete <strong>${productName}</strong>?</p>
+                    <p class="delete-confirmation-warning">This action cannot be undone.</p>
+                </div>
+                <div class="delete-confirmation-footer">
+                    <button class="delete-confirm-btn delete-confirm-yes">Yes, Delete</button>
+                    <button class="delete-confirm-btn delete-confirm-no">Cancel</button>
+                </div>
+            `;
+            
+            overlay.appendChild(content);
+            document.body.appendChild(overlay);
+            
+            // Обробка кнопок
+            const yesBtn = content.querySelector('.delete-confirm-yes');
+            const noBtn = content.querySelector('.delete-confirm-no');
+            
+            yesBtn.addEventListener('click', function() {
+                overlay.remove();
+                window.location.href = 'index.php?action=adminProductDelete&id=' + productId;
+            });
+            
+            noBtn.addEventListener('click', function() {
+                overlay.remove();
+            });
+            
+            // Показуємо з анімацією
+            setTimeout(() => {
+                overlay.classList.add('show');
+            }, 10);
+        }
     </script>
 {% endblock %}
 
@@ -94,26 +189,16 @@
                 </header>
 
                 {% if success is defined and success is not empty %}
-                    <div class="admin-success-message" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #155724; font-size: 13px;">
-                        {% if success == 'created' %}
-                            Product created successfully!
-                        {% elseif success == 'updated' %}
-                            Product updated successfully!
-                        {% elseif success == 'deleted' %}
-                            Product deleted successfully!
-                        {% endif %}
-                    </div>
                     <script>
-                        setTimeout(function() {
-                            const msg = document.querySelector('.admin-success-message');
-                            if (msg) {
-                                msg.style.transition = 'opacity 0.3s ease';
-                                msg.style.opacity = '0';
-                                setTimeout(function() {
-                                    msg.remove();
-                                }, 300);
-                            }
-                        }, 3000);
+                        document.addEventListener('DOMContentLoaded', function() {
+                            {% if success == 'created' %}
+                                showNotification('Product created successfully!', 'success');
+                            {% elseif success == 'updated' %}
+                                showNotification('Product updated successfully!', 'success');
+                            {% elseif success == 'deleted' %}
+                                showNotification('Product deleted successfully!', 'success');
+                            {% endif %}
+                        });
                     </script>
                 {% endif %}
 
@@ -151,7 +236,8 @@
                                     <div class="admin-product-actions">
                                         <button class="admin-btn admin-btn-edit">Edit</button>
                                         <button class="admin-btn admin-btn-delete" 
-                                                onclick="if(confirm('Are you sure you want to delete {{ product.name }}?')) { window.location.href='index.php?action=adminProductDelete&id={{ product.id }}'; }">Delete</button>
+                                                data-product-id="{{ product.id }}"
+                                                data-product-name="{{ product.name }}">Delete</button>
                                     </div>
                                 </article>
                             {% endfor %}

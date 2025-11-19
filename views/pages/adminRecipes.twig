@@ -3,6 +3,41 @@
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
     <script>
+        // Функція для показу повідомлень (замість alert) - однакова з Products/IoT
+        function showNotification(message, type = 'info') {
+            // Видаляємо попереднє повідомлення, якщо є
+            const existing = document.getElementById('notification-message');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.id = 'notification-message';
+            notification.className = 'notification notification-' + type;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                    <span class="notification-text">${message}</span>
+                    <button class="notification-close" onclick="this.closest('.notification').remove()">×</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Показуємо з анімацією
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            // Автоматично приховуємо через 5 секунд
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        window.showNotification = showNotification; // Експортуємо в глобальну область
+    </script>
+    <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.querySelector('.admin-recipe-form form');
             if (!form) return;
@@ -81,6 +116,7 @@
                 iotContainer.innerHTML = '';
                 if (selectedIotSensors.length === 0) {
                     // Не показуємо нічого, контейнер буде прихований через CSS :empty
+                    updateIotSensorsInput(); // Оновлюємо hidden input навіть якщо немає сенсорів
                     return;
                 }
                 selectedIotSensors.forEach(function(sensor, index) {
@@ -249,7 +285,7 @@
                     name: sensorName
                 });
 
-                renderSelectedIotSensors();
+                renderSelectedIotSensors(); // Вже викликає updateIotSensorsInput()
                 iotSelect.value = '';
                 // Приховуємо повідомлення про помилку при успішному додаванні
                 const errorDiv = document.getElementById('iot-error-message');
@@ -264,7 +300,7 @@
                 if (e.target.classList.contains('admin-btn-remove-product') && e.target.dataset.type === 'iot') {
                     const index = parseInt(e.target.dataset.index);
                     selectedIotSensors.splice(index, 1);
-                    renderSelectedIotSensors();
+                    renderSelectedIotSensors(); // Вже викликає updateIotSensorsInput()
                 }
             });
 
@@ -306,16 +342,17 @@
                         });
                     }
                 }
-                renderSelectedIotSensors();
+                renderSelectedIotSensors(); // Вже викликає updateIotSensorsInput()
                 
                 // Фото
                 const photo = card.dataset.photo || '';
-                if (photo) {
+                if (photo && photo !== '' && photo !== 'default.png') {
                     photoPreview.src = '/image/recipes/' + photo;
                     photoPreview.style.display = 'block';
                     photoDeleteBtn.style.display = 'block';
                 } else {
-                    photoPreview.style.display = 'none';
+                    photoPreview.src = '/image/recipes/default.png';
+                    photoPreview.style.display = 'block';
                     photoDeleteBtn.style.display = 'none';
                 }
                 
@@ -336,10 +373,9 @@
 
                 if (deleteBtn) {
                     deleteBtn.addEventListener('click', function () {
+                        const recipeId = card.dataset.id;
                         const name = card.dataset.name || 'this recipe';
-                        if (confirm('Are you sure you want to delete ' + name + '?')) {
-                            window.location.href = 'index.php?action=adminRecipeDelete&id=' + card.dataset.id;
-                        }
+                        showDeleteConfirmation(name, recipeId, 'recipe');
                     });
                 }
 
@@ -397,9 +433,7 @@
 
             photoDeleteBtn.addEventListener('click', function() {
                 if (fieldId.value) {
-                    if (confirm('Delete photo?')) {
-                        window.location.href = 'index.php?action=adminRecipeDeletePhoto&id=' + fieldId.value;
-                    }
+                    showDeleteConfirmation('photo', fieldId.value, 'photo');
                 } else {
                     photoPreview.style.display = 'none';
                     fieldPhoto.value = '';
@@ -411,7 +445,79 @@
             // Ініціалізуємо відображення при завантаженні сторінки
             renderSelectedProducts();
             renderSelectedIotSensors();
+            updateIotSensorsInput(); // Оновлюємо hidden input при завантаженні
+            
+            // Обробка кнопок видалення рецептів з карток
+            document.querySelectorAll('.admin-recipe-card .admin-btn-delete').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const recipeId = this.dataset.recipeId;
+                    const recipeName = this.dataset.recipeName;
+                    showDeleteConfirmation(recipeName, recipeId, 'recipe');
+                });
+            });
         });
+
+        // Функція для показу підтвердження видалення
+        function showDeleteConfirmation(name, id, type) {
+            // Видаляємо попереднє підтвердження, якщо є
+            const existing = document.getElementById('delete-confirmation');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'delete-confirmation';
+            overlay.className = 'delete-confirmation-overlay';
+            
+            let message = '';
+            let actionUrl = '';
+            
+            if (type === 'recipe') {
+                message = `Are you sure you want to delete <strong>${name}</strong>?`;
+                actionUrl = 'index.php?action=adminRecipeDelete&id=' + id;
+            } else if (type === 'photo') {
+                message = `Are you sure you want to delete the photo?`;
+                actionUrl = 'index.php?action=adminRecipeDeletePhoto&id=' + id;
+            }
+            
+            const content = document.createElement('div');
+            content.className = 'delete-confirmation-content';
+            content.innerHTML = `
+                <div class="delete-confirmation-header">
+                    <span class="delete-confirmation-icon">⚠️</span>
+                    <h3>Confirm Deletion</h3>
+                </div>
+                <div class="delete-confirmation-body">
+                    <p>${message}</p>
+                    <p class="delete-confirmation-warning">This action cannot be undone.</p>
+                </div>
+                <div class="delete-confirmation-footer">
+                    <button class="delete-confirm-btn delete-confirm-yes">Yes, Delete</button>
+                    <button class="delete-confirm-btn delete-confirm-no">Cancel</button>
+                </div>
+            `;
+            
+            overlay.appendChild(content);
+            document.body.appendChild(overlay);
+            
+            // Обробка кнопок
+            const yesBtn = content.querySelector('.delete-confirm-yes');
+            const noBtn = content.querySelector('.delete-confirm-no');
+            
+            yesBtn.addEventListener('click', function() {
+                overlay.remove();
+                window.location.href = actionUrl;
+            });
+            
+            noBtn.addEventListener('click', function() {
+                overlay.remove();
+            });
+            
+            // Показуємо з анімацією
+            setTimeout(() => {
+                overlay.classList.add('show');
+            }, 10);
+        }
     </script>
 {% endblock %}
 
@@ -431,28 +537,26 @@
                 </header>
 
                 {% if success is defined and success is not empty %}
-                    <div class="admin-success-message" style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #155724; font-size: 13px;">
-                        {% if success == 'created' %}
-                            Recipe created successfully!
-                        {% elseif success == 'updated' %}
-                            Recipe updated successfully!
-                        {% elseif success == 'deleted' %}
-                            Recipe deleted successfully!
-                        {% elseif success == 'photo_deleted' %}
-                            Photo deleted successfully!
-                        {% endif %}
-                    </div>
                     <script>
-                        setTimeout(function() {
-                            const msg = document.querySelector('.admin-success-message');
-                            if (msg) {
-                                msg.style.transition = 'opacity 0.3s ease';
-                                msg.style.opacity = '0';
-                                setTimeout(function() {
-                                    msg.remove();
-                                }, 300);
-                            }
-                        }, 3000);
+                        document.addEventListener('DOMContentLoaded', function() {
+                            {% if success == 'created' %}
+                                showNotification('Recipe created successfully!', 'success');
+                            {% elseif success == 'updated' %}
+                                showNotification('Recipe updated successfully!', 'success');
+                            {% elseif success == 'deleted' %}
+                                showNotification('Recipe deleted successfully!', 'success');
+                            {% elseif success == 'photo_deleted' %}
+                                showNotification('Photo deleted successfully!', 'success');
+                            {% endif %}
+                        });
+                    </script>
+                {% endif %}
+                
+                {% if error is defined and error is not empty %}
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            showNotification('{{ error|e('js') }}', 'error');
+                        });
                     </script>
                 {% endif %}
 
@@ -468,9 +572,7 @@
                                          data-photo="{{ recipe.photo ?? '' }}"
                                          data-products="{{ recipe.products_json }}"
                                          data-iot-sensors="{{ recipe.iot_sensors_json }}">
-                                    {% if recipe.photo %}
-                                        <img src="/image/recipes/{{ recipe.photo }}" alt="{{ recipe.name }}" class="admin-recipe-photo">
-                                    {% endif %}
+                                    <img src="/image/recipes/{{ (recipe.photo and recipe.photo != '') ? recipe.photo : 'default.png' }}" alt="{{ recipe.name }}" class="admin-recipe-photo">
                                     <div class="admin-product-info">
                                         <h3>{{ recipe.name }}</h3>
                                         <p class="admin-product-meta">
@@ -486,7 +588,8 @@
                                         <button class="admin-btn admin-btn-edit">Edit</button>
                                         <button class="admin-btn admin-btn-eco">Eco System</button>
                                         <button class="admin-btn admin-btn-delete" 
-                                                onclick="if(confirm('Are you sure you want to delete {{ recipe.name }}?')) { window.location.href='index.php?action=adminRecipeDelete&id={{ recipe.id }}'; }">Delete</button>
+                                                data-recipe-id="{{ recipe.id }}"
+                                                data-recipe-name="{{ recipe.name }}">Delete</button>
                                     </div>
                                 </article>
                             {% endfor %}
@@ -595,7 +698,6 @@
                                     </div>
                                     <div id="iot-error-message" class="admin-field-error-message" style="display: none;"></div>
                                     <div id="selected-iot-sensors" class="admin-selected-products-list"></div>
-                                    <input type="hidden" name="iot_sensors" id="iot-sensors-json" value="[]">
                                     <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Click to select and add IoT sensors for eco-system monitoring</small>
                                 </label>
                             </div>

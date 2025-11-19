@@ -5,78 +5,553 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Mock data for IoT sensors
-            const sensorData = {
-                temperature: {
-                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-                    values: [18, 20, 22, 24, 23, 21],
-                    min: 16,
-                    max: 25
-                },
-                humidity: {
-                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-                    values: [45, 50, 55, 60, 58, 52],
-                    min: 40,
-                    max: 70
-                },
-                lighting: {
-                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-                    values: [100, 200, 400, 600, 500, 300],
-                    min: 100,
-                    max: 800
+            const sensors = {{ iotSensors|json_encode|raw }};
+            const charts = {};
+            const intervals = {};
+            const criticalWarnings = {}; // Зберігаємо активні попередження
+            let isEcoSystemActive = {{ ecoSystem.is_active ? 'true' : 'false' }};
+            
+            // Функція для показу критичного попередження
+            function showCriticalWarning(sensorId, warningType, value, distanceToMin, distanceToMax) {
+                const sensor = sensors.find(s => s.id === sensorId);
+                if (!sensor) return;
+                
+                const sensorName = sensor.iot_name || 'Sensor ' + sensorId;
+                const isMin = warningType === 'min';
+                const threshold = isMin ? distanceToMin : distanceToMax;
+                
+                // Створюємо або оновлюємо попередження
+                let warningEl = document.getElementById('critical-warning-' + sensorId);
+                if (!warningEl) {
+                    warningEl = document.createElement('div');
+                    warningEl.id = 'critical-warning-' + sensorId;
+                    warningEl.className = 'critical-warning-overlay';
+                    document.body.appendChild(warningEl);
                 }
-            };
+                
+                warningEl.innerHTML = `
+                    <div class="critical-warning-content">
+                        <div class="critical-warning-header">
+                            <div class="critical-warning-icon-wrapper">
+                                <span class="critical-warning-icon">⚠️</span>
+                            </div>
+                            <div class="critical-warning-title">
+                                <h2>Critical Warning</h2>
+                                <p class="critical-warning-subtitle">Sensor value is outside safe range</p>
+                            </div>
+                        </div>
+                        <div class="critical-warning-body">
+                            <div class="critical-warning-sensor-info">
+                                <div class="critical-info-item">
+                                    <span class="critical-info-label">Sensor Name</span>
+                                    <span class="critical-info-value">${sensorName}</span>
+                                </div>
+                                <div class="critical-info-item">
+                                    <span class="critical-info-label">Sensor ID</span>
+                                    <span class="critical-info-value">#${sensorId}</span>
+                                </div>
+                                <div class="critical-info-item">
+                                    <span class="critical-info-label">Current Value</span>
+                                    <span class="critical-info-value critical-value-highlight">${value.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div class="critical-warning-message">
+                                <div class="critical-message-icon">${isMin ? '📉' : '📈'}</div>
+                                <div class="critical-message-text">
+                                    <p class="critical-message-main">
+                                        ${isMin ? 
+                                            `Value is critically low` :
+                                            `Value is critically high`
+                                        }
+                                    </p>
+                                    <p class="critical-message-detail">
+                                        Only <strong>${threshold.toFixed(2)}</strong> units from ${isMin ? 'minimum' : 'maximum'} threshold.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="critical-warning-action">
+                                <div class="critical-action-icon">ℹ️</div>
+                                <div class="critical-action-text">
+                                    <p><strong>Action required</strong></p>
+                                    <p>Please adjust sensor parameters or stop the production process.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="critical-warning-footer">
+                            <button class="critical-warning-close" onclick="this.closest('.critical-warning-overlay').style.display='none'">
+                                <i class="fas fa-times"></i> Dismiss
+                            </button>
+                        </div>
+                    </div>
+                `;
+                warningEl.style.display = 'flex';
+                criticalWarnings[sensorId] = true;
+            }
+            
+            // Функція для приховування попередження
+            function hideCriticalWarning(sensorId) {
+                const warningEl = document.getElementById('critical-warning-' + sensorId);
+                if (warningEl) {
+                    warningEl.style.display = 'none';
+                    delete criticalWarnings[sensorId];
+                }
+            }
+            
+            // Функція для показу повідомлень (замість alert)
+            function showNotification(message, type = 'info') {
+                // Видаляємо попереднє повідомлення, якщо є
+                const existing = document.getElementById('notification-message');
+                if (existing) {
+                    existing.remove();
+                }
+                
+                const notification = document.createElement('div');
+                notification.id = 'notification-message';
+                notification.className = 'notification notification-' + type;
+                notification.innerHTML = `
+                    <div class="notification-content">
+                        <span class="notification-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                        <span class="notification-text">${message}</span>
+                        <button class="notification-close" onclick="this.closest('.notification').remove()">×</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Показуємо з анімацією
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 10);
+                
+                // Автоматично приховуємо через 5 секунд
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, 5000);
+            }
+            
+            // Експортуємо функції в глобальну область
+            window.showCriticalWarning = showCriticalWarning;
+            window.hideCriticalWarning = hideCriticalWarning;
+            window.showNotification = showNotification;
 
-            // Create charts
-            Object.keys(sensorData).forEach(function(sensorType) {
-                const ctx = document.getElementById('chart-' + sensorType);
-                if (!ctx) return;
+            // Ініціалізація графіків для кожного датчика
+            sensors.forEach(function(sensor) {
+                const sensorId = sensor.id;
+                const sensorName = sensor.iot_name || 'Sensor ' + sensorId;
+                const canvasId = 'chart-' + sensorId;
+                const canvas = document.getElementById(canvasId);
+                
+                if (!canvas) return;
 
-                const data = sensorData[sensorType];
-                new Chart(ctx, {
+                const ctx = canvas.getContext('2d');
+                
+                // Визначаємо min/max на основі start_value та end_value
+                const minValue = sensor.start_value ?? sensor.iot_start_value ?? 0;
+                const maxValue = sensor.end_value ?? sensor.iot_end_value ?? 100;
+                
+                // Форматуємо історію для графіка
+                const labels = [];
+                const values = [];
+                
+                if (sensor.history && sensor.history.length > 0) {
+                    sensor.history.forEach(function(record) {
+                        const date = new Date(record.created_at);
+                        labels.push(date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+                        values.push(parseFloat(record.value));
+                    });
+                } else {
+                    // Якщо немає історії, додаємо поточне значення
+                    const currentValue = sensor.current_value || (minValue + maxValue) / 2;
+                    labels.push(new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+                    values.push(currentValue);
+                }
+
+                // Створюємо графік
+                charts[sensorId] = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: data.labels,
+                        labels: labels,
                         datasets: [{
-                            label: sensorType.charAt(0).toUpperCase() + sensorType.slice(1),
-                            data: data.values,
+                            label: sensorName,
+                            data: values,
                             borderColor: '#111111',
                             backgroundColor: 'rgba(17, 17, 17, 0.1)',
-                            tension: 0.4
+                            tension: 0.4,
+                            fill: true
                         }]
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         scales: {
                             y: {
                                 beginAtZero: false,
-                                min: data.min - 10,
-                                max: data.max + 10
+                                min: minValue - (maxValue - minValue) * 0.1,
+                                max: maxValue + (maxValue - minValue) * 0.1
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
                             }
                         }
                     }
                 });
+
+                // Функція для оновлення даних графіка (винесена в загальну область видимості)
+                window.updateChart = window.updateChart || function(sensorId) {
+                    fetch('index.php?action=adminEcoSystemGetData&iot_eco_id=' + sensorId)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && charts[sensorId]) {
+                                charts[sensorId].data.labels = data.labels;
+                                charts[sensorId].data.datasets[0].data = data.values;
+                                charts[sensorId].update();
+                                
+                                // Оновлюємо поточне значення в UI
+                                const currentValueEl = document.querySelector('[data-sensor-id="' + sensorId + '"] .current-value');
+                                if (currentValueEl) {
+                                    currentValueEl.textContent = data.current_value.toFixed(2);
+                                }
+                                
+                                // Перевірка на критичні значення при оновленні
+                                if (data.is_critical && data.current_value !== null) {
+                                    const sensor = sensors.find(s => s.id === sensorId);
+                                    if (sensor) {
+                                        const minValue = sensor.start_value ?? sensor.iot_start_value ?? 0;
+                                        const maxValue = sensor.end_value ?? sensor.iot_end_value ?? 100;
+                                        const range = maxValue - minValue;
+                                        const criticalThreshold = range * 0.05;
+                                        const distanceToMin = data.current_value - minValue;
+                                        const distanceToMax = maxValue - data.current_value;
+                                        
+                                        showCriticalWarning(sensorId, data.warning_type, data.current_value, distanceToMin, distanceToMax);
+                                    }
+                                } else {
+                                    hideCriticalWarning(sensorId);
+                                }
+                            }
+                        })
+                        .catch(error => console.error('Error fetching data:', error));
+                };
+
+                // Функція для генерації нового значення (винесена в загальну область видимості)
+                window.generateValue = window.generateValue || function(sensorId) {
+                    if (!isEcoSystemActive) {
+                        return; // Не генеруємо, якщо процес зупинений
+                    }
+                    fetch('index.php?action=adminEcoSystemGenerate&iot_eco_id=' + sensorId)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.updateChart(sensorId);
+                                
+                                // Перевірка на критичні значення
+                                if (data.is_critical) {
+                                    showCriticalWarning(sensorId, data.warning_type, data.value, data.distance_to_min, data.distance_to_max);
+                                } else {
+                                    hideCriticalWarning(sensorId);
+                                }
+                            } else {
+                                console.error('Error generating value:', data.error);
+                            }
+                        })
+                        .catch(error => console.error('Error generating value:', error));
+                };
+
+                // Генерація даних кожні 30 секунд (тільки якщо процес активний)
+                if (isEcoSystemActive) {
+                    intervals[sensorId] = setInterval(function() {
+                        if (isEcoSystemActive) {
+                            window.generateValue(sensorId);
+                        }
+                    }, 30000);
+                }
+
+                // Початкове оновлення
+                window.updateChart(sensorId);
             });
 
-            // Control IoT sensors
-            const controlButtons = document.querySelectorAll('.admin-iot-control-btn');
-            controlButtons.forEach(function(btn) {
+            // Обробка кнопок Set та Reset
+            document.querySelectorAll('.admin-iot-control-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
-                    const sensorId = this.dataset.sensorId;
+                    const sensorId = parseInt(this.dataset.sensorId);
                     const action = this.dataset.action;
-                    const input = this.closest('.admin-iot-control-item').querySelector('input[type="number"]');
+                    const controlItem = this.closest('.admin-iot-control-item');
+                    const input = controlItem.querySelector('input[type="number"]');
                     
                     if (action === 'set') {
                         const value = parseFloat(input.value);
-                        if (!isNaN(value)) {
-                            alert('Setting ' + sensorId + ' to ' + value + ' (mockup)');
+                        if (isNaN(value)) {
+                            showNotification('Please enter a valid number', 'error');
+                            return;
                         }
+
+                        // Валідація: перевіряємо межі датчика
+                        const sensor = sensors.find(s => s.id === sensorId);
+                        if (sensor) {
+                            const minValue = sensor.start_value ?? sensor.iot_start_value ?? 0;
+                            const maxValue = sensor.end_value ?? sensor.iot_end_value ?? 100;
+                            
+                            if (value < minValue || value > maxValue) {
+                                showNotification(
+                                    `Value must be between ${minValue} and ${maxValue}. Current value: ${value}`,
+                                    'error'
+                                );
+                                input.focus();
+                                input.select();
+                                return;
+                            }
+                        }
+
+                        // Відправляємо POST запит для встановлення значення
+                        const formData = new FormData();
+                        formData.append('iot_eco_id', sensorId);
+                        formData.append('value', value);
+
+                        fetch('index.php?action=adminEcoSystemSetValue', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Оновлюємо графік поточного датчика
+                                window.updateChart(sensorId);
+                                
+                                // Оновлюємо інші датчики, якщо вони змінилися
+                                if (data.updated_sensors && data.updated_sensors.length > 0) {
+                                    data.updated_sensors.forEach(function(updated) {
+                                        window.updateChart(updated.id);
+                                        
+                                        // Перевіряємо інші датчики на критичні значення
+                                        const otherSensor = sensors.find(s => s.id === updated.id);
+                                        if (otherSensor) {
+                                            const otherStartValue = otherSensor.start_value ?? otherSensor.iot_start_value ?? 0;
+                                            const otherEndValue = otherSensor.end_value ?? otherSensor.iot_end_value ?? 100;
+                                            const otherRange = otherEndValue - otherStartValue;
+                                            const otherCriticalThreshold = otherRange * 0.05;
+                                            const otherDistanceToMin = updated.new_value - otherStartValue;
+                                            const otherDistanceToMax = otherEndValue - updated.new_value;
+                                            
+                                            if (otherDistanceToMin <= otherCriticalThreshold) {
+                                                showCriticalWarning(updated.id, 'min', updated.new_value, otherDistanceToMin, otherDistanceToMax);
+                                            } else if (otherDistanceToMax <= otherCriticalThreshold) {
+                                                showCriticalWarning(updated.id, 'max', updated.new_value, otherDistanceToMin, otherDistanceToMax);
+                                            } else {
+                                                hideCriticalWarning(updated.id);
+                                            }
+                                        }
+                                    });
+                                }
+                                
+                                // Перевірка на критичні значення поточного датчика
+                                if (data.is_critical) {
+                                    showCriticalWarning(sensorId, data.warning_type, data.value, data.distance_to_min, data.distance_to_max);
+                                } else {
+                                    hideCriticalWarning(sensorId);
+                                }
+                                
+                                // Перезапускаємо інтервал (тільки якщо процес активний)
+                                const sensor = sensors.find(s => s.id === sensorId);
+                                if (sensor && intervals[sensorId]) {
+                                    clearInterval(intervals[sensorId]);
+                                    if (isEcoSystemActive) {
+                                        intervals[sensorId] = setInterval(function() {
+                                            if (isEcoSystemActive) {
+                                                window.generateValue(sensorId);
+                                            }
+                                        }, 30000);
+                                    }
+                                }
+                                
+                                input.value = '';
+                            } else {
+                                alert('Error setting value: ' + (data.error || 'Unknown error'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error setting value:', error);
+                            alert('Error setting value');
+                        });
                     } else if (action === 'reset') {
                         input.value = '';
-                        alert('Resetting ' + sensorId + ' (mockup)');
                     }
                 });
             });
+
+            // Функція для зупинки/запуску генерації
+            window.stopAllGeneration = function() {
+                Object.keys(intervals).forEach(function(sensorId) {
+                    if (intervals[sensorId]) {
+                        clearInterval(intervals[sensorId]);
+                        delete intervals[sensorId];
+                    }
+                });
+            };
+
+            window.startAllGeneration = function() {
+                sensors.forEach(function(sensor) {
+                    const sensorId = sensor.id;
+                    if (!intervals[sensorId] && isEcoSystemActive) {
+                        intervals[sensorId] = setInterval(function() {
+                            if (isEcoSystemActive) {
+                                window.generateValue(sensorId);
+                            }
+                        }, 30000);
+                    }
+                });
+            };
+
+            // Очищення інтервалів при закритті сторінки
+            window.addEventListener('beforeunload', function() {
+                Object.values(intervals).forEach(function(interval) {
+                    clearInterval(interval);
+                });
+            });
+
+            // Обробка кнопки запуску/зупинки
+            const toggleBtn = document.getElementById('toggle-eco-btn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    const ecoSystemId = parseInt(this.dataset.ecoSystemId);
+                    const currentStatus = this.dataset.isActive === '1';
+                    const newStatus = !currentStatus;
+
+                    const formData = new FormData();
+                    formData.append('eco_system_id', ecoSystemId);
+                    formData.append('is_active', newStatus ? '1' : '0');
+
+                    fetch('index.php?action=adminEcoSystemToggle', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            isEcoSystemActive = newStatus;
+                            
+                            // Оновлюємо статус
+                            const statusEl = document.getElementById('eco-status');
+                            statusEl.textContent = newStatus ? 'Active' : 'Stopped';
+                            statusEl.style.color = newStatus ? '#28a745' : '#dc3545';
+                            
+                            // Оновлюємо кнопку
+                            this.textContent = newStatus ? 'Stop Production' : 'Start Production';
+                            this.className = 'admin-btn ' + (newStatus ? 'admin-btn-danger' : 'admin-btn-save');
+                            this.dataset.isActive = newStatus ? '1' : '0';
+                            
+                            // Оновлюємо дати
+                            if (data.date_start) {
+                                const dateStartEl = document.getElementById('eco-date-start');
+                                if (dateStartEl) {
+                                    const date = new Date(data.date_start);
+                                    dateStartEl.textContent = date.toLocaleString('uk-UA');
+                                }
+                            }
+                            // Оновлюємо поле Ended
+                            const dateEndEl = document.getElementById('eco-date-end');
+                            if (dateEndEl) {
+                                if (newStatus) {
+                                    // Якщо активний - очищаємо значення
+                                    dateEndEl.textContent = '—';
+                                } else if (data.date_end) {
+                                    // Якщо зупинений - показуємо дату
+                                    const date = new Date(data.date_end);
+                                    dateEndEl.textContent = date.toLocaleString('uk-UA');
+                                }
+                            }
+                            
+                            // Зупиняємо/запускаємо генерацію
+                            if (newStatus) {
+                                window.startAllGeneration();
+                            } else {
+                                window.stopAllGeneration();
+                            }
+                        } else {
+                            alert('Error: ' + (data.error || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error toggling eco system:', error);
+                        alert('Error toggling eco system');
+                    });
+                });
+            }
+
+                // Обробка збереження опису
+                const saveDescBtn = document.getElementById('save-description-btn');
+                if (saveDescBtn) {
+                    saveDescBtn.addEventListener('click', function() {
+                        const ecoSystemId = parseInt(this.dataset.ecoSystemId);
+                        const description = document.getElementById('eco-description').value;
+
+                        const formData = new FormData();
+                        formData.append('eco_system_id', ecoSystemId);
+                        formData.append('description', description);
+
+                        fetch('index.php?action=adminEcoSystemUpdateDescription', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showNotification('Description saved successfully', 'success');
+                            } else {
+                                showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error saving description:', error);
+                            alert('Error saving description');
+                        });
+                    });
+                }
+
+                // Обробка вибору staff member
+                const staffSelect = document.getElementById('staff-select');
+                const saveStaffBtn = document.getElementById('save-staff-btn');
+                if (staffSelect && saveStaffBtn) {
+                    // Зберігаємо початкове значення для порівняння
+                    const initialStaffId = staffSelect.value;
+                    
+                    // Вмикаємо кнопку, якщо значення змінилося
+                    staffSelect.addEventListener('change', function() {
+                        saveStaffBtn.disabled = (this.value === initialStaffId);
+                    });
+
+                    // Обробка збереження staff
+                    saveStaffBtn.addEventListener('click', function() {
+                        const ecoSystemId = parseInt(this.dataset.ecoSystemId);
+                        const staffId = staffSelect.value || null;
+
+                        const formData = new FormData();
+                        formData.append('eco_system_id', ecoSystemId);
+                        if (staffId) {
+                            formData.append('staff_id', staffId);
+                        }
+
+                        fetch('index.php?action=adminEcoSystemUpdateStaff', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showNotification('Staff assignment saved successfully', 'success');
+                                saveStaffBtn.disabled = true;
+                            } else {
+                                showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error saving staff:', error);
+                            showNotification('Error saving staff assignment', 'error');
+                        });
+                    });
+                }
         });
     </script>
 {% endblock %}
@@ -91,77 +566,173 @@
                 <header class="admin-main-header">
                     <div>
                         <h1>Eco-System Control</h1>
-                        <p>Recipe: <strong>Organic Face Cream</strong> (ID: {{ recipeId }})</p>
+                        <p>Recipe: <strong>{{ recipe.name }}</strong> (ID: {{ recipeId }})</p>
                     </div>
-                    <div>
-                        <a href="index.php?action=adminIotStats&recipe_id={{ recipeId }}" class="admin-btn admin-btn-edit">View Statistics</a>
-                        <a href="index.php?action=adminRecipes" class="admin-btn admin-btn-secondary">Back to Recipes</a>
+                    <div class="admin-header-actions">
+                        <a href="index.php?action=adminIotStats&recipe_id={{ recipeId }}" class="admin-header-link">
+                            View Statistics
+                        </a>
+                        <a href="index.php?action=adminRecipes" class="admin-header-link">
+                            Back to Recipes
+                        </a>
                     </div>
                 </header>
 
                 <section class="admin-eco-system">
                     <div class="admin-eco-charts">
-                        <div class="admin-chart-card">
-                            <h3>Temperature Sensor</h3>
-                            <canvas id="chart-temperature"></canvas>
-                            <div class="admin-iot-control-item">
-                                <label>
-                                    <span>Set Value:</span>
-                                    <input type="number" step="0.1" placeholder="20.0" min="16" max="25">
-                                </label>
-                                <div class="admin-iot-control-buttons">
-                                    <button class="admin-iot-control-btn admin-btn admin-btn-save" data-sensor-id="temperature" data-action="set">Set</button>
-                                    <button class="admin-iot-control-btn admin-btn admin-btn-secondary" data-sensor-id="temperature" data-action="reset">Reset</button>
+                        {% if iotSensors|length > 0 %}
+                            {% for sensor in iotSensors %}
+                                <div class="admin-chart-card">
+                                    <h3>{{ sensor.iot_name }} Sensor</h3>
+                                    <div style="position: relative; height: 250px;">
+                                        <canvas id="chart-{{ sensor.id }}"></canvas>
+                                    </div>
+                                    <div class="admin-iot-control-item" data-sensor-id="{{ sensor.id }}">
+                                        <div style="margin-bottom: 10px;">
+                                            <strong>Current Value:</strong> 
+                                            <span class="current-value">{{ sensor.current_value|default('N/A') }}</span>
+                                        </div>
+                                        <div style="margin-bottom: 10px;">
+                                            <strong>Range:</strong> 
+                                            {{ (sensor.start_value ?? sensor.iot_start_value ?? 0) }} - {{ (sensor.end_value ?? sensor.iot_end_value ?? 100) }}
+                                        </div>
+                                        <label>
+                                            <span>Set Value:</span>
+                                            <input type="number" 
+                                                   step="0.1" 
+                                                   placeholder="{{ ((sensor.start_value ?? sensor.iot_start_value ?? 0) + (sensor.end_value ?? sensor.iot_end_value ?? 100)) / 2 }}" 
+                                                   min="{{ sensor.start_value ?? sensor.iot_start_value ?? 0 }}" 
+                                                   max="{{ sensor.end_value ?? sensor.iot_end_value ?? 100 }}">
+                                        </label>
+                                        <div class="admin-iot-control-buttons">
+                                            <button class="admin-iot-control-btn admin-btn admin-btn-save" 
+                                                    data-sensor-id="{{ sensor.id }}" 
+                                                    data-action="set">Set</button>
+                                            <button class="admin-iot-control-btn admin-btn admin-btn-secondary" 
+                                                    data-sensor-id="{{ sensor.id }}" 
+                                                    data-action="reset">Reset</button>
+                                        </div>
+                                        {% if sensor.description %}
+                                            <p style="margin-top: 10px; font-size: 0.9em; color: #666;">{{ sensor.description }}</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="admin-chart-card">
+                                <p>No IoT sensors connected to this eco-system.</p>
                             </div>
-                        </div>
-
-                        <div class="admin-chart-card">
-                            <h3>Humidity Sensor</h3>
-                            <canvas id="chart-humidity"></canvas>
-                            <div class="admin-iot-control-item">
-                                <label>
-                                    <span>Set Value:</span>
-                                    <input type="number" step="0.1" placeholder="50.0" min="40" max="70">
-                                </label>
-                                <div class="admin-iot-control-buttons">
-                                    <button class="admin-iot-control-btn admin-btn admin-btn-save" data-sensor-id="humidity" data-action="set">Set</button>
-                                    <button class="admin-iot-control-btn admin-btn admin-btn-secondary" data-sensor-id="humidity" data-action="reset">Reset</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="admin-chart-card">
-                            <h3>Lighting Sensor</h3>
-                            <canvas id="chart-lighting"></canvas>
-                            <div class="admin-iot-control-item">
-                                <label>
-                                    <span>Set Value:</span>
-                                    <input type="number" step="1" placeholder="400" min="100" max="800">
-                                </label>
-                                <div class="admin-iot-control-buttons">
-                                    <button class="admin-iot-control-btn admin-btn admin-btn-save" data-sensor-id="lighting" data-action="set">Set</button>
-                                    <button class="admin-iot-control-btn admin-btn admin-btn-secondary" data-sensor-id="lighting" data-action="reset">Reset</button>
-                                </div>
-                            </div>
-                        </div>
+                        {% endif %}
                     </div>
 
                     <aside class="admin-eco-info">
                         <h2>Eco-System Info</h2>
                         <div class="admin-info-card">
-                            <p><strong>Status:</strong> <span style="color: #28a745;">Active</span></p>
-                            <p><strong>Started:</strong> 2025-03-01 10:00</p>
-                            <p><strong>Expected End:</strong> 2025-03-01 12:00</p>
-                            <p><strong>Staff:</strong> Manager One (ID: 3)</p>
+                            <p><strong>Status:</strong> 
+                                <span id="eco-status" style="color: {{ ecoSystem.is_active ? '#28a745' : '#dc3545' }};">
+                                    {{ ecoSystem.is_active ? 'Active' : 'Stopped' }}
+                                </span>
+                            </p>
+                            <p><strong>Recipe ID:</strong> {{ recipeId }}</p>
+                            <p><strong>Eco System ID:</strong> {{ ecoSystem.id }}</p>
+                            {% if timeToComplete %}
+                                <p><strong>Time to Complete:</strong> {{ timeToComplete }}</p>
+                            {% endif %}
+                            
+                            {% if ecoSystem.date_start %}
+                                <p><strong>Started:</strong> 
+                                    <span id="eco-date-start">
+                                        {{ ecoSystem.date_start|date('Y-m-d H:i:s') }}
+                                    </span>
+                                </p>
+                            {% else %}
+                                <p><strong>Started:</strong> 
+                                    <span id="eco-date-start">—</span>
+                                </p>
+                            {% endif %}
+                            
+                            <p><strong>Ended:</strong> 
+                                <span id="eco-date-end">
+                                    {% if ecoSystem.is_active %}
+                                        —
+                                    {% elseif ecoSystem.date_end %}
+                                        {{ ecoSystem.date_end|date('Y-m-d H:i:s') }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </span>
+                            </p>
+                            
+                            <div style="margin-top: 20px;">
+                                <button id="toggle-eco-btn" 
+                                        class="admin-btn {{ ecoSystem.is_active ? 'admin-btn-danger' : 'admin-btn-save' }}"
+                                        data-eco-system-id="{{ ecoSystem.id }}"
+                                        data-is-active="{{ ecoSystem.is_active ? '1' : '0' }}">
+                                    {{ ecoSystem.is_active ? 'Stop Production' : 'Start Production' }}
+                                </button>
+                            </div>
                         </div>
 
-                        <h3 style="margin-top: 24px;">Connected Products</h3>
-                        <ul class="admin-products-list-mini">
-                            <li>Minimal Face Cream (100ml)</li>
-                            <li>Organic Oil (50ml)</li>
-                            <li>Essential Extract (10ml)</li>
-                        </ul>
+                        <h3 style="margin-top: 24px;">Description</h3>
+                        <div class="admin-info-card">
+                            <textarea id="eco-description" 
+                                      rows="4" 
+                                      style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;"
+                                      placeholder="Enter eco-system description...">{{ ecoSystem.description|default('') }}</textarea>
+                            <button id="save-description-btn" 
+                                    class="admin-btn admin-btn-save" 
+                                    style="margin-top: 10px;"
+                                    data-eco-system-id="{{ ecoSystem.id }}">
+                                Save Description
+                            </button>
+                        </div>
+
+                        {% if recipe %}
+                            <h3 style="margin-top: 24px;">Recipe Details</h3>
+                            <div class="admin-info-card">
+                                <p><strong>Name:</strong> {{ recipe.name }}</p>
+                                {% if recipe.description %}
+                                    <p><strong>Description:</strong> {{ recipe.description }}</p>
+                                {% endif %}
+                                {% if recipeProducts|length > 0 %}
+                                    <div style="margin-top: 12px;">
+                                        <p><strong>Products (Ingredients):</strong></p>
+                                        <ul style="margin: 8px 0 0 0; padding-left: 20px; list-style-type: disc;">
+                                            {% for product in recipeProducts %}
+                                                {% set totalQuantity = (product.product_quantity|default(0) * product.quantity)|round(2) %}
+                                                <li style="margin-bottom: 4px;">
+                                                    {{ product.product_name }} 
+                                                    <span style="color: #6b6f78;">({{ totalQuantity }} {{ product.unit }})</span>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
+                                <label style="display: block; margin-bottom: 8px; font-size: 13px; color: #6b6f78; font-weight: 500;">
+                                    <span>Staff Member (Optional)</span>
+                                </label>
+                                <select id="staff-select" 
+                                        style="width: 100%; padding: 10px 14px; border: 1px solid #dde1ea; border-radius: 8px; font-size: 14px; background-color: #fff; color: #111111;"
+                                        data-eco-system-id="{{ ecoSystem.id }}">
+                                    <option value="">-- Select Staff Member --</option>
+                                    {% for staff in staffMembers %}
+                                        <option value="{{ staff.id }}" {{ ecoSystem.staff_id == staff.id ? 'selected' : '' }}>
+                                            {{ staff.first_name }} {{ staff.last_name }} ({{ staff.email }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <button id="save-staff-btn" 
+                                        class="admin-btn admin-btn-save" 
+                                        style="margin-top: 10px; width: 100%;"
+                                        data-eco-system-id="{{ ecoSystem.id }}"
+                                        {% if not ecoSystem.staff_id %}disabled{% endif %}>
+                                    Save Staff Assignment
+                                </button>
+                            </div>
+                        {% endif %}
                     </aside>
                 </section>
             </main>
@@ -169,4 +740,3 @@
     </div>
 </section>
 {% endblock %}
-

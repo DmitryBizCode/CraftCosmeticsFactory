@@ -59,6 +59,9 @@ class RecipeService
         // Перевіряємо, чи є поле photo в даних
         $hasPhoto = isset($data['photo']) && $data['photo'] !== null && $data['photo'] !== '';
         
+        // Якщо photo явно встановлено в null (видалення фото)
+        $photoIsNull = isset($data['photo']) && $data['photo'] === null;
+        
         if ($hasPhoto) {
             $sql = "UPDATE recipes 
                     SET name = :name, time_to_complete = :time_to_complete, 
@@ -70,6 +73,18 @@ class RecipeService
                 ':time_to_complete' => (float)$data['time_to_complete'],
                 ':description' => (!empty($data['description']) && $data['description'] !== '') ? $data['description'] : null,
                 ':photo' => $data['photo'],
+            ];
+        } elseif ($photoIsNull) {
+            // Якщо photo явно встановлено в null - видаляємо фото
+            $sql = "UPDATE recipes 
+                    SET name = :name, time_to_complete = :time_to_complete, 
+                        description = :description, photo = NULL 
+                    WHERE id = :id";
+            $params = [
+                ':id' => $id,
+                ':name' => $data['name'],
+                ':time_to_complete' => (float)$data['time_to_complete'],
+                ':description' => (!empty($data['description']) && $data['description'] !== '') ? $data['description'] : null,
             ];
         } else {
             $sql = "UPDATE recipes 
@@ -101,7 +116,7 @@ class RecipeService
     public function getRecipeProducts(int $recipeId): array
     {
         $stmt = $this->pdo->prepare("
-            SELECT rp.*, p.name as product_name, p.unit 
+            SELECT rp.*, p.name as product_name, p.unit, p.quantity as product_quantity
             FROM recipe_product rp 
             JOIN products p ON rp.product_id = p.id 
             WHERE rp.recipe_id = :recipe_id
@@ -162,31 +177,83 @@ class RecipeService
         return $result ?: null;
     }
 
-    public function createEcoSystem(int $recipeId, ?int $staffId = null): int
+    public function createEcoSystem(int $recipeId, ?int $staffId = null, ?string $description = null): int
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO eco_system (recipe_id, staff_id) 
-            VALUES (:recipe_id, :staff_id)
+            INSERT INTO eco_system (recipe_id, staff_id, description) 
+            VALUES (:recipe_id, :staff_id, :description)
         ");
         $stmt->execute([
             ':recipe_id' => $recipeId,
             ':staff_id' => $staffId,
+            ':description' => $description,
         ]);
         return (int)$this->pdo->lastInsertId();
     }
 
-    public function addIotSensorToEcoSystem(int $ecoSystemId, int $iotId, ?float $startValue = null, ?float $endValue = null, ?string $description = null): bool
+    public function updateEcoSystemStatus(int $ecoSystemId, bool $isActive): bool
+    {
+        if ($isActive) {
+            // При запуску: встановлюємо date_start, очищаємо date_end
+            $stmt = $this->pdo->prepare("
+                UPDATE eco_system 
+                SET is_active = 1, 
+                    date_start = NOW(6),
+                    date_end = NULL
+                WHERE id = :id
+            ");
+        } else {
+            // При зупинці: встановлюємо date_end
+            $stmt = $this->pdo->prepare("
+                UPDATE eco_system 
+                SET is_active = 0, 
+                    date_end = NOW(6)
+                WHERE id = :id
+            ");
+        }
+        
+        return $stmt->execute([
+            ':id' => $ecoSystemId,
+        ]);
+    }
+
+    public function updateEcoSystemDescription(int $ecoSystemId, ?string $description): bool
     {
         $stmt = $this->pdo->prepare("
-            INSERT INTO iot_eco (eco_system_id, iot_id, start_value, end_value, description) 
-            VALUES (:eco_system_id, :iot_id, :start_value, :end_value, :description)
+            UPDATE eco_system 
+            SET description = :description 
+            WHERE id = :id
+        ");
+        return $stmt->execute([
+            ':id' => $ecoSystemId,
+            ':description' => $description,
+        ]);
+    }
+
+    public function updateEcoSystemStaff(int $ecoSystemId, ?int $staffId): bool
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE eco_system 
+            SET staff_id = :staff_id 
+            WHERE id = :id
+        ");
+        return $stmt->execute([
+            ':id' => $ecoSystemId,
+            ':staff_id' => $staffId,
+        ]);
+    }
+
+    public function addIotSensorToEcoSystem(int $ecoSystemId, int $iotId, ?float $startValue = null, ?float $endValue = null): bool
+    {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO iot_eco (eco_system_id, iot_id, start_value, end_value) 
+            VALUES (:eco_system_id, :iot_id, :start_value, :end_value)
         ");
         return $stmt->execute([
             ':eco_system_id' => $ecoSystemId,
             ':iot_id' => $iotId,
             ':start_value' => $startValue,
             ':end_value' => $endValue,
-            ':description' => $description,
         ]);
     }
 
