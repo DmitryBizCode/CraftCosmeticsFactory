@@ -2,6 +2,213 @@
 
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+    <script>
+        // Функція для показу повідомлень
+        function showNotification(message, type = 'info') {
+            const existing = document.getElementById('notification-message');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.id = 'notification-message';
+            notification.className = 'notification notification-' + type;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                    <span class="notification-text">${message}</span>
+                    <button class="notification-close" onclick="this.closest('.notification').remove()">×</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+        
+        // Функція для показу підтвердження видалення
+        function showDeleteConfirmation(name, id, type) {
+            const existing = document.getElementById('delete-confirmation');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'delete-confirmation';
+            overlay.className = 'delete-confirmation-overlay';
+            
+            const content = document.createElement('div');
+            content.className = 'delete-confirmation-content';
+            content.innerHTML = `
+                <div class="delete-confirmation-header">
+                    <span class="delete-confirmation-icon">⚠️</span>
+                    <h3>Confirm Deletion</h3>
+                </div>
+                <div class="delete-confirmation-body">
+                    <p>Are you sure you want to delete <strong>${name}</strong>?</p>
+                    <p class="delete-confirmation-warning">This action cannot be undone.</p>
+                </div>
+                <div class="delete-confirmation-footer">
+                    <button class="delete-confirm-btn delete-confirm-yes">Yes, Delete</button>
+                    <button class="delete-confirm-btn delete-confirm-no">Cancel</button>
+                </div>
+            `;
+            
+            overlay.appendChild(content);
+            document.body.appendChild(overlay);
+            
+            const yesBtn = content.querySelector('.delete-confirm-yes');
+            const noBtn = content.querySelector('.delete-confirm-no');
+            
+            yesBtn.addEventListener('click', function() {
+                overlay.remove();
+                const action = type === 'staff' ? 'adminStaffDelete' : 'adminClientDelete';
+                window.location.href = 'index.php?action=' + action + '&id=' + id;
+            });
+            
+            noBtn.addEventListener('click', function() {
+                overlay.remove();
+            });
+            
+            setTimeout(() => {
+                overlay.classList.add('show');
+            }, 10);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            // Обробка форм для Clients
+            const clientForm = document.getElementById('client-form');
+            const clientAddBtn = document.getElementById('client-add-btn');
+            const clientClearBtn = document.getElementById('client-clear-btn');
+            const clientSubmitBtn = document.getElementById('client-submit-btn');
+            const clientIdField = document.getElementById('client-id');
+            
+            function updateClientSubmitButton() {
+                const passwordInput = document.getElementById('client-password');
+                const passwordRequired = document.getElementById('client-password-required');
+                
+                if (clientIdField.value && clientIdField.value !== '') {
+                    clientSubmitBtn.textContent = 'Save Edit';
+                    passwordInput.removeAttribute('required');
+                    if (passwordRequired) passwordRequired.style.display = 'none';
+                } else {
+                    clientSubmitBtn.textContent = 'Create Client';
+                    passwordInput.setAttribute('required', 'required');
+                    if (passwordRequired) passwordRequired.style.display = 'inline';
+                }
+            }
+            
+            // Заповнення форми при натисканні Edit
+            document.querySelectorAll('.admin-btn-edit-client').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.admin-user-card');
+                    if (!card) return;
+                    
+                    clientIdField.value = card.dataset.id || '';
+                    document.getElementById('client-first-name').value = card.dataset.firstName || '';
+                    document.getElementById('client-last-name').value = card.dataset.lastName || '';
+                    document.getElementById('client-email').value = card.dataset.email || '';
+                    document.getElementById('client-phone').value = card.dataset.phone || '';
+                    document.getElementById('client-address').value = card.dataset.address || '';
+                    document.getElementById('client-password').value = '';
+                    
+                    updateClientSubmitButton();
+                    clientForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+            
+            clientAddBtn?.addEventListener('click', function() {
+                clientForm.reset();
+                clientIdField.value = '';
+                updateClientSubmitButton();
+                clientForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            
+            clientClearBtn?.addEventListener('click', function() {
+                clientForm.reset();
+                clientIdField.value = '';
+                updateClientSubmitButton();
+            });
+            
+            // Обробка кнопок видалення
+            document.querySelectorAll('.admin-btn-delete-client').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.admin-user-card');
+                    if (!card) return;
+                    const name = (card.dataset.firstName || '') + ' ' + (card.dataset.lastName || '');
+                    showDeleteConfirmation(name.trim() || 'Client', card.dataset.id, 'client');
+                });
+            });
+            
+            // Обробка форм для Staff
+            const staffForm = document.getElementById('staff-form');
+            const staffAddBtn = document.getElementById('staff-add-btn');
+            const staffClearBtn = document.getElementById('staff-clear-btn');
+            const staffSubmitBtn = document.getElementById('staff-submit-btn');
+            const staffIdField = document.getElementById('staff-id');
+            
+            function updateStaffSubmitButton() {
+                if (staffIdField.value && staffIdField.value !== '') {
+                    staffSubmitBtn.textContent = 'Save Edit';
+                } else {
+                    staffSubmitBtn.textContent = 'Create Staff';
+                }
+            }
+            
+            // Заповнення форми при натисканні Edit
+            document.querySelectorAll('.admin-btn-edit-staff').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.admin-user-card');
+                    if (!card) return;
+                    
+                    staffIdField.value = card.dataset.id || '';
+                    document.getElementById('staff-first-name').value = card.dataset.firstName || '';
+                    document.getElementById('staff-last-name').value = card.dataset.lastName || '';
+                    document.getElementById('staff-email').value = card.dataset.email || '';
+                    document.getElementById('staff-phone').value = card.dataset.phone || '';
+                    document.getElementById('staff-address').value = card.dataset.address || '';
+                    document.getElementById('staff-settlement').value = card.dataset.settlement || '';
+                    document.getElementById('staff-access-layer').value = card.dataset.accessLayer || '1';
+                    
+                    updateStaffSubmitButton();
+                    staffForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+            
+            staffAddBtn?.addEventListener('click', function() {
+                staffForm.reset();
+                staffIdField.value = '';
+                document.getElementById('staff-access-layer').value = '1';
+                updateStaffSubmitButton();
+                staffForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            
+            staffClearBtn?.addEventListener('click', function() {
+                staffForm.reset();
+                staffIdField.value = '';
+                document.getElementById('staff-access-layer').value = '1';
+                updateStaffSubmitButton();
+            });
+            
+            // Обробка кнопок видалення
+            document.querySelectorAll('.admin-btn-delete-staff').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.admin-user-card');
+                    if (!card) return;
+                    const name = (card.dataset.firstName || '') + ' ' + (card.dataset.lastName || '');
+                    showDeleteConfirmation(name.trim() || 'Staff', card.dataset.id, 'staff');
+                });
+            });
+            
+            updateClientSubmitButton();
+            updateStaffSubmitButton();
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -14,79 +221,210 @@
                 <header class="admin-main-header">
                     <div>
                         <h1>Users</h1>
-                        <p>List of clients and staff (tables <code>clients</code> and <code>staff</code>).</p>
+                        <p>Manage clients and staff members.</p>
                     </div>
                 </header>
 
+                {% if success is defined and success is not empty %}
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            {% if success == 'client_created' %}
+                                showNotification('Client created successfully!', 'success');
+                            {% elseif success == 'client_updated' %}
+                                showNotification('Client updated successfully!', 'success');
+                            {% elseif success == 'client_deleted' %}
+                                showNotification('Client deleted successfully!', 'success');
+                            {% elseif success == 'staff_created' %}
+                                showNotification('Staff member created successfully!', 'success');
+                            {% elseif success == 'staff_updated' %}
+                                showNotification('Staff member updated successfully!', 'success');
+                            {% elseif success == 'staff_deleted' %}
+                                showNotification('Staff member deleted successfully!', 'success');
+                            {% endif %}
+                        });
+                    </script>
+                {% endif %}
+
+                {% if error is defined and error is not empty %}
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            showNotification('{{ error|e('js') }}', 'error');
+                        });
+                    </script>
+                {% endif %}
+
                 <section class="admin-users">
                     <div class="admin-users-column">
-                        <h2 class="admin-users-title">Clients</h2>
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Status</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>12</td>
-                                    <td>Anna Smith</td>
-                                    <td>anna@example.com</td>
-                                    <td><span class="badge badge-status-active">Active</span></td>
-                                    <td class="admin-table-actions">
-                                        <button class="admin-btn admin-btn-edit">Edit</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>18</td>
-                                    <td>John Doe</td>
-                                    <td>john@example.com</td>
-                                    <td><span class="badge badge-status-inactive">Inactive</span></td>
-                                    <td class="admin-table-actions">
-                                        <button class="admin-btn admin-btn-edit">Edit</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h2 class="admin-users-title">Clients</h2>
+                            <button class="admin-btn admin-btn-save" id="client-add-btn">+ New Client</button>
+                        </div>
+                        
+                        <div class="admin-users-list">
+                            {% if clients|length > 0 %}
+                                {% for client in clients %}
+                                    <article class="admin-user-card"
+                                             data-id="{{ client.id }}"
+                                             data-first-name="{{ client.first_name }}"
+                                             data-last-name="{{ client.last_name|default('') }}"
+                                             data-email="{{ client.email }}"
+                                             data-phone="{{ client.phone_number|default('') }}"
+                                             data-address="{{ client.address|default('') }}">
+                                        <div class="admin-user-info">
+                                            <h3>{{ client.first_name }} {{ client.last_name|default('') }}</h3>
+                                            <p class="admin-user-meta">
+                                                <strong>Email:</strong> {{ client.email }}<br>
+                                                {% if client.phone_number %}
+                                                    <strong>Phone:</strong> {{ client.phone_number }}<br>
+                                                {% endif %}
+                                                {% if client.address %}
+                                                    <strong>Address:</strong> {{ client.address }}
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <div class="admin-user-actions">
+                                            <button class="admin-btn admin-btn-edit admin-btn-edit-client">Edit</button>
+                                            <button class="admin-btn admin-btn-delete admin-btn-delete-client">Delete</button>
+                                        </div>
+                                    </article>
+                                {% endfor %}
+                            {% else %}
+                                <p style="text-align: center; color: #6b6f78; padding: 40px;">No clients found. Create your first client!</p>
+                            {% endif %}
+                        </div>
+                        
+                        <aside class="admin-user-form">
+                            <h3>Client Form</h3>
+                            <form id="client-form" method="POST" action="index.php?action=adminUsers">
+                                <input type="hidden" name="type" value="client">
+                                <input type="hidden" id="client-id" name="id" value="">
+                                
+                                <div class="admin-label">
+                                    <span>First Name *</span>
+                                    <input type="text" id="client-first-name" name="first_name" required maxlength="50">
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Last Name (Optional)</span>
+                                    <input type="text" id="client-last-name" name="last_name" maxlength="100">
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Email *</span>
+                                    <input type="email" id="client-email" name="email" required maxlength="254">
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Password <span id="client-password-required">*</span></span>
+                                    <input type="password" id="client-password" name="password">
+                                    <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Required when creating. Leave empty when editing to keep current password.</small>
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Phone Number (Optional)</span>
+                                    <input type="text" id="client-phone" name="phone_number" maxlength="20">
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Address (Optional)</span>
+                                    <input type="text" id="client-address" name="address" maxlength="255">
+                                </div>
+                                
+                                <div class="admin-form-actions">
+                                    <button type="submit" class="admin-btn admin-btn-save" id="client-submit-btn">Create Client</button>
+                                    <button type="button" class="admin-btn admin-btn-secondary" id="client-clear-btn">Clear</button>
+                                </div>
+                            </form>
+                        </aside>
                     </div>
 
                     <div class="admin-users-column">
-                        <h2 class="admin-users-title">Staff</h2>
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>3</td>
-                                    <td>Manager One</td>
-                                    <td>Manager</td>
-                                    <td><span class="badge badge-status-active">Active</span></td>
-                                    <td class="admin-table-actions">
-                                        <button class="admin-btn admin-btn-edit">Edit</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>4</td>
-                                    <td>Operator Two</td>
-                                    <td>Operator</td>
-                                    <td><span class="badge badge-status-active">Active</span></td>
-                                    <td class="admin-table-actions">
-                                        <button class="admin-btn admin-btn-edit">Edit</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h2 class="admin-users-title">Staff</h2>
+                            <button class="admin-btn admin-btn-save" id="staff-add-btn">+ New Staff</button>
+                        </div>
+                        
+                        <div class="admin-users-list">
+                            {% if staff|length > 0 %}
+                                {% for staffMember in staff %}
+                                    <article class="admin-user-card"
+                                             data-id="{{ staffMember.id }}"
+                                             data-first-name="{{ staffMember.first_name }}"
+                                             data-last-name="{{ staffMember.last_name|default('') }}"
+                                             data-email="{{ staffMember.email }}"
+                                             data-phone="{{ staffMember.phone_number }}"
+                                             data-address="{{ staffMember.address }}"
+                                             data-settlement="{{ staffMember.settlement }}"
+                                             data-access-layer="{{ staffMember.access_layer }}">
+                                        <div class="admin-user-info">
+                                            <h3>{{ staffMember.first_name }} {{ staffMember.last_name|default('') }}</h3>
+                                            <p class="admin-user-meta">
+                                                <strong>Email:</strong> {{ staffMember.email }}<br>
+                                                <strong>Phone:</strong> {{ staffMember.phone_number }}<br>
+                                                <strong>Address:</strong> {{ staffMember.address }}<br>
+                                                <strong>Settlement:</strong> {{ staffMember.settlement }}<br>
+                                                <strong>Access Layer:</strong> {{ staffMember.access_layer }}
+                                            </p>
+                                        </div>
+                                        <div class="admin-user-actions">
+                                            <button class="admin-btn admin-btn-edit admin-btn-edit-staff">Edit</button>
+                                            <button class="admin-btn admin-btn-delete admin-btn-delete-staff">Delete</button>
+                                        </div>
+                                    </article>
+                                {% endfor %}
+                            {% else %}
+                                <p style="text-align: center; color: #6b6f78; padding: 40px;">No staff members found. Create your first staff member!</p>
+                            {% endif %}
+                        </div>
+                        
+                        <aside class="admin-user-form">
+                            <h3>Staff Form</h3>
+                            <form id="staff-form" method="POST" action="index.php?action=adminUsers">
+                                <input type="hidden" name="type" value="staff">
+                                <input type="hidden" id="staff-id" name="id" value="">
+                                
+                                <div class="admin-label">
+                                    <span>First Name *</span>
+                                    <input type="text" id="staff-first-name" name="first_name" required maxlength="50">
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Last Name (Optional)</span>
+                                    <input type="text" id="staff-last-name" name="last_name" maxlength="100">
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Email *</span>
+                                    <input type="email" id="staff-email" name="email" required maxlength="254">
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Phone Number *</span>
+                                    <input type="text" id="staff-phone" name="phone_number" required maxlength="20">
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Address *</span>
+                                    <input type="text" id="staff-address" name="address" required maxlength="255">
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Settlement *</span>
+                                    <input type="text" id="staff-settlement" name="settlement" required maxlength="255">
+                                </div>
+                                
+                                <div class="admin-label">
+                                    <span>Access Layer *</span>
+                                    <input type="number" id="staff-access-layer" name="access_layer" required min="1" value="1">
+                                    <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Access level (1 = lowest, higher = more access)</small>
+                                </div>
+                                
+                                <div class="admin-form-actions">
+                                    <button type="submit" class="admin-btn admin-btn-save" id="staff-submit-btn">Create Staff</button>
+                                    <button type="button" class="admin-btn admin-btn-secondary" id="staff-clear-btn">Clear</button>
+                                </div>
+                            </form>
+                        </aside>
                     </div>
                 </section>
             </main>
@@ -94,5 +432,3 @@
     </div>
 </section>
 {% endblock %}
-
-

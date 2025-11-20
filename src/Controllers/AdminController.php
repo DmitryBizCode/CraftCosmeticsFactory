@@ -8,6 +8,8 @@ use App\Services\ProductService;
 use App\Services\IotService;
 use App\Services\RecipeService;
 use App\Services\IotEcoService;
+use App\Services\ClientService;
+use App\Services\StaffService;
 use PDO;
 
 class AdminController
@@ -17,6 +19,8 @@ class AdminController
     private IotService $iotService;
     private RecipeService $recipeService;
     private IotEcoService $iotEcoService;
+    private ClientService $clientService;
+    private StaffService $staffService;
 
     public function __construct()
     {
@@ -26,6 +30,8 @@ class AdminController
         $this->iotService = new IotService($sqlService->getPdo());
         $this->recipeService = new RecipeService($sqlService->getPdo());
         $this->iotEcoService = new IotEcoService($sqlService->getPdo());
+        $this->clientService = new ClientService($sqlService->getPdo());
+        $this->staffService = new StaffService($sqlService->getPdo());
     }
 
     /** Сторінка логіну в адмінку */
@@ -1001,11 +1007,98 @@ class AdminController
     /** Сторінка користувачів (клієнти та співробітники) */
     public function getAdminUsers(): string
     {
+        $clients = $this->clientService->getAll();
+        $staff = $this->staffService->getAll();
+        $success = isset($_GET['success']) && !empty($_GET['success']) ? $_GET['success'] : null;
+        $error = isset($_GET['error']) && !empty($_GET['error']) ? $_GET['error'] : null;
+        
         return $this->templateService->render('pages/adminUsers', [
             'homeNavBar' => null,
             'footer' => null,
             'currentPage' => 'users',
+            'clients' => $clients,
+            'staff' => $staff,
+            'success' => $success,
+            'error' => $error,
         ]);
+    }
+
+    /** Створення нового клієнта */
+    public function createClient(array $data): string
+    {
+        try {
+            $this->clientService->create($data);
+            header('Location: index.php?action=adminUsers&success=client_created');
+            exit;
+        } catch (\Exception $e) {
+            header('Location: index.php?action=adminUsers&error=' . urlencode('Error creating client: ' . $e->getMessage()));
+            exit;
+        }
+    }
+
+    /** Оновлення клієнта */
+    public function updateClient(int $id, array $data): string
+    {
+        try {
+            $this->clientService->update($id, $data);
+            header('Location: index.php?action=adminUsers&success=client_updated');
+            exit;
+        } catch (\Exception $e) {
+            header('Location: index.php?action=adminUsers&error=' . urlencode('Error updating client: ' . $e->getMessage()));
+            exit;
+        }
+    }
+
+    /** Видалення клієнта */
+    public function deleteClient(int $id): string
+    {
+        try {
+            $this->clientService->delete($id);
+            header('Location: index.php?action=adminUsers&success=client_deleted');
+            exit;
+        } catch (\Exception $e) {
+            header('Location: index.php?action=adminUsers&error=' . urlencode('Error deleting client: ' . $e->getMessage()));
+            exit;
+        }
+    }
+
+    /** Створення нового персоналу */
+    public function createStaff(array $data): string
+    {
+        try {
+            $this->staffService->create($data);
+            header('Location: index.php?action=adminUsers&success=staff_created');
+            exit;
+        } catch (\Exception $e) {
+            header('Location: index.php?action=adminUsers&error=' . urlencode('Error creating staff: ' . $e->getMessage()));
+            exit;
+        }
+    }
+
+    /** Оновлення персоналу */
+    public function updateStaff(int $id, array $data): string
+    {
+        try {
+            $this->staffService->update($id, $data);
+            header('Location: index.php?action=adminUsers&success=staff_updated');
+            exit;
+        } catch (\Exception $e) {
+            header('Location: index.php?action=adminUsers&error=' . urlencode('Error updating staff: ' . $e->getMessage()));
+            exit;
+        }
+    }
+
+    /** Видалення персоналу */
+    public function deleteStaff(int $id): string
+    {
+        try {
+            $this->staffService->delete($id);
+            header('Location: index.php?action=adminUsers&success=staff_deleted');
+            exit;
+        } catch (\Exception $e) {
+            header('Location: index.php?action=adminUsers&error=' . urlencode('Error deleting staff: ' . $e->getMessage()));
+            exit;
+        }
     }
 
     /** Сторінка управління IoT / Eco system */

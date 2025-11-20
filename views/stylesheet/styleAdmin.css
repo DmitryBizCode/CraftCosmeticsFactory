@@ -627,9 +627,83 @@
     gap: 22px;
 }
 
+.admin-users-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .admin-users-title {
-    margin: 0 0 10px;
+    margin: 0;
+    font-size: 18px;
+    color: #111111;
+}
+
+.admin-users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.admin-user-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid #edf0f5;
+    background-color: #fdfdfd;
+    transition: box-shadow 0.2s ease, transform 0.1s ease, border-color 0.2s ease;
+}
+
+.admin-user-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+    border-color: #dde2eb;
+}
+
+.admin-user-info {
+    min-width: 0;
+}
+
+.admin-user-info h3 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    color: #111111;
+    font-weight: 600;
+}
+
+.admin-user-meta {
+    margin: 0;
+    font-size: 12px;
+    color: #6b6f78;
+    line-height: 1.6;
+}
+
+.admin-user-meta strong {
+    color: #4a4d55;
+    font-weight: 600;
+}
+
+.admin-user-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-user-form {
+    padding: 16px 18px 18px;
+    border-radius: 12px;
+    background-color: #f8f9fb;
+    border: 1px solid #edf0f5;
+    margin-top: 20px;
+}
+
+.admin-user-form h3 {
+    margin: 0 0 16px;
     font-size: 16px;
+    color: #111111;
 }
 
 .admin-iot-subtitle {
