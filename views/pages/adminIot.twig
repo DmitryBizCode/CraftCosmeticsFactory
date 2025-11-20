@@ -186,81 +186,84 @@
                     </script>
                 {% endif %}
 
-                <section class="admin-iot-grid">
-                    <div class="admin-iot-column">
-                        <div class="admin-iot-sensors-section">
-                            <h2 class="admin-users-title">IoT Sensors</h2>
-                            <div class="admin-iot-sensors-list">
-                                {% if iotSensors %}
-                                    {% for sensor in iotSensors %}
-                                        <article class="admin-iot-card"
-                                                 data-id="{{ sensor.id }}"
-                                                 data-name="{{ sensor.name }}"
-                                                 data-start-value="{{ sensor.start_value }}"
-                                                 data-end-value="{{ sensor.end_value }}"
-                                                 data-description="{{ sensor.description ?? '' }}">
-                                            <div class="admin-iot-info">
-                                                <h3>{{ sensor.name }}</h3>
-                                                <p class="admin-iot-meta">
-                                                    Range: ({{ sensor.start_value }}) - ({{ sensor.end_value }})
-                                                </p>
-                                                <p class="admin-iot-meta" style="margin-top: 6px; color: #6b6f78;">
-                                                    <strong>Used in recipes:</strong> {{ sensor.recipe_count|default(0) }}
-                                                </p>
-                                                {% if sensor.description %}
-                                                    <p class="admin-iot-description">{{ sensor.description }}</p>
-                                                {% endif %}
-                                            </div>
-                                            <div class="admin-product-actions">
-                                                <button class="admin-btn admin-btn-edit">Edit</button>
-                                                <button class="admin-btn admin-btn-delete" 
-                                                        data-sensor-id="{{ sensor.id }}"
-                                                        data-sensor-name="{{ sensor.name }}">Delete</button>
-                                            </div>
-                                        </article>
-                                    {% endfor %}
-                                {% else %}
-                                    <p style="text-align: center; color: #6b6f78; padding: 40px;">No IoT sensors found. Create your first sensor!</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="admin-eco-sessions-section">
-                            <h2 class="admin-users-title admin-iot-subtitle">Active Eco Sessions (eco_system)</h2>
-                            <div class="admin-table-wrapper">
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Recipe ID</th>
-                                            <th>Start Date</th>
-                                            <th>End Date</th>
-                                            <th>Staff ID</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% if ecoSystems %}
-                                            {% for eco in ecoSystems %}
-                                                <tr>
-                                                    <td>{{ eco.id }}</td>
-                                                    <td>{{ eco.recipe_id }}</td>
-                                                    <td>{{ eco.date_start }}</td>
-                                                    <td>{{ eco.date_end ?? 'N/A' }}</td>
-                                                    <td>{{ eco.staff_id ?? 'N/A' }}</td>
-                                                </tr>
-                                            {% endfor %}
-                                        {% else %}
+                <section class="admin-iot-layout">
+                    <div class="admin-eco-sessions-section-full">
+                        <h2 class="admin-users-title">Active Eco Sessions (eco_system)</h2>
+                        <div class="admin-table-wrapper">
+                            <table class="admin-table" style="text-align: center;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: center;">ID</th>
+                                        <th style="text-align: center;">Recipe ID</th>
+                                        <th style="text-align: center;">Description</th>
+                                        <th style="text-align: center;">Start Date</th>
+                                        <th style="text-align: center;">End Date</th>
+                                        <th style="text-align: center;">Staff ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if ecoSystems %}
+                                        {% for eco in ecoSystems %}
                                             <tr>
-                                                <td colspan="5" style="text-align: center; color: #6b6f78; padding: 20px;">No active eco sessions</td>
+                                                <td style="text-align: center;">{{ eco.id }}</td>
+                                                <td style="text-align: center;">{{ eco.recipe_id }}</td>
+                                                <td style="text-align: center;">{{ eco.description ?? 'N/A' }}</td>
+                                                <td style="text-align: center;">{{ eco.date_start }}</td>
+                                                <td style="text-align: center;">{{ eco.date_end ?? 'N/A' }}</td>
+                                                <td style="text-align: center;">{{ eco.staff_id ?? 'N/A' }}</td>
                                             </tr>
-                                        {% endif %}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="6" style="text-align: center; color: #6b6f78; padding: 20px;">No active eco sessions</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <aside class="admin-product-form admin-iot-form">
+                    <div class="admin-iot-grid">
+                        <div class="admin-iot-column">
+                            <div class="admin-iot-sensors-section">
+                                <h2 class="admin-users-title">IoT Sensors</h2>
+                                <div class="admin-iot-sensors-list">
+                                    {% if iotSensors %}
+                                        {% for sensor in iotSensors %}
+                                            <article class="admin-iot-card"
+                                                     data-id="{{ sensor.id }}"
+                                                     data-name="{{ sensor.name }}"
+                                                     data-start-value="{{ sensor.start_value }}"
+                                                     data-end-value="{{ sensor.end_value }}"
+                                                     data-description="{{ sensor.description ?? '' }}">
+                                                <div class="admin-iot-info">
+                                                    <h3>{{ sensor.name }}</h3>
+                                                    <p class="admin-iot-meta">
+                                                        Range: ({{ sensor.start_value }}) - ({{ sensor.end_value }})
+                                                    </p>
+                                                    <p class="admin-iot-meta" style="margin-top: 6px; color: #6b6f78;">
+                                                        <strong>Used in recipes:</strong> {{ sensor.recipe_count|default(0) }}
+                                                    </p>
+                                                    {% if sensor.description %}
+                                                        <p class="admin-iot-description">{{ sensor.description }}</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="admin-product-actions">
+                                                    <button class="admin-btn admin-btn-edit">Edit</button>
+                                                    <button class="admin-btn admin-btn-delete" 
+                                                            data-sensor-id="{{ sensor.id }}"
+                                                            data-sensor-name="{{ sensor.name }}">Delete</button>
+                                                </div>
+                                            </article>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p style="text-align: center; color: #6b6f78; padding: 40px;">No IoT sensors found. Create your first sensor!</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <aside class="admin-product-form admin-iot-form">
                         <h2>IoT Sensor Form</h2>
                         <p class="admin-form-hint">Create or edit an IoT sensor. Fields marked with * are required.</p>
 
@@ -303,6 +306,7 @@
                             </div>
                         </form>
                     </aside>
+                    </div>
                 </section>
             </main>
         </div>
