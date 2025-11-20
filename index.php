@@ -1,10 +1,10 @@
 <?php
 require 'vendor/autoload.php';
 
-use App\Services\ContainerService;
-use App\Services\Router;
-use App\Services\SQLService;
-use App\Services\TemplateService;
+use App\Services\Legacy\ContainerService;
+use App\Services\Common\Router;
+use App\Services\Database\SQLService;
+use App\Services\Common\TemplateService;
 
 $action = $_GET['action'] ?? null;
 $id = $_GET['id'] ?? null;

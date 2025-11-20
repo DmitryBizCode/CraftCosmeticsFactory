@@ -2,15 +2,15 @@
 
 namespace App\Controllers;
 
-use App\Services\CalculateShipments;
-use App\Services\ContainerService;
-use App\Services\IotService;
-use App\Services\Mail;
-use App\Services\PeopleService;
-use App\Services\PlaceService;
-use App\Services\RentService;
-use App\Services\SQLService;
-use App\Services\TemplateService;
+use App\Services\Legacy\CalculateShipments;
+use App\Services\Legacy\ContainerService;
+use App\Services\Iot\IotService;
+use App\Services\Common\Mail;
+use App\Services\User\PeopleService;
+use App\Services\Legacy\PlaceService;
+use App\Services\Legacy\RentService;
+use App\Services\Database\SQLService;
+use App\Services\Common\TemplateService;
 use Exception;
 use PDO;
 use App\Model\PeopleModel;

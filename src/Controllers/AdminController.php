@@ -2,36 +2,20 @@
 
 namespace App\Controllers;
 
-use App\Services\TemplateService;
-use App\Services\SQLService;
-use App\Services\ProductService;
-use App\Services\IotService;
-use App\Services\RecipeService;
-use App\Services\IotEcoService;
-use App\Services\ClientService;
-use App\Services\StaffService;
-use PDO;
+use App\Services\Common\TemplateService;
+use App\Services\Common\ResponseService;
+use App\Services\Admin\AdminActionService;
+use Exception;
 
 class AdminController
 {
     private TemplateService $templateService;
-    private ProductService $productService;
-    private IotService $iotService;
-    private RecipeService $recipeService;
-    private IotEcoService $iotEcoService;
-    private ClientService $clientService;
-    private StaffService $staffService;
+    private AdminActionService $adminActionService;
 
     public function __construct()
     {
         $this->templateService = new TemplateService();
-        $sqlService = new SQLService();
-        $this->productService = new ProductService($sqlService->getPdo());
-        $this->iotService = new IotService($sqlService->getPdo());
-        $this->recipeService = new RecipeService($sqlService->getPdo());
-        $this->iotEcoService = new IotEcoService($sqlService->getPdo());
-        $this->clientService = new ClientService($sqlService->getPdo());
-        $this->staffService = new StaffService($sqlService->getPdo());
+        $this->adminActionService = new AdminActionService();
     }
 
     /** Сторінка логіну в адмінку */
@@ -46,7 +30,7 @@ class AdminController
     /** Сторінка управління продуктами (інгредієнти) */
     public function getAdminProducts(): string
     {
-        $products = $this->productService->getAll();
+        $products = $this->adminActionService->getAllProducts();
         $success = isset($_GET['success']) && !empty($_GET['success']) ? $_GET['success'] : null;
         return $this->templateService->render('pages/adminProducts', [
             'homeNavBar' => null,
@@ -61,18 +45,12 @@ class AdminController
     public function createProduct(array $data): string
     {
         try {
-            $this->productService->create($data);
-            header('Location: index.php?action=adminProducts&success=created');
-            exit;
-        } catch (\Exception $e) {
-            $products = $this->productService->getAll();
-            return $this->templateService->render('pages/adminProducts', [
-                'homeNavBar' => null,
-                'footer' => null,
-                'currentPage' => 'products',
-                'products' => $products,
-                'error' => 'Error creating product: ' . $e->getMessage(),
-            ]);
+            $this->adminActionService->createProduct($data);
+            ResponseService::redirectWithSuccess('index.php?action=adminProducts', 'created');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminProducts', 'Error creating product: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -80,18 +58,12 @@ class AdminController
     public function updateProduct(int $id, array $data): string
     {
         try {
-            $this->productService->update($id, $data);
-            header('Location: index.php?action=adminProducts&success=updated');
-            exit;
-        } catch (\Exception $e) {
-            $products = $this->productService->getAll();
-            return $this->templateService->render('pages/adminProducts', [
-                'homeNavBar' => null,
-                'footer' => null,
-                'currentPage' => 'products',
-                'products' => $products,
-                'error' => 'Error updating product: ' . $e->getMessage(),
-            ]);
+            $this->adminActionService->updateProduct($id, $data);
+            ResponseService::redirectWithSuccess('index.php?action=adminProducts', 'updated');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminProducts', 'Error updating product: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -99,172 +71,55 @@ class AdminController
     public function deleteProduct(int $id): string
     {
         try {
-            $this->productService->delete($id);
-            header('Location: index.php?action=adminProducts&success=deleted');
-            exit;
-        } catch (\Exception $e) {
-            $products = $this->productService->getAll();
-            return $this->templateService->render('pages/adminProducts', [
-                'homeNavBar' => null,
-                'footer' => null,
-                'currentPage' => 'products',
-                'products' => $products,
-                'error' => 'Error deleting product: ' . $e->getMessage(),
-            ]);
+            $this->adminActionService->deleteProduct($id);
+            ResponseService::redirectWithSuccess('index.php?action=adminProducts', 'deleted');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminProducts', 'Error deleting product: ' . $e->getMessage());
+            return '';
         }
     }
 
     /** Сторінка управління рецептами */
     public function getAdminRecipes(): string
     {
-        $recipes = $this->recipeService->getAll();
-        $products = $this->productService->getAll();
-        $iotSensors = $this->iotService->getAll();
-        $success = isset($_GET['success']) && !empty($_GET['success']) ? $_GET['success'] : null;
-        
-        // Завантажуємо продукти та IoT сенсори для кожного рецепту
-        foreach ($recipes as &$recipe) {
-            // Перевіряємо наявність фото
-            if (empty($recipe['photo']) || $recipe['photo'] === null) {
-                $recipe['photo'] = 'default.png';
-            } else {
-                // Перевіряємо, чи існує файл фото
-                $photoPath = __DIR__ . '/../../image/recipes/' . $recipe['photo'];
-                if (!file_exists($photoPath)) {
-                    // Якщо файл не існує, оновлюємо БД - встановлюємо photo в NULL
-                    $this->recipeService->update($recipe['id'], [
-                        'name' => $recipe['name'],
-                        'time_to_complete' => $recipe['time_to_complete'],
-                        'description' => $recipe['description'],
-                        'photo' => null, // Видаляємо посилання на неіснуючий файл
-                    ]);
-                    $recipe['photo'] = 'default.png';
-                }
-            }
+        try {
+            $data = $this->adminActionService->getAllRecipesWithDetails();
+            $success = isset($_GET['success']) && !empty($_GET['success']) ? $_GET['success'] : null;
             
-            $recipe['products'] = $this->recipeService->getRecipeProducts($recipe['id']);
-            $recipe['iot_sensors'] = $this->recipeService->getRecipeIotSensors($recipe['id']);
-            
-            // Форматуємо продукти для JSON
-            $recipe['products_json'] = json_encode(array_map(function($p) {
-                return [
-                    'id' => $p['product_id'],
-                    'name' => $p['product_name'],
-                    'quantity' => $p['quantity'],
-                    'unit' => $p['unit']
-                ];
-            }, $recipe['products']));
-            
-            // Форматуємо IoT сенсори для JSON
-            $recipe['iot_sensors_json'] = json_encode(array_map(function($s) {
-                return $s['iot_id'];
-            }, $recipe['iot_sensors']));
+            return $this->templateService->render('pages/adminRecipes', [
+                'homeNavBar' => null,
+                'footer' => null,
+                'currentPage' => 'recipes',
+                'recipes' => $data['recipes'],
+                'products' => $data['products'],
+                'iotSensors' => $data['iotSensors'],
+                'success' => $success,
+            ]);
+        } catch (Exception $e) {
+            $data = $this->adminActionService->getAllRecipesWithDetails();
+            return $this->templateService->render('pages/adminRecipes', [
+                'homeNavBar' => null,
+                'footer' => null,
+                'currentPage' => 'recipes',
+                'recipes' => $data['recipes'],
+                'products' => $data['products'],
+                'iotSensors' => $data['iotSensors'],
+                'error' => 'Error loading recipes: ' . $e->getMessage(),
+            ]);
         }
-        
-        return $this->templateService->render('pages/adminRecipes', [
-            'homeNavBar' => null,
-            'footer' => null,
-            'currentPage' => 'recipes',
-            'recipes' => $recipes,
-            'products' => $products,
-            'iotSensors' => $iotSensors,
-            'success' => $success,
-        ]);
     }
 
     /** Створення нового рецепту */
     public function createRecipe(array $data, array $image): string
     {
         try {
-            $photo = null;
-            if (isset($image['photo']) && $image['photo']['error'] === UPLOAD_ERR_OK) {
-                $photo = $this->uploadRecipePhoto($image['photo']);
-            }
-
-            // Конвертуємо час з окремих компонентів (години, хвилини, секунди)
-            $hours = (float)($data['time_hours'] ?? 0);
-            $minutes = (float)($data['time_minutes'] ?? 0);
-            $seconds = (float)($data['time_seconds'] ?? 0);
-            // Точний розрахунок з максимальною точністю
-            $timeToComplete = round($hours + ($minutes / 60.0) + ($seconds / 3600.0), 4);
-
-            $recipeData = [
-                'name' => $data['name'],
-                'time_to_complete' => $timeToComplete,
-                'description' => $data['description'] ?? null,
-                'photo' => $photo,
-            ];
-
-            $recipeId = $this->recipeService->create($recipeData);
-
-            // Створюємо eco_system для рецепту
-            $ecoSystemId = $this->recipeService->createEcoSystem($recipeId);
-
-            // Додаємо продукти до рецепту
-            if (isset($data['products']) && !empty($data['products'])) {
-                // Перевіряємо, чи це JSON рядок або масив
-                if (is_string($data['products'])) {
-                    $products = json_decode($data['products'], true);
-                } else {
-                    $products = $data['products'];
-                }
-                
-                if (is_array($products)) {
-                    foreach ($products as $productData) {
-                        // Якщо це рядок JSON, декодуємо його
-                        if (is_string($productData)) {
-                            $productInfo = json_decode($productData, true);
-                        } else {
-                            $productInfo = $productData;
-                        }
-                        
-                        if ($productInfo && isset($productInfo['id']) && isset($productInfo['quantity'])) {
-                            $this->recipeService->addProductToRecipe(
-                                $recipeId,
-                                (int)$productInfo['id'],
-                                (int)$productInfo['quantity']
-                            );
-                        }
-                    }
-                }
-            }
-
-            // Додаємо IoT сенсори до eco_system
-            if (isset($data['iot_sensors']) && !empty($data['iot_sensors'])) {
-                // Перевіряємо, чи це JSON рядок або масив
-                if (is_string($data['iot_sensors'])) {
-                    $iotSensors = json_decode($data['iot_sensors'], true);
-                    if (json_last_error() !== JSON_ERROR_NONE) {
-                        error_log("JSON decode error for iot_sensors: " . json_last_error_msg() . " | Value: " . $data['iot_sensors']);
-                    }
-                } else {
-                    $iotSensors = $data['iot_sensors'];
-                }
-                
-                if (is_array($iotSensors) && !empty($iotSensors)) {
-                    foreach ($iotSensors as $iotId) {
-                        if (!empty($iotId)) {
-                            $this->recipeService->addIotSensorToEcoSystem($ecoSystemId, (int)$iotId);
-                        }
-                    }
-                }
-            }
-
-            header('Location: index.php?action=adminRecipes&success=created');
-            exit;
-        } catch (\Exception $e) {
-            $recipes = $this->recipeService->getAll();
-            $products = $this->productService->getAll();
-            $iotSensors = $this->iotService->getAll();
-            return $this->templateService->render('pages/adminRecipes', [
-                'homeNavBar' => null,
-                'footer' => null,
-                'currentPage' => 'recipes',
-                'recipes' => $recipes,
-                'products' => $products,
-                'iotSensors' => $iotSensors,
-                'error' => 'Error creating recipe: ' . $e->getMessage(),
-            ]);
+            $this->adminActionService->createRecipeWithDetails($data, $image);
+            ResponseService::redirectWithSuccess('index.php?action=adminRecipes', 'created');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminRecipes', 'Error creating recipe: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -272,110 +127,12 @@ class AdminController
     public function updateRecipe(int $id, array $data, array $image): string
     {
         try {
-            $recipe = $this->recipeService->getById($id);
-            if (!$recipe) {
-                throw new \Exception('Recipe not found');
-            }
-
-            $photo = $recipe['photo'];
-            if (isset($image['photo']) && $image['photo']['error'] === UPLOAD_ERR_OK) {
-                // Видаляємо старе фото
-                if ($photo) {
-                    $this->deleteRecipePhoto($photo);
-                }
-                $photo = $this->uploadRecipePhoto($image['photo']);
-            }
-
-            // Конвертуємо час з окремих компонентів (години, хвилини, секунди)
-            $hours = (float)($data['time_hours'] ?? 0);
-            $minutes = (float)($data['time_minutes'] ?? 0);
-            $seconds = (float)($data['time_seconds'] ?? 0);
-            // Точний розрахунок з максимальною точністю
-            $timeToComplete = round($hours + ($minutes / 60.0) + ($seconds / 3600.0), 4);
-
-            $recipeData = [
-                'name' => $data['name'],
-                'time_to_complete' => $timeToComplete,
-                'description' => $data['description'] ?? null,
-                'photo' => $photo,
-            ];
-
-            $this->recipeService->update($id, $recipeData);
-
-            // Оновлюємо продукти
-            $this->recipeService->clearRecipeProducts($id);
-            if (isset($data['products']) && !empty($data['products'])) {
-                // Перевіряємо, чи це JSON рядок або масив
-                if (is_string($data['products'])) {
-                    $products = json_decode($data['products'], true);
-                } else {
-                    $products = $data['products'];
-                }
-                
-                if (is_array($products)) {
-                    foreach ($products as $productData) {
-                        // Якщо це рядок JSON, декодуємо його
-                        if (is_string($productData)) {
-                            $productInfo = json_decode($productData, true);
-                        } else {
-                            $productInfo = $productData;
-                        }
-                        
-                        if ($productInfo && isset($productInfo['id']) && isset($productInfo['quantity'])) {
-                            $this->recipeService->addProductToRecipe(
-                                $id,
-                                (int)$productInfo['id'],
-                                (int)$productInfo['quantity']
-                            );
-                        }
-                    }
-                }
-            }
-
-            // Оновлюємо IoT сенсори
-            $ecoSystem = $this->recipeService->getEcoSystemByRecipeId($id);
-            if ($ecoSystem) {
-                // Отримуємо новий список IoT датчиків
-                $newIotIds = [];
-                if (isset($data['iot_sensors']) && !empty($data['iot_sensors'])) {
-                    // Перевіряємо, чи це JSON рядок або масив
-                    if (is_string($data['iot_sensors'])) {
-                        $iotSensors = json_decode($data['iot_sensors'], true);
-                        if (json_last_error() !== JSON_ERROR_NONE) {
-                            error_log("JSON decode error for iot_sensors: " . json_last_error_msg() . " | Value: " . $data['iot_sensors']);
-                        }
-                    } else {
-                        $iotSensors = $data['iot_sensors'];
-                    }
-                    
-                    if (is_array($iotSensors) && !empty($iotSensors)) {
-                        foreach ($iotSensors as $iotId) {
-                            if (!empty($iotId)) {
-                                $newIotIds[] = (int)$iotId;
-                            }
-                        }
-                    }
-                }
-                
-                // Оновлюємо датчики інкрементально (видаляємо тільки видалені, додаємо тільки нові)
-                $this->recipeService->updateEcoSystemIotSensors($ecoSystem['id'], $newIotIds);
-            }
-
-            header('Location: index.php?action=adminRecipes&success=updated');
-            exit;
-        } catch (\Exception $e) {
-            $recipes = $this->recipeService->getAll();
-            $products = $this->productService->getAll();
-            $iotSensors = $this->iotService->getAll();
-            return $this->templateService->render('pages/adminRecipes', [
-                'homeNavBar' => null,
-                'footer' => null,
-                'currentPage' => 'recipes',
-                'recipes' => $recipes,
-                'products' => $products,
-                'iotSensors' => $iotSensors,
-                'error' => 'Error updating recipe: ' . $e->getMessage(),
-            ]);
+            $this->adminActionService->updateRecipeWithDetails($id, $data, $image);
+            ResponseService::redirectWithSuccess('index.php?action=adminRecipes', 'updated');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminRecipes', 'Error updating recipe: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -383,27 +140,12 @@ class AdminController
     public function deleteRecipe(int $id): string
     {
         try {
-            $recipe = $this->recipeService->getById($id);
-            if ($recipe && !empty($recipe['photo']) && $recipe['photo'] !== 'default.png') {
-                // Видаляємо файл фото з папки
-                $this->deleteRecipePhoto($recipe['photo']);
-            }
-            $this->recipeService->delete($id);
-            header('Location: index.php?action=adminRecipes&success=deleted');
-            exit;
-        } catch (\Exception $e) {
-            $recipes = $this->recipeService->getAll();
-            $products = $this->productService->getAll();
-            $iotSensors = $this->iotService->getAll();
-            return $this->templateService->render('pages/adminRecipes', [
-                'homeNavBar' => null,
-                'footer' => null,
-                'currentPage' => 'recipes',
-                'recipes' => $recipes,
-                'products' => $products,
-                'iotSensors' => $iotSensors,
-                'error' => 'Error deleting recipe: ' . $e->getMessage(),
-            ]);
+            $this->adminActionService->deleteRecipe($id);
+            ResponseService::redirectWithSuccess('index.php?action=adminRecipes', 'deleted');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminRecipes', 'Error deleting recipe: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -411,577 +153,125 @@ class AdminController
     public function deleteRecipePhotoAction(int $id): string
     {
         try {
-            $recipe = $this->recipeService->getById($id);
-            if ($recipe && !empty($recipe['photo']) && $recipe['photo'] !== 'default.png') {
-                // Видаляємо файл з папки
-                $this->deleteRecipePhoto($recipe['photo']);
-                
-                // Оновлюємо БД - встановлюємо photo в NULL
-                $this->recipeService->update($id, [
-                    'name' => $recipe['name'],
-                    'time_to_complete' => $recipe['time_to_complete'],
-                    'description' => $recipe['description'],
-                    'photo' => null, // Явно встановлюємо null для видалення
-                ]);
-            }
-            header('Location: index.php?action=adminRecipes&success=photo_deleted');
-            exit;
-        } catch (\Exception $e) {
-            header('Location: index.php?action=adminRecipes&error=' . urlencode($e->getMessage()));
-            exit;
+            $this->adminActionService->deleteRecipePhoto($id);
+            ResponseService::redirectWithSuccess('index.php?action=adminRecipes', 'photo_deleted');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminRecipes', $e->getMessage());
+            return '';
         }
-    }
-
-    /** Завантаження фото рецепту */
-    private function uploadRecipePhoto(array $file): string
-    {
-        $hashName = $this->recipeService->generateImageHash($file['name']);
-        $targetDir = __DIR__ . '/../../image/recipes/';
-        
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0755, true);
-        }
-        
-        $targetPath = $targetDir . $hashName;
-        
-        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-            throw new \Exception('Failed to upload image');
-        }
-        
-        return $hashName;
-    }
-
-    /** Видалення фото рецепту */
-    private function deleteRecipePhoto(string $photoName): void
-    {
-        $photoPath = __DIR__ . '/../../image/recipes/' . $photoName;
-        if (file_exists($photoPath)) {
-            unlink($photoPath);
-        }
-    }
-
-    /** Конвертація часу в години */
-    private function convertTimeToHours(float $value, string $unit): float
-    {
-        return match($unit) {
-            'seconds' => round($value / 3600, 2),
-            'minutes' => round($value / 60, 2),
-            'hours' => round($value, 2),
-            'days' => round($value * 24, 2),
-            default => round($value, 2), // За замовчуванням години
-        };
-    }
-
-    /** Форматування годин в читабельний формат */
-    public function formatTime(float $hours): string
-    {
-        // Конвертуємо в секунди для точного розрахунку
-        $totalSeconds = (int)round($hours * 3600);
-        
-        $days = floor($totalSeconds / 86400);
-        $hours_remain = floor(($totalSeconds % 86400) / 3600);
-        $minutes = floor(($totalSeconds % 3600) / 60);
-        $seconds = $totalSeconds % 60;
-        
-        $parts = [];
-        if ($days > 0) {
-            $parts[] = $days . ' day' . ($days > 1 ? 's' : '');
-        }
-        if ($hours_remain > 0) {
-            $parts[] = $hours_remain . ' hour' . ($hours_remain > 1 ? 's' : '');
-        }
-        if ($minutes > 0) {
-            $parts[] = $minutes . ' min' . ($minutes > 1 ? 's' : '');
-        }
-        if ($seconds > 0 || count($parts) === 0) {
-            $parts[] = $seconds . ' sec';
-        }
-        
-        return implode(' ', $parts);
     }
 
     /** Сторінка контролю еко-системи рецепту */
     public function getAdminEcoSystem(int $recipeId): string
     {
-        $recipe = $this->recipeService->getById($recipeId);
-        if (!$recipe) {
-            header('Location: index.php?action=adminRecipes&error=' . urlencode('Recipe not found'));
-            exit;
-        }
-
-        $ecoSystem = $this->recipeService->getEcoSystemByRecipeId($recipeId);
-        if (!$ecoSystem) {
-            header('Location: index.php?action=adminRecipes&error=' . urlencode('Eco system not found'));
-            exit;
-        }
-
-        // Отримуємо IoT сенсори для цієї eco_system
-        $iotSensors = $this->iotEcoService->getIotSensorsByEcoSystemId($ecoSystem['id']);
-        
-        // Для кожного сенсора отримуємо останнє значення та історію
-        foreach ($iotSensors as &$sensor) {
-            $sensor['current_value'] = $this->iotEcoService->getLastValue($sensor['id']);
-            $sensor['history'] = $this->iotEcoService->getValuesHistory($sensor['id'], 20);
+        try {
+            $data = $this->adminActionService->getEcoSystemPageData($recipeId);
             
-            // Якщо немає значення, встановлюємо початкове
-            if ($sensor['current_value'] === null) {
-                $startValue = $sensor['start_value'] ?? $sensor['iot_start_value'] ?? 0;
-                $endValue = $sensor['end_value'] ?? $sensor['iot_end_value'] ?? 100;
-                $initialValue = ($startValue + $endValue) / 2;
-                $this->iotEcoService->addValue($sensor['id'], $initialValue);
-                $sensor['current_value'] = $initialValue;
-            }
+            return $this->templateService->render('pages/adminEcoSystem', [
+                'homeNavBar' => null,
+                'footer' => null,
+                'currentPage' => 'recipes',
+                'recipeId' => $recipeId,
+                'recipe' => $data['recipe'],
+                'ecoSystem' => $data['ecoSystem'],
+                'iotSensors' => $data['iotSensors'],
+                'timeToComplete' => $data['timeToComplete'],
+                'recipeProducts' => $data['recipeProducts'],
+                'staffMembers' => $data['staffMembers'],
+            ]);
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminRecipes', $e->getMessage());
+            return '';
         }
-
-        // Форматуємо час виготовлення рецепту
-        $timeToComplete = null;
-        if (isset($recipe['time_to_complete']) && $recipe['time_to_complete'] !== null) {
-            $timeToComplete = $this->formatTime((float)$recipe['time_to_complete']);
-        }
-
-        // Отримуємо продукти рецепту
-        $recipeProducts = $this->recipeService->getRecipeProducts($recipeId);
-
-        // Отримуємо список staff для вибору
-        $sqlService = new SQLService();
-        $pdo = $sqlService->getPdo();
-        $stmt = $pdo->prepare("SELECT id, first_name, last_name, email FROM staff ORDER BY first_name, last_name");
-        $stmt->execute();
-        $staffMembers = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-        return $this->templateService->render('pages/adminEcoSystem', [
-            'homeNavBar' => null,
-            'footer' => null,
-            'currentPage' => 'recipes',
-            'recipeId' => $recipeId,
-            'recipe' => $recipe,
-            'ecoSystem' => $ecoSystem,
-            'iotSensors' => $iotSensors,
-            'timeToComplete' => $timeToComplete,
-            'recipeProducts' => $recipeProducts,
-            'staffMembers' => $staffMembers,
-        ]);
     }
 
     /** API: Генерація нового значення для датчика */
     public function generateIotValue(int $iotEcoId): string
     {
-        header('Content-Type: application/json');
-        
         try {
-            // Отримуємо інформацію про датчик
-            $sqlService = new SQLService();
-            $pdo = $sqlService->getPdo();
-            $stmt = $pdo->prepare("
-                SELECT ie.*, i.start_value as iot_start_value, i.end_value as iot_end_value, ie.eco_system_id
-                FROM iot_eco ie 
-                JOIN iot i ON ie.iot_id = i.id 
-                WHERE ie.id = :id
-            ");
-            $stmt->execute([':id' => $iotEcoId]);
-            $sensor = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$sensor) {
-                echo json_encode(['error' => 'Sensor not found']);
-                return '';
-            }
-
-            // Перевіряємо, чи активна eco_system
-            $stmt = $pdo->prepare("SELECT is_active FROM eco_system WHERE id = :id");
-            $stmt->execute([':id' => $sensor['eco_system_id']]);
-            $ecoSystem = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$ecoSystem || !$ecoSystem['is_active']) {
-                echo json_encode(['error' => 'Eco system is not active']);
-                return '';
-            }
-
-            $startValue = $sensor['start_value'] ?? $sensor['iot_start_value'] ?? 0;
-            $endValue = $sensor['end_value'] ?? $sensor['iot_end_value'] ?? 100;
-            $currentValue = $this->iotEcoService->getLastValue($iotEcoId);
-            
-            // Отримуємо історію даних
-            $history = $this->iotEcoService->getValuesHistory($iotEcoId, 10);
-            $historyValues = array_column($history, 'value');
-            
-            // Отримуємо дані про інші датчики в цій eco_system
-            $allSensors = $this->iotEcoService->getIotSensorsByEcoSystemId($sensor['eco_system_id']);
-            $otherSensors = [];
-            $previousValues = $this->iotEcoService->getLastValuesForEcoSystem($sensor['eco_system_id']);
-            
-            foreach ($allSensors as $otherSensor) {
-                if ($otherSensor['id'] != $iotEcoId) {
-                    $otherCurrentValue = $previousValues[$otherSensor['id']] ?? null;
-                    if ($otherCurrentValue !== null) {
-                        // Отримуємо попереднє значення для розрахунку зміни
-                        $otherHistory = $this->iotEcoService->getValuesHistory($otherSensor['id'], 2);
-                        $otherPreviousValue = count($otherHistory) > 1 ? $otherHistory[0]['value'] : $otherCurrentValue;
-                        $otherChange = $otherCurrentValue - $otherPreviousValue;
-                        
-                        $otherStartValue = $otherSensor['start_value'] ?? $otherSensor['iot_start_value'] ?? 0;
-                        $otherEndValue = $otherSensor['end_value'] ?? $otherSensor['iot_end_value'] ?? 100;
-                        $otherRange = $otherEndValue - $otherStartValue;
-                        
-                        $otherSensors[] = [
-                            'id' => $otherSensor['id'],
-                            'value' => $otherCurrentValue,
-                            'change' => $otherChange,
-                            'range' => $otherRange
-                        ];
-                    }
-                }
-            }
-
-            // Використовуємо новий генератор з історією та залежностями
-            $generator = new \App\Services\IotDataGenerator();
-            $result = $generator->generateNextValue(
-                $currentValue,
-                $startValue,
-                $endValue,
-                $iotEcoId,
-                time(),
-                $historyValues,
-                $otherSensors
-            );
-            
-            // Зберігаємо нове значення
-            $this->iotEcoService->addValue($iotEcoId, $result['value']);
-
-            // Якщо значення критичне, збільшуємо лічильник
-            if ($result['is_critical']) {
-                $this->iotEcoService->incrementCriticalWarnings($iotEcoId);
-            }
-
-            echo json_encode([
-                'success' => true,
-                'value' => $result['value'],
-                'is_critical' => $result['is_critical'],
-                'warning_type' => $result['warning_type'],
-                'distance_to_min' => $result['distance_to_min'],
-                'distance_to_max' => $result['distance_to_max'],
-                'timestamp' => date('Y-m-d H:i:s')
-            ]);
-        } catch (\Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
+            $result = $this->adminActionService->generateIotValue($iotEcoId);
+            return ResponseService::jsonSuccess($result);
+        } catch (Exception $e) {
+            return ResponseService::jsonError($e->getMessage(), 400);
         }
-        
-        return '';
     }
 
     /** API: Встановлення значення вручну */
     public function setIotValue(int $iotEcoId, float $value): string
     {
-        header('Content-Type: application/json');
-        
         try {
-            // Отримуємо інформацію про датчик
-            $sqlService = new SQLService();
-            $pdo = $sqlService->getPdo();
-            $stmt = $pdo->prepare("
-                SELECT ie.*, i.start_value as iot_start_value, i.end_value as iot_end_value, ie.eco_system_id
-                FROM iot_eco ie 
-                JOIN iot i ON ie.iot_id = i.id 
-                WHERE ie.id = :id
-            ");
-            $stmt->execute([':id' => $iotEcoId]);
-            $sensor = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$sensor) {
-                echo json_encode(['error' => 'Sensor not found']);
-                return '';
-            }
-
-            $startValue = $sensor['start_value'] ?? $sensor['iot_start_value'] ?? 0;
-            $endValue = $sensor['end_value'] ?? $sensor['iot_end_value'] ?? 100;
-            $range = $endValue - $startValue;
-            
-            // Отримуємо попереднє значення для розрахунку зміни
-            $previousValue = $this->iotEcoService->getLastValue($iotEcoId);
-            if ($previousValue === null) {
-                $previousValue = ($startValue + $endValue) / 2;
-            }
-            
-            // Розраховуємо зміну в процентах від range
-            $change = $value - $previousValue;
-            $changePercent = ($change / $range) * 100; // Зміна в % від range
-            
-            // Зберігаємо нове значення
-            $this->iotEcoService->setValue($iotEcoId, $value);
-            
-            // Отримуємо всі інші датчики в eco_system
-            $allSensors = $this->iotEcoService->getIotSensorsByEcoSystemId($sensor['eco_system_id']);
-            $updatedSensors = [];
-            
-            // Змінюємо всі інші датчики на 25% від зміни цього датчика
-            foreach ($allSensors as $otherSensor) {
-                if ($otherSensor['id'] != $iotEcoId) {
-                    $otherCurrentValue = $this->iotEcoService->getLastValue($otherSensor['id']);
-                    if ($otherCurrentValue !== null) {
-                        $otherStartValue = $otherSensor['start_value'] ?? $otherSensor['iot_start_value'] ?? 0;
-                        $otherEndValue = $otherSensor['end_value'] ?? $otherSensor['iot_end_value'] ?? 100;
-                        $otherRange = $otherEndValue - $otherStartValue;
-                        
-                        // 25% від зміни (випадково вибираємо напрямок в + або -)
-                        $influencePercent = 0.25; // 25%
-                        $influence = ($changePercent * $influencePercent / 100) * $otherRange;
-                        
-                        // Випадково вверх або вниз
-                        $direction = mt_rand(0, 1) ? 1 : -1;
-                        $newOtherValue = $otherCurrentValue + ($influence * $direction);
-                        
-                        // Обмежуємо в межах range
-                        $newOtherValue = max($otherStartValue, min($otherEndValue, $newOtherValue));
-                        
-                        // Зберігаємо нове значення
-                        $this->iotEcoService->setValue($otherSensor['id'], $newOtherValue);
-                        
-                        $updatedSensors[] = [
-                            'id' => $otherSensor['id'],
-                            'old_value' => $otherCurrentValue,
-                            'new_value' => $newOtherValue,
-                            'change' => $newOtherValue - $otherCurrentValue
-                        ];
-                    }
-                }
-            }
-            
-            // Перевірка на критичні значення
-            $criticalThreshold = $range * 0.05;
-            $distanceToMin = $value - $startValue;
-            $distanceToMax = $endValue - $value;
-            $isCritical = false;
-            $warningType = null;
-            
-            if ($distanceToMin <= $criticalThreshold) {
-                $isCritical = true;
-                $warningType = 'min';
-            } elseif ($distanceToMax <= $criticalThreshold) {
-                $isCritical = true;
-                $warningType = 'max';
-            }
-            
-            // Якщо значення критичне, збільшуємо лічильник
-            if ($isCritical) {
-                $this->iotEcoService->incrementCriticalWarnings($iotEcoId);
-            }
-            
-            echo json_encode([
-                'success' => true,
-                'value' => $value,
-                'change_percent' => round($changePercent, 2),
-                'is_critical' => $isCritical,
-                'warning_type' => $warningType,
-                'updated_sensors' => $updatedSensors,
-                'distance_to_min' => round($distanceToMin, 2),
-                'distance_to_max' => round($distanceToMax, 2),
-                'timestamp' => date('Y-m-d H:i:s')
-            ]);
-        } catch (\Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
+            $result = $this->adminActionService->setIotValue($iotEcoId, $value);
+            return ResponseService::jsonSuccess($result);
+        } catch (Exception $e) {
+            return ResponseService::jsonError($e->getMessage(), 400);
         }
-        
-        return '';
     }
 
     /** API: Отримання даних для графіків */
     public function getIotData(int $iotEcoId): string
     {
-        header('Content-Type: application/json');
-        
         try {
-            // Отримуємо інформацію про датчик для перевірки критичних значень
-            $sqlService = new SQLService();
-            $pdo = $sqlService->getPdo();
-            $stmt = $pdo->prepare("
-                SELECT ie.*, i.start_value as iot_start_value, i.end_value as iot_end_value
-                FROM iot_eco ie 
-                JOIN iot i ON ie.iot_id = i.id 
-                WHERE ie.id = :id
-            ");
-            $stmt->execute([':id' => $iotEcoId]);
-            $sensor = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            $history = $this->iotEcoService->getValuesHistory($iotEcoId, 30);
-            $currentValue = $this->iotEcoService->getLastValue($iotEcoId);
-            
-            // Форматуємо дані для графіка
-            $labels = [];
-            $values = [];
-            
-            foreach ($history as $record) {
-                $labels[] = date('H:i:s', strtotime($record['created_at']));
-                $values[] = (float)$record['value'];
-            }
-            
-            // Перевірка на критичні значення
-            $isCritical = false;
-            $warningType = null;
-            if ($sensor && $currentValue !== null) {
-                $startValue = $sensor['start_value'] ?? $sensor['iot_start_value'] ?? 0;
-                $endValue = $sensor['end_value'] ?? $sensor['iot_end_value'] ?? 100;
-                $range = $endValue - $startValue;
-                $criticalThreshold = $range * 0.05;
-                $distanceToMin = $currentValue - $startValue;
-                $distanceToMax = $endValue - $currentValue;
-                
-                if ($distanceToMin <= $criticalThreshold) {
-                    $isCritical = true;
-                    $warningType = 'min';
-                } elseif ($distanceToMax <= $criticalThreshold) {
-                    $isCritical = true;
-                    $warningType = 'max';
-                }
-            }
-            
-            echo json_encode([
-                'success' => true,
-                'labels' => $labels,
-                'values' => $values,
-                'current_value' => $currentValue,
-                'is_critical' => $isCritical,
-                'warning_type' => $warningType
-            ]);
-        } catch (\Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
+            $result = $this->adminActionService->getIotDataForGraph($iotEcoId);
+            return ResponseService::jsonSuccess($result);
+        } catch (Exception $e) {
+            return ResponseService::jsonError($e->getMessage(), 400);
         }
-        
-        return '';
     }
 
     /** API: Запуск/зупинка eco_system */
     public function toggleEcoSystem(int $ecoSystemId, bool $isActive): string
     {
-        header('Content-Type: application/json');
-        
         try {
-            $this->recipeService->updateEcoSystemStatus($ecoSystemId, $isActive);
-            
-            // Отримуємо оновлені дані eco_system
-            $sqlService = new SQLService();
-            $pdo = $sqlService->getPdo();
-            $stmt = $pdo->prepare("SELECT * FROM eco_system WHERE id = :id");
-            $stmt->execute([':id' => $ecoSystemId]);
-            $ecoSystem = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            echo json_encode([
-                'success' => true,
-                'is_active' => $isActive,
-                'date_start' => $ecoSystem['date_start'] ?? null,
-                'date_end' => $ecoSystem['date_end'] ?? null,
-                'message' => $isActive ? 'Eco system started' : 'Eco system stopped'
-            ]);
-        } catch (\Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
+            $result = $this->adminActionService->updateEcoSystemStatus($ecoSystemId, $isActive);
+            return ResponseService::jsonSuccess($result);
+        } catch (Exception $e) {
+            return ResponseService::jsonError($e->getMessage(), 400);
         }
-        
-        return '';
     }
 
     /** API: Оновлення опису eco_system */
     public function updateEcoSystemDescription(int $ecoSystemId, string $description): string
     {
-        header('Content-Type: application/json');
-        
         try {
-            $this->recipeService->updateEcoSystemDescription($ecoSystemId, $description);
-            echo json_encode([
-                'success' => true,
-                'description' => $description
-            ]);
-        } catch (\Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
+            $result = $this->adminActionService->updateEcoSystemDescription($ecoSystemId, $description);
+            return ResponseService::jsonSuccess($result);
+        } catch (Exception $e) {
+            return ResponseService::jsonError($e->getMessage(), 400);
         }
-        
-        return '';
     }
 
+    /** API: Оновлення staff для eco_system */
     public function updateEcoSystemStaff(int $ecoSystemId, ?int $staffId): string
     {
-        header('Content-Type: application/json');
-        
         try {
-            $this->recipeService->updateEcoSystemStaff($ecoSystemId, $staffId);
-            echo json_encode([
-                'success' => true,
-                'staff_id' => $staffId
-            ]);
-        } catch (\Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
+            $result = $this->adminActionService->updateEcoSystemStaff($ecoSystemId, $staffId);
+            return ResponseService::jsonSuccess($result);
+        } catch (Exception $e) {
+            return ResponseService::jsonError($e->getMessage(), 400);
         }
-        
-        return '';
     }
 
     /** Сторінка статистики IoT датчиків */
     public function getAdminIotStats(int $recipeId): string
     {
-        $recipe = $this->recipeService->getById($recipeId);
-        if (!$recipe) {
-            header('Location: index.php?action=adminRecipes&error=' . urlencode('Recipe not found'));
-            exit;
-        }
-
-        $ecoSystem = $this->recipeService->getEcoSystemByRecipeId($recipeId);
-        if (!$ecoSystem) {
-            header('Location: index.php?action=adminRecipes&error=' . urlencode('Eco system not found'));
-            exit;
-        }
-
-        // Отримуємо IoT сенсори для цієї eco_system
-        $iotSensors = $this->iotEcoService->getIotSensorsByEcoSystemId($ecoSystem['id']);
-        
-        // Отримуємо параметр period з GET (за замовчуванням 7 днів)
-        // Також підтримуємо старий параметр 'days' для зворотної сумісності
-        if (isset($_GET['period'])) {
-            $period = $_GET['period'];
-        } elseif (isset($_GET['days'])) {
-            $period = (string)(int)$_GET['days'];
-        } else {
-            $period = '7';
-        }
-        
-        // Визначаємо dateFrom для статистики
-        if ($period === 'hour') {
-            $dateFrom = date('Y-m-d H:i:s', strtotime('-1 hour'));
-        } elseif ($period === 'day') {
-            $dateFrom = date('Y-m-d H:i:s', strtotime('-1 day'));
-        } else {
-            $days = (int)$period;
-            if ($days <= 0) {
-                $days = 7;
-            }
-            $dateFrom = date('Y-m-d H:i:s', strtotime("-{$days} days"));
-        }
-        
-        $sensorsStats = [];
-        foreach ($iotSensors as $sensor) {
-            // Отримуємо статистику з реальної БД
-            $stats = $this->iotEcoService->getStatisticsForSensor($sensor['id'], $dateFrom);
-            $histogram = $this->iotEcoService->getHistogramData($sensor['id'], $period);
+        try {
+            $period = $_GET['period'] ?? $_GET['days'] ?? '7';
+            $data = $this->adminActionService->getIotStatsForRecipe($recipeId, $period);
             
-            $sensorsStats[] = [
-                'id' => $sensor['id'],
-                'name' => $sensor['iot_name'],
-                'start_value' => $sensor['iot_start_value'] ?? 0,
-                'end_value' => $sensor['iot_end_value'] ?? 100,
-                'critical_warnings_count' => (int)($sensor['critical_warnings_count'] ?? 0),
-                'avg' => $stats['avg'],
-                'min' => $stats['min'],
-                'max' => $stats['max'],
-                'count' => $stats['count'],
-                'histogram' => $histogram,
-            ];
+            return $this->templateService->render('pages/adminIotStats', [
+                'homeNavBar' => null,
+                'footer' => null,
+                'currentPage' => 'recipes',
+                'recipeId' => $recipeId,
+                'recipe' => $data['recipe'],
+                'sensorsStats' => $data['sensorsStats'],
+                'period' => $data['period'],
+            ]);
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminRecipes', $e->getMessage());
+            return '';
         }
-
-        return $this->templateService->render('pages/adminIotStats', [
-            'homeNavBar' => null,
-            'footer' => null,
-            'currentPage' => 'recipes',
-            'recipeId' => $recipeId,
-            'recipe' => $recipe,
-            'sensorsStats' => $sensorsStats,
-            'period' => $period,
-        ]);
     }
 
     /** Сторінка всіх замовлень */
@@ -1007,8 +297,8 @@ class AdminController
     /** Сторінка користувачів (клієнти та співробітники) */
     public function getAdminUsers(): string
     {
-        $clients = $this->clientService->getAll();
-        $staff = $this->staffService->getAll();
+        $clients = $this->adminActionService->getAllClients();
+        $staff = $this->adminActionService->getAllStaff();
         $success = isset($_GET['success']) && !empty($_GET['success']) ? $_GET['success'] : null;
         $error = isset($_GET['error']) && !empty($_GET['error']) ? $_GET['error'] : null;
         
@@ -1027,12 +317,12 @@ class AdminController
     public function createClient(array $data): string
     {
         try {
-            $this->clientService->create($data);
-            header('Location: index.php?action=adminUsers&success=client_created');
-            exit;
-        } catch (\Exception $e) {
-            header('Location: index.php?action=adminUsers&error=' . urlencode('Error creating client: ' . $e->getMessage()));
-            exit;
+            $this->adminActionService->createClient($data);
+            ResponseService::redirectWithSuccess('index.php?action=adminUsers', 'client_created');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminUsers', 'Error creating client: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -1040,12 +330,12 @@ class AdminController
     public function updateClient(int $id, array $data): string
     {
         try {
-            $this->clientService->update($id, $data);
-            header('Location: index.php?action=adminUsers&success=client_updated');
-            exit;
-        } catch (\Exception $e) {
-            header('Location: index.php?action=adminUsers&error=' . urlencode('Error updating client: ' . $e->getMessage()));
-            exit;
+            $this->adminActionService->updateClient($id, $data);
+            ResponseService::redirectWithSuccess('index.php?action=adminUsers', 'client_updated');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminUsers', 'Error updating client: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -1053,12 +343,12 @@ class AdminController
     public function deleteClient(int $id): string
     {
         try {
-            $this->clientService->delete($id);
-            header('Location: index.php?action=adminUsers&success=client_deleted');
-            exit;
-        } catch (\Exception $e) {
-            header('Location: index.php?action=adminUsers&error=' . urlencode('Error deleting client: ' . $e->getMessage()));
-            exit;
+            $this->adminActionService->deleteClient($id);
+            ResponseService::redirectWithSuccess('index.php?action=adminUsers', 'client_deleted');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminUsers', 'Error deleting client: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -1066,12 +356,12 @@ class AdminController
     public function createStaff(array $data): string
     {
         try {
-            $this->staffService->create($data);
-            header('Location: index.php?action=adminUsers&success=staff_created');
-            exit;
-        } catch (\Exception $e) {
-            header('Location: index.php?action=adminUsers&error=' . urlencode('Error creating staff: ' . $e->getMessage()));
-            exit;
+            $this->adminActionService->createStaff($data);
+            ResponseService::redirectWithSuccess('index.php?action=adminUsers', 'staff_created');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminUsers', 'Error creating staff: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -1079,12 +369,12 @@ class AdminController
     public function updateStaff(int $id, array $data): string
     {
         try {
-            $this->staffService->update($id, $data);
-            header('Location: index.php?action=adminUsers&success=staff_updated');
-            exit;
-        } catch (\Exception $e) {
-            header('Location: index.php?action=adminUsers&error=' . urlencode('Error updating staff: ' . $e->getMessage()));
-            exit;
+            $this->adminActionService->updateStaff($id, $data);
+            ResponseService::redirectWithSuccess('index.php?action=adminUsers', 'staff_updated');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminUsers', 'Error updating staff: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -1092,55 +382,53 @@ class AdminController
     public function deleteStaff(int $id): string
     {
         try {
-            $this->staffService->delete($id);
-            header('Location: index.php?action=adminUsers&success=staff_deleted');
-            exit;
-        } catch (\Exception $e) {
-            header('Location: index.php?action=adminUsers&error=' . urlencode('Error deleting staff: ' . $e->getMessage()));
-            exit;
+            $this->adminActionService->deleteStaff($id);
+            ResponseService::redirectWithSuccess('index.php?action=adminUsers', 'staff_deleted');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminUsers', 'Error deleting staff: ' . $e->getMessage());
+            return '';
         }
     }
 
     /** Сторінка управління IoT / Eco system */
     public function getAdminIot(): string
     {
-        $iotSensors = $this->iotService->getAll();
-        
-        // Додаємо кількість рецептів для кожного датчика
-        foreach ($iotSensors as &$sensor) {
-            $sensor['recipe_count'] = $this->iotService->getRecipeCountForIot($sensor['id']);
+        try {
+            $data = $this->adminActionService->getIotManagementPageData();
+            $success = isset($_GET['success']) && !empty($_GET['success']) ? $_GET['success'] : null;
+            
+            return $this->templateService->render('pages/adminIot', [
+                'homeNavBar' => null,
+                'footer' => null,
+                'currentPage' => 'iot',
+                'iotSensors' => $data['iotSensors'],
+                'ecoSystems' => $data['ecoSystems'],
+                'success' => $success,
+            ]);
+        } catch (Exception $e) {
+            $data = $this->adminActionService->getIotManagementPageData();
+            return $this->templateService->render('pages/adminIot', [
+                'homeNavBar' => null,
+                'footer' => null,
+                'currentPage' => 'iot',
+                'iotSensors' => $data['iotSensors'],
+                'ecoSystems' => $data['ecoSystems'],
+                'error' => 'Error loading IoT sensors: ' . $e->getMessage(),
+            ]);
         }
-        
-        $ecoSystems = $this->iotService->getEcoSystems();
-        $success = isset($_GET['success']) && !empty($_GET['success']) ? $_GET['success'] : null;
-        return $this->templateService->render('pages/adminIot', [
-            'homeNavBar' => null,
-            'footer' => null,
-            'currentPage' => 'iot',
-            'iotSensors' => $iotSensors,
-            'ecoSystems' => $ecoSystems,
-            'success' => $success,
-        ]);
     }
 
     /** Створення нового IoT датчика */
     public function createIotSensor(array $data): string
     {
         try {
-            $this->iotService->create($data);
-            header('Location: index.php?action=adminIot&success=created');
-            exit;
-        } catch (\Exception $e) {
-            $iotSensors = $this->iotService->getAll();
-            $ecoSystems = $this->iotService->getEcoSystems();
-            return $this->templateService->render('pages/adminIot', [
-                'homeNavBar' => null,
-                'footer' => null,
-                'currentPage' => 'iot',
-                'iotSensors' => $iotSensors,
-                'ecoSystems' => $ecoSystems,
-                'error' => 'Error creating IoT sensor: ' . $e->getMessage(),
-            ]);
+            $this->adminActionService->createIotSensor($data);
+            ResponseService::redirectWithSuccess('index.php?action=adminIot', 'created');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminIot', 'Error creating IoT sensor: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -1148,20 +436,12 @@ class AdminController
     public function updateIotSensor(int $id, array $data): string
     {
         try {
-            $this->iotService->update($id, $data);
-            header('Location: index.php?action=adminIot&success=updated');
-            exit;
-        } catch (\Exception $e) {
-            $iotSensors = $this->iotService->getAll();
-            $ecoSystems = $this->iotService->getEcoSystems();
-            return $this->templateService->render('pages/adminIot', [
-                'homeNavBar' => null,
-                'footer' => null,
-                'currentPage' => 'iot',
-                'iotSensors' => $iotSensors,
-                'ecoSystems' => $ecoSystems,
-                'error' => 'Error updating IoT sensor: ' . $e->getMessage(),
-            ]);
+            $this->adminActionService->updateIotSensor($id, $data);
+            ResponseService::redirectWithSuccess('index.php?action=adminIot', 'updated');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminIot', 'Error updating IoT sensor: ' . $e->getMessage());
+            return '';
         }
     }
 
@@ -1169,20 +449,12 @@ class AdminController
     public function deleteIotSensor(int $id): string
     {
         try {
-            $this->iotService->delete($id);
-            header('Location: index.php?action=adminIot&success=deleted');
-            exit;
-        } catch (\Exception $e) {
-            $iotSensors = $this->iotService->getAll();
-            $ecoSystems = $this->iotService->getEcoSystems();
-            return $this->templateService->render('pages/adminIot', [
-                'homeNavBar' => null,
-                'footer' => null,
-                'currentPage' => 'iot',
-                'iotSensors' => $iotSensors,
-                'ecoSystems' => $ecoSystems,
-                'error' => 'Error deleting IoT sensor: ' . $e->getMessage(),
-            ]);
+            $this->adminActionService->deleteIotSensor($id);
+            ResponseService::redirectWithSuccess('index.php?action=adminIot', 'deleted');
+            return '';
+        } catch (Exception $e) {
+            ResponseService::redirectWithError('index.php?action=adminIot', 'Error deleting IoT sensor: ' . $e->getMessage());
+            return '';
         }
     }
 }
