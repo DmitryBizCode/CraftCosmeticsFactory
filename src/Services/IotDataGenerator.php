@@ -53,42 +53,71 @@ class IotDataGenerator
         $range = $endValue - $startValue;
         $midValue = ($startValue + $endValue) / 2;
         $criticalThreshold = $range * 0.05; // 5% від range - критична зона
+        $maxChangeAllowed = $range * 0.05; // МАКСИМУМ 5% від range - максимальна зміна
 
-        // 1. АНАЛІЗ ІСТОРІЇ - визначаємо тренд та волатильність
-        $trendFromHistory = 0;
-        $volatility = 0;
-        $meanValue = $currentValue;
-        if (count($history) >= 3) {
-            $recentValues = array_slice($history, -10); // Останні 10 значень
-            $trendAnalysis = $this->analyzeTrend($recentValues);
-            $trendFromHistory = $trendAnalysis['slope'] * 0.3; // Пом'якшений тренд
-            $volatility = $trendAnalysis['volatility'] * 0.4;
-            $meanValue = $trendAnalysis['mean'];
+        // Визначаємо поточне положення відносно меж (в процентах)
+        $distanceFromStart = $currentValue - $startValue;
+        $distanceFromEnd = $endValue - $currentValue;
+        $percentFromStart = ($distanceFromStart / $range) * 100; // Від 0 до 100%
+        $percentFromEnd = ($distanceFromEnd / $range) * 100; // Від 0 до 100%
+
+        // Зони балансування
+        $safeZoneMin = 10; // 10% від початку - нижня межа безпечної зони
+        $safeZoneMax = 90; // 90% від початку - верхня межа безпечної зони
+        $criticalZone = 5; // 5% від меж - критична зона
+
+        // 1. ОСНОВНЕ КОЛИВАННЯ (у межах норми)
+        // Невеликі синусоїдальні коливання для природного руху
+        // Додаємо випадковість в напрямок коливань
+        $oscillationDirection = mt_rand(0, 1) ? 1 : -1; // Випадковий напрямок
+        $baseOscillation = sin($timestamp * 0.0001 + $sensorId * 0.3) * $maxChangeAllowed * 0.6 * $oscillationDirection; // До 60% від maxChangeAllowed
+        $secondaryOscillation = cos($timestamp * 0.00015 + $sensorId * 0.7) * $maxChangeAllowed * 0.4 * (mt_rand(0, 1) ? 1 : -1); // До 40% з випадковим напрямком
+
+        // 2. БАЛАНСУВАННЯ (рух до протилежної сторони при наближенні до критичної зони)
+        $balancingForce = 0;
+        if ($percentFromStart <= $criticalZone) {
+            // Дуже близько до нижньої межі - рухаємося вгору (до центру)
+            $urgency = ($criticalZone - $percentFromStart) / $criticalZone; // 0 до 1
+            $balancingForce = $maxChangeAllowed * 0.9 * $urgency; // До 90% від максимальної зміни
+        } elseif ($percentFromEnd <= $criticalZone) {
+            // Дуже близько до верхньої межі - рухаємося вниз (до центру)
+            $urgency = ($criticalZone - $percentFromEnd) / $criticalZone; // 0 до 1
+            $balancingForce = -$maxChangeAllowed * 0.9 * $urgency; // До 90% від максимальної зміни
+        } elseif ($percentFromStart <= $safeZoneMin) {
+            // Близько до нижньої безпечної межі - помірний рух вгору
+            $urgency = ($safeZoneMin - $percentFromStart) / $safeZoneMin; // 0 до 1
+            $balancingForce = $maxChangeAllowed * 0.6 * $urgency; // До 60% від максимальної зміни
+        } elseif ($percentFromEnd <= (100 - $safeZoneMax)) {
+            // Близько до верхньої безпечної межі - помірний рух вниз
+            $urgency = ((100 - $safeZoneMax) - $percentFromEnd) / (100 - $safeZoneMax); // 0 до 1
+            $balancingForce = -$maxChangeAllowed * 0.6 * $urgency; // До 60% від максимальної зміни
+        } else {
+            // В безпечній зоні (10-90%) - можливі невеликі коливання в обидві сторони
+            // З шансом 5% дозволяємо рух до критичної зони
+            if (mt_rand(1, 100) <= 5) {
+                // Дозволяємо випадковий рух (може бути в напрямку до критичної зони)
+                $balancingForce = (mt_rand(-100, 100) / 100) * $maxChangeAllowed * 0.5;
+            } else {
+                // Звичайне коливання в безпечній зоні
+                $balancingForce = (mt_rand(-50, 50) / 100) * $maxChangeAllowed * 0.3;
+            }
         }
 
-        // 2. ПРОЦЕС ВАРІННЯ/НАГРІВАННЯ (для заводу косметики)
-        // Імітуємо циклічні процеси нагрівання та охолодження
-        $heatingCycle = sin($timestamp * 0.0001 + $sensorId * 0.3) * $range * 0.06; // 6% амплітуда
-        $coolingCycle = cos($timestamp * 0.00015 + $sensorId * 0.7) * $range * 0.04; // 4% амплітуда
-        
-        // 3. ПЕРЕМІШУВАННЯ/ТУРБУЛЕНТНІСТЬ (швидкі коливання)
-        $mixingNoise = sin($timestamp * 0.001 + $sensorId * 1.5) * $range * 0.025; // 2.5% амплітуда
-        $turbulence = cos($timestamp * 0.0015 + $sensorId * 2.1) * $range * 0.02; // 2% амплітуда
+        // 3. М'ЯКЕ ПРИТЯГУВАННЯ ДО ЦЕНТРУ (якщо не в критичній зоні)
+        $meanReversion = 0;
+        if ($percentFromStart > $criticalZone && $percentFromEnd > $criticalZone) {
+            // Тільки якщо не в критичній зоні - притягування до центру
+            $distanceFromCenter = abs($currentValue - $midValue);
+            if ($distanceFromCenter > $range * 0.2) { // Якщо далеко від центру
+                $meanReversion = ($midValue - $currentValue) * 0.002; // Дуже м'яке притягування
+                // Обмежуємо притягування до 0.5% від range
+                if (abs($meanReversion) > $maxChangeAllowed * 0.5) {
+                    $meanReversion = ($meanReversion > 0 ? 1 : -1) * $maxChangeAllowed * 0.5;
+                }
+            }
+        }
 
-        // 4. ТРЕНД НА ОСНОВІ ІСТОРІЇ (природна еволюція процесу)
-        $trend = $trendFromHistory;
-
-        // 5. М'ЯКЕ ПРИТЯГУВАННЯ ДО СЕРЕДНЬОГО (стабілізація процесу)
-        $meanReversion = ($meanValue - $currentValue) * 0.015; // 1.5% притягування
-
-        // 6. РЕАЛІСТИЧНИЙ ШУМ ДАТЧИКА (більша рандомність)
-        $noiseStdDev = max($range * 0.015, $volatility * 0.6); // 1.5% range або 60% волатильності
-        $gaussianNoise = $this->generateGaussianNoise(0, $noiseStdDev);
-        
-        // Додатковий рандомний шум (характерний для промислових датчиків)
-        $randomJitter = (mt_rand(-100, 100) / 100) * $range * 0.01; // ±1% рандом
-
-        // 7. ЗАЛЕЖНІСТЬ ВІД ІНШИХ ДАТЧИКІВ (10-15% вплив)
+        // 4. ЗАЛЕЖНІСТЬ ВІД ІНШИХ ДАТЧИКІВ (25% вплив від зміни інших датчиків)
         $sensorDependency = 0;
         if (!empty($otherSensors)) {
             $totalChange = 0;
@@ -96,6 +125,7 @@ class IotDataGenerator
             foreach ($otherSensors as $otherSensor) {
                 if (isset($otherSensor['change']) && isset($otherSensor['value'])) {
                     $otherRange = isset($otherSensor['range']) ? $otherSensor['range'] : $range;
+                    // Нормалізуємо зміну іншого датчика
                     $normalizedChange = ($otherSensor['change'] / $otherRange) * $range;
                     $totalChange += $normalizedChange;
                     $count++;
@@ -103,34 +133,48 @@ class IotDataGenerator
             }
             if ($count > 0) {
                 $avgChange = $totalChange / $count;
-                // Вплив 10-15% від зміни інших датчиків
-                $dependencyFactor = 0.125; // 12.5% в середньому
-                $sensorDependency = $avgChange * $dependencyFactor;
+                // Вплив 25% від зміни інших датчиків (рандомно в + або -)
+                $direction = mt_rand(0, 1) ? 1 : -1;
+                $sensorDependency = $avgChange * 0.25 * $direction;
+                // Обмежуємо до максимальної зміни
+                if (abs($sensorDependency) > $maxChangeAllowed) {
+                    $sensorDependency = ($sensorDependency > 0 ? 1 : -1) * $maxChangeAllowed;
+                }
             }
         }
 
-        // 8. РІДКІСНІ АНОМАЛІЇ (несподівані події на заводі)
-        $anomaly = $this->generateAnomaly($range, $sensorId, $timestamp) * 0.3;
+        // 5. НЕЗНАЧНИЙ РАНДОМНИЙ ШУМ (до 30% від maxChangeAllowed)
+        $randomJitter = (mt_rand(-100, 100) / 100) * $maxChangeAllowed * 0.3;
 
-        // 9. АДАПТИВНА КОРЕКЦІЯ (відштовхування від критичних меж)
-        $boundaryCorrection = $this->calculateBoundaryCorrection($currentValue, $startValue, $endValue, $range) * 0.3;
+        // 6. ІМПУЛЬСИВНІ СТРИБКИ (з ймовірністю 5% стрибок на 10% від range)
+        $impulsiveJump = 0;
+        if (mt_rand(1, 100) <= 5) {
+            // З ймовірністю 5% робимо імпульсивний стрибок на 10% від range
+            $jumpMagnitude = $range * 0.10; // 10% від range
+            $jumpDirection = mt_rand(0, 1) ? 1 : -1; // Випадковий напрямок
+            $impulsiveJump = $jumpMagnitude * $jumpDirection;
+        }
 
         // Об'єднуємо всі компоненти
-        $newValue = $currentValue 
-            + $heatingCycle
-            + $coolingCycle
-            + $mixingNoise
-            + $turbulence
-            + $trend 
+        $totalChange = $baseOscillation 
+            + $secondaryOscillation 
+            + $balancingForce 
             + $meanReversion 
-            + $gaussianNoise
-            + $randomJitter
             + $sensorDependency
-            + $anomaly 
-            + $boundaryCorrection;
+            + $randomJitter
+            + $impulsiveJump;
+
+        // КРИТИЧНО: Обмежуємо загальну зміну до максимум 5% від range (але імпульсивні стрибки можуть бути більшими)
+        // Якщо це не імпульсивний стрибок, обмежуємо до maxChangeAllowed
+        if ($impulsiveJump == 0 && abs($totalChange) > $maxChangeAllowed) {
+            $totalChange = ($totalChange > 0 ? 1 : -1) * $maxChangeAllowed;
+        }
+        // Для імпульсивних стрибків дозволяємо до 10% від range, але обмежуємо в межах range
+
+        $newValue = $currentValue + $totalChange;
 
         // Обмежуємо значення в межах range
-        $newValue = $this->clampWithSoftBoundaries($newValue, $startValue, $endValue, $range);
+        $newValue = max($startValue, min($endValue, $newValue));
 
         // Перевірка на критичні значення (5% від меж)
         $distanceToMin = $newValue - $startValue;

@@ -706,7 +706,7 @@ class AdminController
             $allSensors = $this->iotEcoService->getIotSensorsByEcoSystemId($sensor['eco_system_id']);
             $updatedSensors = [];
             
-            // Змінюємо всі інші датчики на 10-15% від зміни цього датчика
+            // Змінюємо всі інші датчики на 25% від зміни цього датчика
             foreach ($allSensors as $otherSensor) {
                 if ($otherSensor['id'] != $iotEcoId) {
                     $otherCurrentValue = $this->iotEcoService->getLastValue($otherSensor['id']);
@@ -715,8 +715,8 @@ class AdminController
                         $otherEndValue = $otherSensor['end_value'] ?? $otherSensor['iot_end_value'] ?? 100;
                         $otherRange = $otherEndValue - $otherStartValue;
                         
-                        // 10-15% від зміни (випадково вибираємо напрямок)
-                        $influencePercent = mt_rand(100, 150) / 1000; // 10-15%
+                        // 25% від зміни (випадково вибираємо напрямок в + або -)
+                        $influencePercent = 0.25; // 25%
                         $influence = ($changePercent * $influencePercent / 100) * $otherRange;
                         
                         // Випадково вверх або вниз
