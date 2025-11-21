@@ -3,6 +3,713 @@
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleProfileAside.css">
     <link rel="stylesheet" href="/views/stylesheet/styleProfileSetting.css">
+    <style>
+        /* Notification styles (from admin panel) */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            max-width: 500px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            z-index: 10001;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+            border-left: 4px solid #007bff;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-success {
+            border-left-color: #28a745;
+        }
+
+        .notification-error {
+            border-left-color: #dc3545;
+        }
+
+        .notification-info {
+            border-left-color: #17a2b8;
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .notification-success .notification-icon {
+            background-color: #d4edda;
+            color: #28a745;
+        }
+
+        .notification-error .notification-icon {
+            background-color: #f8d7da;
+            color: #dc3545;
+        }
+
+        .notification-info .notification-icon {
+            background-color: #d1ecf1;
+            color: #17a2b8;
+        }
+
+        .notification-text {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .notification-close:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        /* Modal confirmation styles (як в адмін панелі) */
+        .delete-confirmation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            animation: fadeIn 0.2s ease-in;
+            backdrop-filter: blur(2px);
+        }
+
+        .delete-confirmation-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delete-confirmation-content {
+            background: linear-gradient(150deg, #ffffff 0%, #fafbfc 100%);
+            border-radius: 28px;
+            padding: 40px 36px;
+            max-width: 520px;
+            width: 90%;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+            animation: slideIn 0.3s ease-out;
+            border: 1px solid #eceff3;
+        }
+
+        .delete-confirmation-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 2px dashed #dcdcdc;
+        }
+
+        .delete-confirmation-icon {
+            font-size: 44px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            background: radial-gradient(circle at top, #fff5f5 0%, #ffe5e5 45%, #ffd5d5 100%);
+            border-radius: 18px;
+            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.15);
+        }
+
+        .delete-confirmation-header h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: #111111;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .delete-confirmation-body {
+            margin-bottom: 28px;
+            padding: 20px 24px;
+            background: linear-gradient(150deg, #ffffff 0%, #f5f6fa 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(220, 53, 69, 0.15);
+            border-left: 4px solid #dc3545;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        .delete-confirmation-body p {
+            margin: 10px 0;
+            font-size: 15px;
+            color: #1f2124;
+            line-height: 1.7;
+        }
+
+        .delete-confirmation-body p:first-child {
+            font-size: 17px;
+            font-weight: 600;
+            color: #111111;
+            margin-bottom: 14px;
+            letter-spacing: 0.2px;
+        }
+
+        .delete-confirmation-body strong {
+            font-weight: 700;
+            color: #dc3545;
+        }
+
+        .delete-confirmation-warning {
+            font-size: 13px !important;
+            color: #6b6f78 !important;
+            font-style: italic;
+            margin-top: 12px !important;
+            padding-top: 12px;
+            border-top: 1px dashed #dcdcdc;
+            letter-spacing: 0.3px;
+        }
+
+        .delete-confirmation-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding-top: 8px;
+        }
+
+        .delete-confirm-btn {
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            min-width: 140px;
+            letter-spacing: 0.3px;
+        }
+
+        .delete-confirm-yes {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: #fff;
+            box-shadow: 0 10px 24px rgba(220, 53, 69, 0.25);
+        }
+
+        .delete-confirm-yes:hover {
+            background: linear-gradient(135deg, #c82333 0%, #b71d2a 100%);
+            box-shadow: 0 14px 30px rgba(220, 53, 69, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .delete-confirm-yes:active {
+            transform: translateY(0);
+            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+        }
+
+        .delete-confirm-no {
+            background: linear-gradient(135deg, #fdfdfd 0%, #f1f3f8 100%);
+            color: #6b6f78;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .delete-confirm-no:hover {
+            background: linear-gradient(135deg, #f1f3f8 0%, #e9ecef 100%);
+            color: #111111;
+            border-color: rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .delete-confirm-no:active {
+            transform: translateY(0);
+        }
+
+        /* Стиль для Delete Account (як на превью) */
+        .delete-account-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            animation: fadeIn 0.2s ease-in;
+            backdrop-filter: blur(2px);
+        }
+
+        .delete-account-overlay.show {
+            display: flex;
+        }
+
+        .delete-account-content {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 40px 36px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+            animation: slideIn 0.3s ease-out;
+            border: 1px solid #eceff3;
+            position: relative;
+        }
+
+        .delete-account-close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f5f5f5;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .delete-account-close-btn:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .delete-account-robot {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 24px;
+            background: transparent;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .delete-account-robot img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 20px;
+        }
+
+        .delete-account-header h3 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #212121;
+            text-align: center;
+            letter-spacing: 0.2px;
+        }
+
+        .delete-account-body {
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .delete-account-body p {
+            margin: 8px 0;
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .delete-account-body p:first-child {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .delete-account-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .delete-account-btn {
+            padding: 14px 32px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            min-width: 160px;
+            letter-spacing: 0.3px;
+        }
+
+        .delete-account-stay {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: #fff;
+            box-shadow: 0 10px 24px rgba(220, 53, 69, 0.25);
+        }
+
+        .delete-account-stay:hover {
+            background: linear-gradient(135deg, #c82333 0%, #b71d2a 100%);
+            box-shadow: 0 14px 30px rgba(220, 53, 69, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .delete-account-stay:active {
+            transform: translateY(0);
+        }
+
+        .delete-account-leave {
+            background: linear-gradient(135deg, #a8a8a8 0%, #7a7a7a 100%);
+            color: #fff;
+            box-shadow: 0 10px 24px rgba(168, 168, 168, 0.3);
+        }
+
+        .delete-account-leave:hover {
+            background: linear-gradient(135deg, #999999 0%, #6a6a6a 100%);
+            box-shadow: 0 14px 30px rgba(168, 168, 168, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .delete-account-leave:active {
+            transform: translateY(0);
+        }
+    </style>
+    <script>
+        // Функція для показу повідомлень (як на адмін панелі)
+        function showNotification(message, type = 'info') {
+            const existing = document.getElementById('notification-message');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.id = 'notification-message';
+            notification.className = 'notification notification-' + type;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                    <span class="notification-text">${message}</span>
+                    <button class="notification-close" onclick="this.closest('.notification').remove()">×</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Модальне вікно підтвердження
+        function showConfirmModal(title, message, onConfirm, isDeleteAccount = false) {
+            const existing = document.getElementById('delete-confirmation');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'delete-confirmation';
+            overlay.className = 'delete-confirmation-overlay';
+            
+            const content = document.createElement('div');
+            content.className = 'delete-confirmation-content';
+            
+            // Форматуємо повідомлення (якщо воно містить HTML)
+            const messageHtml = message.replace(/\n/g, '<br>');
+            
+            content.innerHTML = `
+                <div class="delete-confirmation-header">
+                    <span class="delete-confirmation-icon">⚠️</span>
+                    <h3>${title}</h3>
+                </div>
+                <div class="delete-confirmation-body">
+                    <p>${messageHtml}</p>
+                    <p class="delete-confirmation-warning">This action cannot be undone.</p>
+                </div>
+                <div class="delete-confirmation-footer">
+                    <button class="delete-confirm-btn delete-confirm-yes">${isDeleteAccount ? "Yes, Delete Account" : "Yes, Delete"}</button>
+                    <button class="delete-confirm-btn delete-confirm-no">Cancel</button>
+                </div>
+            `;
+            
+            overlay.appendChild(content);
+            document.body.appendChild(overlay);
+            
+            const yesBtn = content.querySelector('.delete-confirm-yes');
+            const noBtn = content.querySelector('.delete-confirm-no');
+            
+            yesBtn.addEventListener('click', function() {
+                overlay.remove();
+                onConfirm();
+            });
+            
+            noBtn.addEventListener('click', function() {
+                overlay.remove();
+            });
+            
+            // Закриття при кліку на overlay
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
+            
+            // Показуємо з анімацією
+            setTimeout(() => {
+                overlay.classList.add('show');
+            }, 10);
+        }
+
+        function deleteAccount() {
+            const existing = document.getElementById('delete-account-modal');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'delete-account-modal';
+            overlay.className = 'delete-account-overlay';
+            
+            overlay.innerHTML = `
+                <div class="delete-account-content">
+                    <button class="delete-account-close-btn" onclick="this.closest('.delete-account-overlay').remove()">×</button>
+                    <div class="delete-account-robot">
+                        <img src="/image/deleteAcc.png" alt="Robot">
+                    </div>
+                    <div class="delete-account-header">
+                        <h3>Are you sure you want to say goodbye?</h3>
+                    </div>
+                    <div class="delete-account-body">
+                        <p>We're sad to see you go!</p>
+                        <p>If you delete your account, all your data will be wiped.</p>
+                        <p>Are you absolutely sure you want to proceed?</p>
+                    </div>
+                    <div class="delete-account-footer">
+                        <button class="delete-account-btn delete-account-stay">I'll stay!</button>
+                        <button class="delete-account-btn delete-account-leave">Sorry, I have to go</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            const stayBtn = overlay.querySelector('.delete-account-stay');
+            const leaveBtn = overlay.querySelector('.delete-account-leave');
+            
+            stayBtn.addEventListener('click', function() {
+                overlay.remove();
+            });
+            
+            leaveBtn.addEventListener('click', function() {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'index.php?action=deleteAccount';
+                document.body.appendChild(form);
+                form.submit();
+            });
+            
+            // Закриття при кліку на overlay
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
+            
+            // Показуємо з анімацією
+            setTimeout(() => {
+                overlay.classList.add('show');
+            }, 10);
+        }
+
+        function previewAvatar(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('avatar-preview').src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeAvatar() {
+            showConfirmModal(
+                'Remove Profile Photo',
+                'Are you sure you want to remove your profile photo? This action cannot be undone.',
+                function() {
+                    document.getElementById('remove-photo-flag').value = '1';
+                    document.getElementById('avatar-preview').src = '/image/pfp.png';
+                    document.getElementById('profile-form').submit();
+                }
+            );
+        }
+
+        function handlePhotoChange(input) {
+            if (input.files && input.files[0]) {
+                previewAvatar(input);
+                // Автоматично відправляємо форму при виборі фото
+                document.getElementById('profile-form').submit();
+            }
+        }
+
+        function deleteSocialChannel(channelId) {
+            showConfirmModal(
+                'Delete Social Channel',
+                'Are you sure you want to delete this social channel? This action cannot be undone.',
+                function() {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'index.php?action=deleteSocialChannel&id=' + channelId;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            );
+        }
+
+        // Linked accounts - реальне посилання на Google OAuth
+        function linkGoogleAccount() {
+            // Відкриваємо Google OAuth в новому вікні
+            const googleOAuthUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' +
+                'client_id=YOUR_CLIENT_ID&' +
+                'redirect_uri=' + encodeURIComponent(window.location.origin + '/auth/google/callback') + '&' +
+                'response_type=code&' +
+                'scope=openid%20email%20profile&' +
+                'access_type=offline&' +
+                'prompt=consent';
+            
+            // Альтернативно - просто відкриваємо Google Account
+            window.open('https://myaccount.google.com/', '_blank');
+            showNotification('Opening Google Account... You can sign in with Google there.', 'info');
+        }
+
+        // Care calendar - реальне посилання на Google Calendar з готовою подією
+        function connectCalendar() {
+            // Створюємо подію в Google Calendar з нагадуванням про beauty routine
+            const eventTitle = encodeURIComponent('Beauty Care Reminder 💆‍♀️');
+            const eventDetails = encodeURIComponent('Time for your personalized beauty routine!\n\nDon\'t forget to:\n- Check your skincare schedule\n- Apply your favorite products\n- Follow your care ritual\n\nStay beautiful! ✨');
+            const eventLocation = encodeURIComponent('Home');
+            
+            // Дата через тиждень (приклад нагадування)
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            nextWeek.setHours(20, 0, 0, 0); // 8 PM
+            
+            // Форматуємо дату для Google Calendar (YYYYMMDDTHHmmssZ)
+            const formatDate = (date) => {
+                const year = date.getUTCFullYear();
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                const hours = String(date.getUTCHours()).padStart(2, '0');
+                const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+                return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+            };
+            
+            const startDate = formatDate(nextWeek);
+            const endDate = formatDate(new Date(nextWeek.getTime() + 30 * 60 * 1000)); // +30 хвилин
+            
+            const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&` +
+                `text=${eventTitle}&` +
+                `dates=${startDate}/${endDate}&` +
+                `details=${eventDetails}&` +
+                `location=${eventLocation}&` +
+                `sf=true&` +
+                `output=xml`;
+            
+            window.open(googleCalendarUrl, '_blank');
+            showNotification('Opening Google Calendar with a beauty care reminder! You can customize the date and save it.', 'success');
+        }
+
+        // Обробка завантаження фото та показ повідомлень при завантаженні сторінки
+        document.addEventListener('DOMContentLoaded', function() {
+            const photoUpload = document.getElementById('photo-upload');
+            if (photoUpload) {
+                photoUpload.addEventListener('change', function(e) {
+                    handlePhotoChange(e.target);
+                });
+            }
+
+            // Показуємо повідомлення з URL параметрів
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            const success = urlParams.get('success');
+            const photoUpdated = urlParams.get('photo_updated');
+            
+            if (error) {
+                showNotification(decodeURIComponent(error), 'error');
+            }
+            if (success) {
+                showNotification(decodeURIComponent(success), 'success');
+            }
+            
+            // Оновлюємо фото після завантаження (додаємо timestamp для оновлення кешу)
+            if (photoUpdated) {
+                const avatarImg = document.getElementById('avatar-preview');
+                if (avatarImg) {
+                    const timestamp = new Date().getTime();
+                    const currentSrc = avatarImg.src.split('?')[0];
+                    avatarImg.src = currentSrc + '?t=' + timestamp;
+                }
+            }
+
+            // Обробники для Linked accounts та Care calendar вже додані через onclick в HTML
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -17,15 +724,18 @@
                 <span class="profile-heading-divider"></span>
             </header>
 
+
             <section class="settings-card settings-account">
                 <div class="settings-card-header">
                     <div class="settings-avatar-block">
                         <div class="settings-avatar-ring">
-                            <img src="/image/3.jpg" alt="Valeria Beznosiuk" class="settings-avatar">
+                            <img src="{{ userPhoto|default('/image/pfp.png') }}" alt="{{ user.first_name|default('User') }}" class="settings-avatar" id="avatar-preview">
                         </div>
                         <div class="settings-avatar-actions">
-                            <button type="button" class="settings-btn secondary">Upload</button>
-                            <button type="button" class="settings-btn ghost">Remove</button>
+                            <label for="photo-upload" class="settings-btn secondary" style="cursor: pointer;">
+                                Upload
+                            </label>
+                            <button type="button" class="settings-btn ghost" onclick="removeAvatar()">Remove</button>
                         </div>
                     </div>
                     <div class="settings-card-meta">
@@ -34,42 +744,46 @@
                     </div>
                 </div>
 
-                <form class="settings-form">
+                <form class="settings-form" id="profile-form" method="POST" action="index.php?action=setting" enctype="multipart/form-data">
+                    <input type="hidden" name="update_type" value="profile">
+                    <input type="hidden" name="remove_photo" id="remove-photo-flag" value="0">
+                    <!-- Переміщено поле файлу всередину форми -->
+                    <input type="file" id="photo-upload" name="photo" accept="image/*" style="display: none;">
                     <div class="settings-grid">
                         <div class="settings-field">
                             <label for="first-name" class="settings-label">
                                 First name
                                 <span>Used for invoices</span>
                             </label>
-                            <input id="first-name" type="text" class="settings-input" value="Valeria">
+                            <input id="first-name" name="first_name" type="text" class="settings-input" value="{{ user.first_name|default('') }}" required>
                         </div>
                         <div class="settings-field">
                             <label for="last-name" class="settings-label">
                                 Last name
                                 <span>Shown on delivery slips</span>
                             </label>
-                            <input id="last-name" type="text" class="settings-input" value="Beznosiuk">
+                            <input id="last-name" name="last_name" type="text" class="settings-input" value="{{ user.last_name|default('') }}">
                         </div>
                         <div class="settings-field">
                             <label for="email-address" class="settings-label">
                                 Email address
                                 <span>Notifications + sign in</span>
                             </label>
-                            <input id="email-address" type="email" class="settings-input" value="valeria@purecraft.ua">
+                            <input id="email-address" name="email" type="email" class="settings-input" value="{{ user.email|default('') }}" required>
                         </div>
                         <div class="settings-field">
                             <label for="phone-number" class="settings-label">
                                 Phone number
                                 <span>Delivery updates</span>
                             </label>
-                            <input id="phone-number" type="tel" class="settings-input" value="+38 067 123 45 67">
+                            <input id="phone-number" name="phone_number" type="tel" class="settings-input" value="{{ user.phone_number|default('') }}" placeholder="Not provided">
                         </div>
                         <div class="settings-field full">
                             <label for="street-address" class="settings-label">
                                 Street address
                                 <span>Shipping destination</span>
                             </label>
-                            <input id="street-address" type="text" class="settings-input" value="Kyiv, Volodymyrska 22">
+                            <input id="street-address" name="address" type="text" class="settings-input" value="{{ user.address|default('') }}" placeholder="Not provided">
                         </div>
                     </div>
                 </form>
@@ -82,19 +796,22 @@
                         <p>Update the password you use to sign in and secure your beauty data.</p>
                     </div>
                 </div>
-                <div class="settings-grid password-grid">
-                    <div class="settings-field">
-                        <label for="new-password" class="settings-label">New password</label>
-                        <input id="new-password" type="password" class="settings-input" placeholder="Create a new password">
+                <form id="password-form" method="POST" action="index.php?action=setting">
+                    <input type="hidden" name="update_type" value="password">
+                    <div class="settings-grid password-grid">
+                        <div class="settings-field">
+                            <label for="new-password" class="settings-label">New password</label>
+                            <input id="new-password" name="new_password" type="password" class="settings-input" placeholder="Create a new password" minlength="6">
+                        </div>
+                        <div class="settings-field">
+                            <label for="confirm-password" class="settings-label">Confirm password</label>
+                            <input id="confirm-password" name="confirm_password" type="password" class="settings-input" placeholder="Repeat new password" minlength="6">
+                        </div>
                     </div>
-                    <div class="settings-field">
-                        <label for="confirm-password" class="settings-label">Confirm password</label>
-                        <input id="confirm-password" type="password" class="settings-input" placeholder="Repeat new password">
+                    <div style="margin-top: 24px;">
+                        <button type="submit" class="settings-btn outline">Save password</button>
                     </div>
-                </div>
-                <div class="settings-password-actions">
-                    <button type="button" class="settings-btn outline">Save password</button>
-                </div>
+                </form>
             </section>
 
             <section class="settings-card settings-social">
@@ -105,48 +822,37 @@
                     </div>
                 </div>
                 <div class="settings-social-grid">
-                    <div class="settings-social-card youtube">
-                        <div class="settings-social-top">
-                            <span class="social-icon"><i class="fab fa-youtube"></i></span>
-                            <div>
-                                <h4>YouTube</h4>
-                                <small>Showcase rituals & tutorials</small>
+                    {% set platforms = [
+                        {name: 'YouTube', key: 'youtube', icon: 'fab fa-youtube', desc: 'Showcase rituals & tutorials'},
+                        {name: 'Instagram', key: 'instagram', icon: 'fab fa-instagram', desc: 'Daily glow diary'},
+                        {name: 'TikTok', key: 'tiktok', icon: 'fab fa-tiktok', desc: 'Quick tips & unboxings'}
+                    ] %}
+                    {% for platform in platforms %}
+                        {% set channel = socialChannelsByPlatform[platform.key]|default(null) %}
+                        <div class="settings-social-card {{ platform.key }}">
+                            <div class="settings-social-top">
+                                <span class="social-icon"><i class="{{ platform.icon }}"></i></span>
+                                <div>
+                                    <h4>{{ platform.name }}</h4>
+                                    <small>{{ platform.desc }}</small>
+                                </div>
                             </div>
+                            <form class="social-channel-form" method="POST" action="index.php?action=setting" data-platform="{{ platform.key }}">
+                                <input type="hidden" name="update_type" value="social">
+                                <input type="hidden" name="platform" value="{{ platform.name }}">
+                                <div class="settings-social-body">
+                                    <input name="handle" type="text" class="settings-input" value="{{ channel.handle|default('') }}" placeholder="@username">
+                                    <input name="url" type="url" class="settings-input subtle" value="{{ channel.url|default('') }}" placeholder="https://...">
+                                </div>
+                                <div style="margin-top: 8px; display: flex; gap: 8px;">
+                                    <button type="submit" class="settings-btn outline" style="flex: 1;">Save</button>
+                                    {% if channel %}
+                                        <button type="button" class="settings-btn ghost" onclick="deleteSocialChannel({{ channel.id }})">Delete</button>
+                                    {% endif %}
+                                </div>
+                            </form>
                         </div>
-                        <div class="settings-social-body">
-                            <input id="social-youtube" type="text" class="settings-input" value="@glowbymaria">
-                            <input type="url" class="settings-input subtle" value="https://youtube.com/@glowbymaria">
-                        </div>
-                    </div>
-                    <div class="settings-social-card instagram">
-                        <div class="settings-social-top">
-                            <span class="social-icon"><i class="fab fa-instagram"></i></span>
-                            <div>
-                                <h4>Instagram</h4>
-                                <small>Daily glow diary</small>
-                            </div>
-                        </div>
-                        <div class="settings-social-body">
-                            <input id="social-instagram" type="text" class="settings-input" value="@maria.glow">
-                            <input type="url" class="settings-input subtle" value="https://instagram.com/maria.glow">
-                        </div>
-                    </div>
-                    <div class="settings-social-card tiktok">
-                        <div class="settings-social-top">
-                            <span class="social-icon"><i class="fab fa-tiktok"></i></span>
-                            <div>
-                                <h4>TikTok</h4>
-                                <small>Quick tips & unboxings</small>
-                            </div>
-                        </div>
-                        <div class="settings-social-body">
-                            <input id="social-tiktok" type="text" class="settings-input" value="@skincare_maria">
-                            <input type="url" class="settings-input subtle" value="https://tiktok.com/@skincare_maria">
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-social-actions">
-                    <button type="button" class="settings-btn ghost">Add channel</button>
+                    {% endfor %}
                 </div>
             </section>
 
@@ -156,7 +862,7 @@
                         <h3>Linked accounts</h3>
                         <p>Use your favourite services to sign in faster and sync loyalty perks.</p>
                     </div>
-                    <button type="button" class="settings-btn outline">
+                    <button type="button" class="settings-btn outline" onclick="linkGoogleAccount()">
                         <i class="fab fa-google"></i>
                         Sign in with Google
                     </button>
@@ -166,7 +872,7 @@
                         <h3>Care calendar</h3>
                         <p>Connect your calendar to receive personal treatment reminders.</p>
                     </div>
-                    <button type="button" class="settings-btn outline">
+                    <button type="button" class="settings-btn outline" onclick="connectCalendar()">
                         <i class="far fa-calendar-check"></i>
                         Connect calendar
                     </button>
@@ -210,12 +916,12 @@
                         <h3>Delete account</h3>
                         <p>Deleting is permanent and removes order history, rewards, and saved rituals.</p>
                     </div>
-                    <button type="button" class="settings-btn danger">Delete account</button>
+                    <button type="button" class="settings-btn danger" onclick="deleteAccount()">Delete account</button>
                 </div>
             </section>
 
             <div class="settings-actions">
-                <button type="button" class="settings-btn primary">Save changes</button>
+                <button type="submit" form="profile-form" class="settings-btn primary">Save changes</button>
             </div>
         </main>
     </div>

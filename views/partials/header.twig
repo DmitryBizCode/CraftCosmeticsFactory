@@ -11,10 +11,10 @@
             </a>
             <a href="/index.php?action=cart" class="navbar-icon cart-icon" title="Cart">
                 <i class="fas fa-shopping-bag"></i>
-                <span class="cart-badge">2</span>
+                <span class="cart-badge" id="cart-badge" style="display: none;">0</span>
             </a>
-            <a href="/index.php?action=profile" class="navbar-icon profile-icon" title="Profile">
-                <img src="/image/3.jpg" alt="Profile" class="profile-avatar">
+            <a href="{{ userProfileLink|default('/index.php?action=profile') }}" class="navbar-icon profile-icon" title="Profile">
+                <img src="{{ userPhoto|default('/image/pfp.png') }}" alt="Profile" class="profile-avatar">
             </a>
         </div>
     </div>

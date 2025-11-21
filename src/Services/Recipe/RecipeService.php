@@ -29,25 +29,33 @@ class RecipeService
     {
         // Перевіряємо, чи є поле photo в даних
         $hasPhoto = isset($data['photo']) && $data['photo'] !== null && $data['photo'] !== '';
+        $hasPrice = isset($data['price']) && $data['price'] !== null && $data['price'] !== '';
+        
+        $fields = ['name', 'time_to_complete', 'description'];
+        $values = [':name', ':time_to_complete', ':description'];
+        $params = [
+            ':name' => $data['name'],
+            ':time_to_complete' => (float)$data['time_to_complete'],
+            ':description' => (!empty($data['description']) && $data['description'] !== '') ? $data['description'] : null,
+        ];
         
         if ($hasPhoto) {
-            $sql = "INSERT INTO recipes (name, time_to_complete, description, photo) 
-                    VALUES (:name, :time_to_complete, :description, :photo)";
-            $params = [
-                ':name' => $data['name'],
-                ':time_to_complete' => (float)$data['time_to_complete'],
-                ':description' => (!empty($data['description']) && $data['description'] !== '') ? $data['description'] : null,
-                ':photo' => $data['photo'],
-            ];
-        } else {
-            $sql = "INSERT INTO recipes (name, time_to_complete, description) 
-                    VALUES (:name, :time_to_complete, :description)";
-            $params = [
-                ':name' => $data['name'],
-                ':time_to_complete' => (float)$data['time_to_complete'],
-                ':description' => (!empty($data['description']) && $data['description'] !== '') ? $data['description'] : null,
-            ];
+            $fields[] = 'photo';
+            $values[] = ':photo';
+            $params[':photo'] = $data['photo'];
         }
+        
+        if ($hasPrice) {
+            $fields[] = 'price';
+            $values[] = ':price';
+            $params[':price'] = (float)$data['price'];
+        } else {
+            $fields[] = 'price';
+            $values[] = ':price';
+            $params[':price'] = 0.00;
+        }
+        
+        $sql = "INSERT INTO recipes (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $values) . ")";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
@@ -59,46 +67,38 @@ class RecipeService
     {
         // Перевіряємо, чи є поле photo в даних
         $hasPhoto = isset($data['photo']) && $data['photo'] !== null && $data['photo'] !== '';
-        
-        // Якщо photo явно встановлено в null (видалення фото)
         $photoIsNull = isset($data['photo']) && $data['photo'] === null;
+        $hasPrice = isset($data['price']) && $data['price'] !== null && $data['price'] !== '';
+        
+        $setParts = [
+            'name = :name',
+            'time_to_complete = :time_to_complete',
+            'description = :description'
+        ];
+        $params = [
+            ':id' => $id,
+            ':name' => $data['name'],
+            ':time_to_complete' => (float)$data['time_to_complete'],
+            ':description' => (!empty($data['description']) && $data['description'] !== '') ? $data['description'] : null,
+        ];
         
         if ($hasPhoto) {
-            $sql = "UPDATE recipes 
-                    SET name = :name, time_to_complete = :time_to_complete, 
-                        description = :description, photo = :photo 
-                    WHERE id = :id";
-            $params = [
-                ':id' => $id,
-                ':name' => $data['name'],
-                ':time_to_complete' => (float)$data['time_to_complete'],
-                ':description' => (!empty($data['description']) && $data['description'] !== '') ? $data['description'] : null,
-                ':photo' => $data['photo'],
-            ];
+            $setParts[] = 'photo = :photo';
+            $params[':photo'] = $data['photo'];
         } elseif ($photoIsNull) {
-            // Якщо photo явно встановлено в null - видаляємо фото
-            $sql = "UPDATE recipes 
-                    SET name = :name, time_to_complete = :time_to_complete, 
-                        description = :description, photo = NULL 
-                    WHERE id = :id";
-            $params = [
-                ':id' => $id,
-                ':name' => $data['name'],
-                ':time_to_complete' => (float)$data['time_to_complete'],
-                ':description' => (!empty($data['description']) && $data['description'] !== '') ? $data['description'] : null,
-            ];
-        } else {
-            $sql = "UPDATE recipes 
-                    SET name = :name, time_to_complete = :time_to_complete, 
-                        description = :description 
-                    WHERE id = :id";
-            $params = [
-                ':id' => $id,
-                ':name' => $data['name'],
-                ':time_to_complete' => (float)$data['time_to_complete'],
-                ':description' => (!empty($data['description']) && $data['description'] !== '') ? $data['description'] : null,
-            ];
+            $setParts[] = 'photo = NULL';
         }
+        
+        // Price завжди додаємо (навіть якщо не вказано, встановлюємо 0.00)
+        if ($hasPrice) {
+            $setParts[] = 'price = :price';
+            $params[':price'] = (float)$data['price'];
+        } else {
+            $setParts[] = 'price = :price';
+            $params[':price'] = 0.00;
+        }
+        
+        $sql = "UPDATE recipes SET " . implode(', ', $setParts) . " WHERE id = :id";
         
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute($params);
@@ -117,13 +117,60 @@ class RecipeService
     public function getRecipeProducts(int $recipeId): array
     {
         $stmt = $this->pdo->prepare("
-            SELECT rp.*, p.name as product_name, p.unit, p.quantity as product_quantity
+            SELECT rp.*, p.name as product_name, p.unit, p.quantity as product_quantity, p.allergen
             FROM recipe_product rp 
             JOIN products p ON rp.product_id = p.id 
             WHERE rp.recipe_id = :recipe_id
         ");
         $stmt->execute([':recipe_id' => $recipeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Отримати всі рецепти для сторінки продажів з усіма деталями
+     */
+    public function getAllForSalesPage(?string $searchQuery = null): array
+    {
+        // Якщо є пошуковий запит, фільтруємо рецепти
+        if (!empty($searchQuery)) {
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM recipes 
+                WHERE name LIKE :search 
+                ORDER BY id DESC
+            ");
+            $searchPattern = '%' . $searchQuery . '%';
+            $stmt->execute([':search' => $searchPattern]);
+            $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $recipes = $this->getAll();
+        }
+        
+        foreach ($recipes as &$recipe) {
+            // Встановлюємо дефолтне фото, якщо немає
+            if (empty($recipe['photo']) || $recipe['photo'] === null) {
+                $recipe['photo'] = 'default.png';
+            } else {
+                // Перевіряємо, чи існує файл фото
+                $photoPath = __DIR__ . '/../../../image/recipes/' . $recipe['photo'];
+                if (!file_exists($photoPath)) {
+                    $recipe['photo'] = 'default.png';
+                }
+            }
+            
+            // Отримуємо продукти з алергенами
+            $recipe['products'] = $this->getRecipeProducts($recipe['id']);
+            
+            // Визначаємо, чи є алергени в рецепті
+            $recipe['has_allergens'] = false;
+            foreach ($recipe['products'] as $product) {
+                if (!empty($product['allergen']) && (bool)$product['allergen']) {
+                    $recipe['has_allergens'] = true;
+                    break;
+                }
+            }
+        }
+        
+        return $recipes;
     }
 
     public function getRecipeIotSensors(int $recipeId): array

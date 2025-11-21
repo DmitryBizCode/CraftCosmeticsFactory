@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS recipes (
     time_to_complete DECIMAL(10,4) NOT NULL COMMENT 'Time in hours',
     description TEXT,
     photo VARCHAR(255),
+    price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
 
     PRIMARY KEY (id)
 );

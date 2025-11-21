@@ -52,6 +52,7 @@
             const fieldTimeMinutes = document.getElementById('time-minutes');
             const fieldTimeSeconds = document.getElementById('time-seconds');
             const fieldDescription = document.getElementById('recipe-description');
+            const fieldPrice = document.getElementById('recipe-price');
             const fieldPhoto = document.getElementById('recipe-photo');
             const photoPreview = document.getElementById('photo-preview');
             const photoDeleteBtn = document.getElementById('photo-delete-btn');
@@ -320,6 +321,7 @@
                 document.getElementById('time-seconds').value = seconds;
                 
                 fieldDescription.value = card.dataset.description || '';
+                fieldPrice.value = card.dataset.price || '0.00';
                 
                 // Завантажуємо продукти та IoT сенсори
                 const productsData = card.dataset.products || '[]';
@@ -393,6 +395,7 @@
                 fieldTimeHours.value = '0';
                 fieldTimeMinutes.value = '0';
                 fieldTimeSeconds.value = '0';
+                fieldPrice.value = '0.00';
                 selectedProducts = [];
                 selectedIotSensors = [];
                 renderSelectedProducts();
@@ -409,6 +412,7 @@
                 fieldTimeHours.value = '0';
                 fieldTimeMinutes.value = '0';
                 fieldTimeSeconds.value = '0';
+                fieldPrice.value = '0.00';
                 selectedProducts = [];
                 selectedIotSensors = [];
                 renderSelectedProducts();
@@ -569,6 +573,7 @@
                                          data-name="{{ recipe.name }}"
                                          data-time-to-complete="{{ recipe.time_to_complete }}"
                                          data-description="{{ recipe.description ?? '' }}"
+                                         data-price="{{ recipe.price ?? '0.00' }}"
                                          data-photo="{{ recipe.photo ?? '' }}"
                                          data-products="{{ recipe.products_json }}"
                                          data-iot-sensors="{{ recipe.iot_sensors_json }}">
@@ -641,6 +646,12 @@
                             <label class="admin-label">
                                 <span>Description</span>
                                 <textarea name="description" id="recipe-description" rows="3" placeholder="Recipe description..."></textarea>
+                            </label>
+
+                            <label class="admin-label">
+                                <span>Price *</span>
+                                <input type="number" name="price" id="recipe-price" placeholder="0.00" min="0" step="0.01" value="0.00" required>
+                                <small style="display: block; margin-top: 4px; color: #6b6f78; font-size: 11px;">Price in USD</small>
                             </label>
 
                             <label class="admin-label">

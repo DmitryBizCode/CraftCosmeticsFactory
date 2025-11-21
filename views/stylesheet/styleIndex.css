@@ -558,6 +558,48 @@ body {
     border-color: #333;
 }
 
+.nav-arrow:disabled,
+.nav-arrow[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.nav-arrow[disabled]:hover {
+    background-color: white;
+    color: #333;
+    border-color: #ddd;
+}
+
+/* Recommendations Carousel */
+.recommendations-container {
+    overflow: hidden;
+    position: relative;
+}
+
+.recommendations-grid {
+    display: flex;
+    transition: transform 0.5s ease;
+    gap: 30px;
+}
+
+.recommendations-item {
+    min-width: calc(33.333% - 20px);
+    flex-shrink: 0;
+}
+
+@media (max-width: 992px) {
+    .recommendations-item {
+        min-width: calc(50% - 15px);
+    }
+}
+
+@media (max-width: 768px) {
+    .recommendations-item {
+        min-width: 100%;
+    }
+}
+
 /* Newsletter Section */
 .newsletter-section {
     background-color: #f8f9fa;

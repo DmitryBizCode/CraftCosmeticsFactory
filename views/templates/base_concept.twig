@@ -16,10 +16,36 @@
 <body>
 {% if homeNavBar is not empty %}
     <link rel="stylesheet" href="/views/stylesheet/styleFooter.css">
-    {% include 'partials/header.twig' %}
+    {% include 'partials/header.twig' with {userPhoto: userPhoto|default('/image/pfp.png'), userProfileLink: userProfileLink|default('/index.php?action=profile')} %}
 {% endif %}
 {% block content %}{% endblock %}
 
+<script>
+    // Функції для роботи з кошиком (глобальні для всіх сторінок)
+    function getCart() {
+        const cartJson = localStorage.getItem('shopping_cart');
+        return cartJson ? JSON.parse(cartJson) : [];
+    }
+
+    function updateCartBadge() {
+        const cart = getCart();
+        const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+        const badge = document.getElementById('cart-badge');
+        if (badge) {
+            if (totalItems > 0) {
+                badge.textContent = totalItems;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    }
+
+    // Оновлюємо бейдж при завантаженні сторінки
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartBadge();
+    });
+</script>
 
 {% if footer is not empty %}
     <link rel="stylesheet" href="/views/stylesheet/styleFooter.css">

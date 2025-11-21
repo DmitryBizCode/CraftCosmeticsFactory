@@ -20,7 +20,32 @@ class Router
         $content = '';
         switch ($action) {
             case 'autorization':
-                $content = $this->ecommerceController->autorization();
+                if ($method == 'POST') {
+                    // Визначаємо, яка форма була відправлена
+                    if (isset($data['full_name'])) {
+                        // Sign Up форма
+                        $content = $this->ecommerceController->signUp($data);
+                    } else {
+                        // Sign In форма
+                        $content = $this->ecommerceController->signIn($data);
+                    }
+                } else {
+                    $content = $this->ecommerceController->autorization();
+                }
+                break;
+            case 'signUp':
+                if ($method == 'POST') {
+                    $content = $this->ecommerceController->signUp($data);
+                } else {
+                    $content = $this->ecommerceController->autorization();
+                }
+                break;
+            case 'signIn':
+                if ($method == 'POST') {
+                    $content = $this->ecommerceController->signIn($data);
+                } else {
+                    $content = $this->ecommerceController->autorization();
+                }
                 break;
             case 'admin':
                 // Вхід в адмінку тільки по URL: index.php?action=admin (сторінка логіну)
@@ -228,7 +253,49 @@ class Router
                 }
             // no break
             case 'setting':
-                $content = $this->ecommerceController->getProfileSetting();
+                if ($method == 'POST') {
+                    // Визначаємо тип оновлення
+                    if (isset($data['update_type'])) {
+                        switch ($data['update_type']) {
+                            case 'profile':
+                                $content = $this->ecommerceController->updateProfile($data, $image);
+                                break;
+                            case 'password':
+                                $content = $this->ecommerceController->updatePassword($data);
+                                break;
+                            case 'social':
+                                $content = $this->ecommerceController->updateSocialChannel($data);
+                                break;
+                            default:
+                                $content = $this->ecommerceController->getProfileSetting();
+                                break;
+                        }
+                    } else {
+                        // За замовчуванням оновлюємо профіль
+                        $content = $this->ecommerceController->updateProfile($data, $image);
+                    }
+                } else {
+                    $content = $this->ecommerceController->getProfileSetting();
+                }
+                break;
+            case 'deleteSocialChannel':
+                if ($method == 'POST' || $method == 'GET') {
+                    $channelId = isset($id) ? (int)$id : (isset($data['channel_id']) ? (int)$data['channel_id'] : 0);
+                    if ($channelId > 0) {
+                        $content = $this->ecommerceController->deleteSocialChannel($channelId);
+                    } else {
+                        $content = $this->ecommerceController->getProfileSetting();
+                    }
+                } else {
+                    $content = $this->ecommerceController->getProfileSetting();
+                }
+                break;
+            case 'deleteAccount':
+                if ($method == 'POST') {
+                    $content = $this->ecommerceController->deleteAccount();
+                } else {
+                    $content = $this->ecommerceController->getProfileSetting();
+                }
                 break;
             case 'ordersProfile':
                 $content = $this->ecommerceController->getProfileOrders();

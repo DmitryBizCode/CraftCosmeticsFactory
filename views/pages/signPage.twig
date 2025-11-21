@@ -2,7 +2,134 @@
 
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleSign.css">
+    <style>
+        /* Notification styles (як в інших частинах проекту) */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            max-width: 500px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            z-index: 10001;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+            border-left: 4px solid #007bff;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-success {
+            border-left-color: #28a745;
+        }
+
+        .notification-error {
+            border-left-color: #dc3545;
+        }
+
+        .notification-info {
+            border-left-color: #17a2b8;
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .notification-success .notification-icon {
+            background-color: #d4edda;
+            color: #28a745;
+        }
+
+        .notification-error .notification-icon {
+            background-color: #f8d7da;
+            color: #dc3545;
+        }
+
+        .notification-info .notification-icon {
+            background-color: #d1ecf1;
+            color: #17a2b8;
+        }
+
+        .notification-text {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .notification-close:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+    </style>
     <script>
+        // Функція для показу повідомлень
+        function showNotification(message, type = 'info') {
+            const existing = document.getElementById('notification-message');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.id = 'notification-message';
+            notification.className = 'notification notification-' + type;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                    <span class="notification-text">${message}</span>
+                    <button class="notification-close" onclick="this.closest('.notification').remove()">×</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const loginBtn = document.getElementById('login');
             const signupBtn = document.getElementById('signup');
@@ -38,6 +165,19 @@
                     });
                 });
             }
+
+            // Показуємо повідомлення з URL параметрів
+            const urlParams = new URLSearchParams(window.location.search);
+            const success = urlParams.get('success');
+            const error = urlParams.get('error');
+            
+            if (success) {
+                showNotification(decodeURIComponent(success), 'success');
+            }
+            
+            if (error) {
+                showNotification(decodeURIComponent(error), 'error');
+            }
         });
     </script>
 {% endblock %}
@@ -46,12 +186,12 @@
 <div class="form-structor">
     <div class="signup">
         <h2 class="form-title" id="signup"><span>or</span>Sign up</h2>
-        <form action="/index.php?action=salesPage" method="POST">
+        <form action="index.php?action=signUp" method="POST">
             <div class="form-holder">
                 <input type="text" name="full_name" class="input" placeholder="First Name - Last Name" required />
                 <input type="email" name="email" class="input" placeholder="Email" required />
                 <input type="tel" name="phone_number" class="input" placeholder="Phone Number (optional)" />
-                <input type="password" name="password" class="input" placeholder="Password" required />
+                <input type="password" name="password" class="input" placeholder="Password" required minlength="6" />
             </div>
             <button type="submit" class="submit-btn">Sign up</button>
         </form>
@@ -59,7 +199,7 @@
     <div class="login slide-up">
         <div class="center">
             <h2 class="form-title" id="login"><span>or</span>Log in</h2>
-            <form action="/index.php?action=salesPage" method="POST">
+            <form action="index.php?action=signIn" method="POST">
                 <div class="form-holder">
                     <input type="email" name="email" class="input" placeholder="Email" required />
                     <input type="password" name="password" class="input" placeholder="Password" required />

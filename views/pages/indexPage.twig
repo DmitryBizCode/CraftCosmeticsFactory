@@ -3,7 +3,219 @@
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleIndex.css">
     <script>
+        // Функції для роботи з кошиком
+        function getCart() {
+            const cartJson = localStorage.getItem('shopping_cart');
+            return cartJson ? JSON.parse(cartJson) : [];
+        }
+
+        function saveCart(cart) {
+            localStorage.setItem('shopping_cart', JSON.stringify(cart));
+            updateCartBadge();
+        }
+
+        function updateCartBadge() {
+            const cart = getCart();
+            const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+            const badge = document.querySelector('.cart-badge');
+            if (badge) {
+                if (totalItems > 0) {
+                    badge.textContent = totalItems;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        function addToCart(button) {
+            const recipeId = button.dataset.recipeId;
+            const recipeName = button.dataset.recipeName;
+            const recipePrice = parseFloat(button.dataset.recipePrice);
+            const recipePhoto = button.dataset.recipePhoto;
+            
+            if (!recipeId || !recipeName || !recipePrice) {
+                alert('Error: Product information is missing');
+                return;
+            }
+            
+            let cart = getCart();
+            
+            // Перевіряємо, чи товар вже є в кошику
+            const existingItem = cart.find(item => item.id === recipeId);
+            
+            if (existingItem) {
+                // Якщо товар вже є, збільшуємо кількість
+                existingItem.quantity = (existingItem.quantity || 1) + 1;
+            } else {
+                // Якщо товару немає, додаємо новий
+                cart.push({
+                    id: recipeId,
+                    name: recipeName,
+                    price: recipePrice,
+                    photo: recipePhoto,
+                    quantity: 1
+                });
+            }
+            
+            saveCart(cart);
+            
+            // Показуємо повідомлення
+            showCartNotification(`"${recipeName}" added to cart!`);
+        }
+
+        function showCartNotification(message) {
+            // Створюємо просте повідомлення
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: #28a745;
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                font-size: 14px;
+                font-weight: 500;
+                animation: slideInRight 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Додаємо стилі для анімації
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Карусель для recommendations
+        function initRecommendationsCarousel() {
+            const container = document.getElementById('recommendations-container');
+            const grid = document.getElementById('recommendations-grid');
+            const prevBtn = document.getElementById('recommendations-prev');
+            const nextBtn = document.getElementById('recommendations-next');
+            
+            if (!container || !grid || !prevBtn || !nextBtn) {
+                return;
+            }
+            
+            const items = grid.querySelectorAll('.recommendations-item');
+            const itemsPerView = 3; // Показуємо 3 товари одночасно
+            const totalItems = items.length;
+            let currentIndex = 0;
+            
+            // Якщо товарів <= 3, ховаємо стрілки
+            if (totalItems <= itemsPerView) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+                return;
+            }
+            
+            // Розраховуємо ширину одного елемента
+            function getItemWidth() {
+                const containerWidth = container.offsetWidth;
+                const gap = 30; // gap між елементами
+                return (containerWidth - (gap * (itemsPerView - 1))) / itemsPerView;
+            }
+            
+            function updateCarousel() {
+                const itemWidth = getItemWidth();
+                const gap = 30;
+                const translateX = -currentIndex * (itemWidth + gap);
+                grid.style.transform = `translateX(${translateX}px)`;
+                
+                // Відключаємо кнопки на краях
+                const isAtStart = currentIndex === 0;
+                const isAtEnd = currentIndex >= totalItems - itemsPerView;
+                
+                prevBtn.disabled = isAtStart;
+                nextBtn.disabled = isAtEnd;
+                
+                // Візуально показуємо стан кнопок
+                if (isAtStart) {
+                    prevBtn.style.opacity = '0.5';
+                    prevBtn.style.cursor = 'not-allowed';
+                    prevBtn.style.pointerEvents = 'none';
+                } else {
+                    prevBtn.style.opacity = '1';
+                    prevBtn.style.cursor = 'pointer';
+                    prevBtn.style.pointerEvents = 'auto';
+                }
+                
+                if (isAtEnd) {
+                    nextBtn.style.opacity = '0.5';
+                    nextBtn.style.cursor = 'not-allowed';
+                    nextBtn.style.pointerEvents = 'none';
+                } else {
+                    nextBtn.style.opacity = '1';
+                    nextBtn.style.cursor = 'pointer';
+                    nextBtn.style.pointerEvents = 'auto';
+                }
+            }
+            
+            prevBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    updateCarousel();
+                }
+            });
+            
+            nextBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (currentIndex < totalItems - itemsPerView) {
+                    currentIndex++;
+                    updateCarousel();
+                }
+            });
+            
+            // Оновлюємо карусель при зміні розміру вікна
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(updateCarousel, 250);
+            });
+            
+            // Ініціалізуємо карусель
+            updateCarousel();
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
+            // Оновлюємо бейдж при завантаженні сторінки
+            updateCartBadge();
+            
+            // Ініціалізуємо карусель recommendations
+            initRecommendationsCarousel();
+            
             const categoryHeaders = document.querySelectorAll('.filter-category-header[data-toggle="subcategories"]');
             categoryHeaders.forEach(header => {
                 header.addEventListener('click', function() {
@@ -36,13 +248,22 @@
     <div class="container">
         <div class="search-bar-container">
             <h2 class="search-title">Give All You Need</h2>
-            <form class="search-form">
+            <form class="search-form" method="GET" action="index.php">
+                <input type="hidden" name="action" value="salesPage">
                 <div class="search-input-wrapper">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search on Stuffsus" class="search-input">
+                    <input type="text" name="search" placeholder="Search recipes..." class="search-input" value="{{ searchQuery|default('') }}">
                 </div>
                 <button type="submit" class="search-btn">Search</button>
+                {% if searchQuery %}
+                    <a href="index.php?action=salesPage" class="search-clear-btn" style="margin-left: 10px; padding: 12px 20px; background-color: #dc3545; color: white; border: none; border-radius: 8px; text-decoration: none; display: inline-block; cursor: pointer;">Clear</a>
+                {% endif %}
             </form>
+            {% if searchQuery %}
+                <div style="margin-top: 15px; text-align: center; color: #6b6f78; font-size: 14px;">
+                    Search results for: <strong>"{{ searchQuery }}"</strong> ({{ totalRecipes }} {{ totalRecipes == 1 ? 'recipe found' : 'recipes found' }})
+                </div>
+            {% endif %}
         </div>
     </div>
 </section>
@@ -124,116 +345,149 @@
             <!-- Right Column - Product Grid -->
             <div class="col-md-9">
                 <div class="product-grid">
-                    <!-- Product Card 1 -->
-                    <div class="product-card">
-                        <span class="product-category">Other</span>
-                        <img src="/image/product-placeholder.jpg" alt="Phone Holder Sakti" class="product-image">
-                        <h4 class="product-name">Phone Holder Sakti</h4>
-                        <div class="product-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-text">5.0 (12k Reviews)</span>
+                    {% if recipes is defined and recipes|length > 0 %}
+                        {% for recipe in recipes %}
+                            <div class="product-card">
+                                {% if recipe.has_allergens %}
+                                    <span class="product-category" style="background-color: #ff6b6b; color: white;">⚠ Contains Allergens</span>
+                                {% else %}
+                                    <span class="product-category">Recipe</span>
+                                {% endif %}
+                                <img src="/image/recipes/{{ recipe.photo }}" alt="{{ recipe.name }}" class="product-image">
+                                <h4 class="product-name">{{ recipe.name }}</h4>
+                                {% if recipe.description %}
+                                    <p class="product-description" style="font-size: 12px; color: #6b6f78; margin: 8px 0; min-height: 40px;">{{ recipe.description|slice(0, 80) }}{% if recipe.description|length > 80 %}...{% endif %}</p>
+                                {% endif %}
+                                {% if recipe.products is defined and recipe.products|length > 0 %}
+                                    <div class="product-ingredients" style="font-size: 11px; color: #8b8d94; margin: 8px 0; padding: 6px 0; border-top: 1px solid #f0f0f0;">
+                                        <strong style="color: #6b6f78;">Ingredients:</strong>
+                                        <div style="margin-top: 4px; max-height: 50px; overflow: hidden;">
+                                            {% for product in recipe.products|slice(0, 3) %}
+                                                <span style="display: inline-block; margin: 2px 4px 2px 0;">
+                                                    {{ product.product_name }}{% if product.unit %} ({{ product.quantity }} {{ product.unit }}){% endif %}{% if not loop.last %},{% endif %}
+                                                </span>
+                                            {% endfor %}
+                                            {% if recipe.products|length > 3 %}
+                                                <span style="color: #8b8d94;">+{{ recipe.products|length - 3 }} more</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                <div class="product-rating">
+                                    <span class="stars">★★★★★</span>
+                                    <span class="rating-text">5.0 (12k Reviews)</span>
+                                </div>
+                                <div class="product-price">${{ recipe.price|number_format(2, '.', ',') }}</div>
+                                <div class="product-actions">
+                                    <button class="btn-add-cart" 
+                                            data-recipe-id="{{ recipe.id }}" 
+                                            data-recipe-name="{{ recipe.name|e }}" 
+                                            data-recipe-price="{{ recipe.price }}" 
+                                            data-recipe-photo="{{ recipe.photo }}"
+                                            onclick="addToCart(this)">
+                                        Add to Cart
+                                    </button>
+                                    <button class="btn-buy-now">Buy Now</button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #6b6f78;">
+                            <p>No recipes available at the moment.</p>
                         </div>
-                        <div class="product-price">$29.90</div>
-                        <div class="product-actions">
-                            <button class="btn-add-cart">Add to Chart</button>
-                            <button class="btn-buy-now">Buy Now</button>
-                        </div>
-                    </div>
-
-                    <!-- Product Card 2 -->
-                    <div class="product-card">
-                        <span class="product-category">Music</span>
-                        <img src="/image/product-placeholder.jpg" alt="Headsound" class="product-image">
-                        <h4 class="product-name">Headsound</h4>
-                        <div class="product-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-text">5.0 (12k Reviews)</span>
-                        </div>
-                        <div class="product-price">$12.00</div>
-                        <div class="product-actions">
-                            <button class="btn-add-cart">Add to Chart</button>
-                            <button class="btn-buy-now">Buy Now</button>
-                        </div>
-                    </div>
-
-                    <!-- Product Card 3 -->
-                    <div class="product-card">
-                        <span class="product-category">Home</span>
-                        <img src="/image/product-placeholder.jpg" alt="Adudu Cleaner" class="product-image">
-                        <h4 class="product-name">Adudu Cleaner</h4>
-                        <div class="product-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-text">5.0 (12k Reviews)</span>
-                        </div>
-                        <div class="product-price">$50.00</div>
-                        <div class="product-actions">
-                            <button class="btn-add-cart">Add to Chart</button>
-                            <button class="btn-buy-now">Buy Now</button>
-                        </div>
-                    </div>
-
-                    <!-- Product Card 4 -->
-                    <div class="product-card">
-                        <span class="product-category">Other</span>
-                        <img src="/image/product-placeholder.jpg" alt="CCTV Maling" class="product-image">
-                        <h4 class="product-name">CCTV Maling</h4>
-                        <div class="product-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-text">5.0 (12k Reviews)</span>
-                        </div>
-                        <div class="product-price">$9.90</div>
-                        <div class="product-actions">
-                            <button class="btn-add-cart">Add to Chart</button>
-                            <button class="btn-buy-now">Buy Now</button>
-                        </div>
-                    </div>
-
-                    <!-- Product Card 5 -->
-                    <div class="product-card">
-                        <span class="product-category">Other</span>
-                        <img src="/image/product-placeholder.jpg" alt="Stuffus Peker 32" class="product-image">
-                        <h4 class="product-name">Stuffus Peker 32</h4>
-                        <div class="product-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-text">5.0 (12k Reviews)</span>
-                        </div>
-                        <div class="product-price">$34.10</div>
-                        <div class="product-actions">
-                            <button class="btn-add-cart">Add to Chart</button>
-                            <button class="btn-buy-now">Buy Now</button>
-                        </div>
-                    </div>
-
-                    <!-- Product Card 6 -->
-                    <div class="product-card">
-                        <span class="product-category">Other</span>
-                        <img src="/image/product-placeholder.jpg" alt="Stuffus R175" class="product-image">
-                        <h4 class="product-name">Stuffus R175</h4>
-                        <div class="product-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-text">5.0 (12k Reviews)</span>
-                        </div>
-                        <div class="product-price">$29.90</div>
-                        <div class="product-actions">
-                            <button class="btn-add-cart">Add to Chart</button>
-                            <button class="btn-buy-now">Buy Now</button>
-                        </div>
-                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- Pagination -->
+                {% if totalPages > 1 %}
                 <div class="pagination-wrapper">
                     <nav class="pagination">
-                        <a href="#" class="pagination-link">← Previous</a>
-                        <a href="#" class="pagination-link active">1</a>
-                        <a href="#" class="pagination-link">2</a>
-                        <a href="#" class="pagination-link">3</a>
-                        <span class="pagination-dots">...</span>
-                        <a href="#" class="pagination-link">9</a>
-                        <a href="#" class="pagination-link">10</a>
-                        <a href="#" class="pagination-link">Next →</a>
+                        {% set searchParam = searchQuery ? '&search=' ~ searchQuery|url_encode : '' %}
+                        {% if currentPage > 1 %}
+                            <a href="?action=salesPage&page={{ currentPage - 1 }}{{ searchParam }}" class="pagination-link">← Previous</a>
+                        {% else %}
+                            <span class="pagination-link disabled">← Previous</span>
+                        {% endif %}
+                        
+                        {% if totalPages <= 7 %}
+                            {# Якщо сторінок 7 або менше, показуємо всі #}
+                            {% for page in 1..totalPages %}
+                                {% if page == currentPage %}
+                                    <span class="pagination-link active">{{ page }}</span>
+                                {% else %}
+                                    <a href="?action=salesPage&page={{ page }}{{ searchParam }}" class="pagination-link">{{ page }}</a>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {# Показуємо першу сторінку #}
+                            {% if currentPage == 1 %}
+                                <span class="pagination-link active">1</span>
+                            {% else %}
+                                <a href="?action=salesPage&page=1{{ searchParam }}" class="pagination-link">1</a>
+                            {% endif %}
+                            
+                            {# Показуємо ... якщо поточна сторінка далеко від початку #}
+                            {% if currentPage > 3 %}
+                                <span class="pagination-dots">...</span>
+                            {% elseif currentPage == 3 %}
+                                <a href="?action=salesPage&page=2{{ searchParam }}" class="pagination-link">2</a>
+                            {% endif %}
+                            
+                            {# Показуємо сторінки навколо поточної #}
+                            {% if currentPage > 1 and currentPage < totalPages %}
+                                {% if currentPage > 2 %}
+                                    {% if currentPage - 1 != 1 %}
+                                        <a href="?action=salesPage&page={{ currentPage - 1 }}{{ searchParam }}" class="pagination-link">{{ currentPage - 1 }}</a>
+                                    {% endif %}
+                                {% endif %}
+                                <span class="pagination-link active">{{ currentPage }}</span>
+                                {% if currentPage < totalPages - 1 %}
+                                    {% if currentPage + 1 != totalPages %}
+                                        <a href="?action=salesPage&page={{ currentPage + 1 }}{{ searchParam }}" class="pagination-link">{{ currentPage + 1 }}</a>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                            
+                            {# Показуємо ... якщо поточна сторінка далеко від кінця #}
+                            {% if currentPage < totalPages - 2 %}
+                                <span class="pagination-dots">...</span>
+                            {% elseif currentPage == totalPages - 2 %}
+                                <a href="?action=salesPage&page={{ totalPages - 1 }}{{ searchParam }}" class="pagination-link">{{ totalPages - 1 }}</a>
+                            {% endif %}
+                            
+                            {# Показуємо останню сторінку #}
+                            {% if currentPage == totalPages %}
+                                <span class="pagination-link active">{{ totalPages }}</span>
+                            {% else %}
+                                <a href="?action=salesPage&page={{ totalPages }}{{ searchParam }}" class="pagination-link">{{ totalPages }}</a>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if currentPage < totalPages %}
+                            <a href="?action=salesPage&page={{ currentPage + 1 }}{{ searchParam }}" class="pagination-link">Next →</a>
+                        {% else %}
+                            <span class="pagination-link disabled">Next →</span>
+                        {% endif %}
                     </nav>
+                    <div style="text-align: center; margin-top: 12px; color: #6b6f78; font-size: 13px;">
+                        {% if searchQuery %}
+                            Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }}-{{ min(currentPage * itemsPerPage, totalRecipes) }} of {{ totalRecipes }} search results
+                        {% else %}
+                            Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }}-{{ min(currentPage * itemsPerPage, totalRecipes) }} of {{ totalRecipes }} recipes
+                        {% endif %}
+                    </div>
                 </div>
+                {% else %}
+                <div class="pagination-wrapper" style="text-align: center; padding: 20px; color: #6b6f78;">
+                    <p style="font-style: italic; font-size: 14px;">
+                        {% if totalRecipes > 0 %}
+                            ✨ All {{ totalRecipes }} recipe{{ totalRecipes != 1 ? 's' : '' }} displayed on this page
+                        {% else %}
+                            No recipes available at the moment
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -245,55 +499,63 @@
         <div class="section-header">
             <h2 class="section-title">Explore our recommendations</h2>
             <div class="section-nav">
-                <button class="nav-arrow">←</button>
-                <button class="nav-arrow">→</button>
+                <button class="nav-arrow nav-arrow-prev" id="recommendations-prev" {% if recommendedRecipes|length <= 3 %}style="display: none;"{% endif %}>←</button>
+                <button class="nav-arrow nav-arrow-next" id="recommendations-next" {% if recommendedRecipes|length <= 3 %}style="display: none;"{% endif %}>→</button>
             </div>
         </div>
-        <div class="product-grid">
-            <!-- Recommendation Product Cards -->
-            <div class="product-card">
-                <span class="product-category">Music</span>
-                <img src="/image/product-placeholder.jpg" alt="TWS Bujug" class="product-image">
-                <h4 class="product-name">TWS Bujug</h4>
-                <div class="product-rating">
-                    <span class="stars">★★★★★</span>
-                    <span class="rating-text">5.0 (12k Reviews)</span>
-                </div>
-                <div class="product-price">$29.90</div>
-                <div class="product-actions">
-                    <button class="btn-add-cart">Add to Chart</button>
-                    <button class="btn-buy-now">Buy Now</button>
-                </div>
-            </div>
-
-            <div class="product-card">
-                <span class="product-category">Music</span>
-                <img src="/image/product-placeholder.jpg" alt="Headsound Baptis" class="product-image">
-                <h4 class="product-name">Headsound Baptis</h4>
-                <div class="product-rating">
-                    <span class="stars">★★★★★</span>
-                    <span class="rating-text">5.0 (12k Reviews)</span>
-                </div>
-                <div class="product-price">$29.90</div>
-                <div class="product-actions">
-                    <button class="btn-add-cart">Add to Chart</button>
-                    <button class="btn-buy-now">Buy Now</button>
-                </div>
-            </div>
-
-            <div class="product-card">
-                <span class="product-category">Home</span>
-                <img src="/image/product-placeholder.jpg" alt="Adudu Cleaner" class="product-image">
-                <h4 class="product-name">Adudu Cleaner</h4>
-                <div class="product-rating">
-                    <span class="stars">★★★★★</span>
-                    <span class="rating-text">5.0 (12k Reviews)</span>
-                </div>
-                <div class="product-price">$29.90</div>
-                <div class="product-actions">
-                    <button class="btn-add-cart">Add to Chart</button>
-                    <button class="btn-buy-now">Buy Now</button>
-                </div>
+        <div class="recommendations-container" id="recommendations-container">
+            <div class="product-grid recommendations-grid" id="recommendations-grid">
+                {% if recommendedRecipes is defined and recommendedRecipes|length > 0 %}
+                    {% for recipe in recommendedRecipes %}
+                        <div class="product-card recommendations-item">
+                            {% if recipe.has_allergens %}
+                                <span class="product-category" style="background-color: #ff6b6b; color: white;">⚠ Contains Allergens</span>
+                            {% else %}
+                                <span class="product-category">Recipe</span>
+                            {% endif %}
+                            <img src="/image/recipes/{{ recipe.photo }}" alt="{{ recipe.name }}" class="product-image">
+                            <h4 class="product-name">{{ recipe.name }}</h4>
+                            {% if recipe.description %}
+                                <p class="product-description" style="font-size: 12px; color: #6b6f78; margin: 8px 0; min-height: 40px;">{{ recipe.description|slice(0, 80) }}{% if recipe.description|length > 80 %}...{% endif %}</p>
+                            {% endif %}
+                            {% if recipe.products is defined and recipe.products|length > 0 %}
+                                <div class="product-ingredients" style="font-size: 11px; color: #8b8d94; margin: 8px 0; padding: 6px 0; border-top: 1px solid #f0f0f0;">
+                                    <strong style="color: #6b6f78;">Ingredients:</strong>
+                                    <div style="margin-top: 4px; max-height: 50px; overflow: hidden;">
+                                        {% for product in recipe.products|slice(0, 3) %}
+                                            <span style="display: inline-block; margin: 2px 4px 2px 0;">
+                                                {{ product.product_name }}{% if product.unit %} ({{ product.quantity }} {{ product.unit }}){% endif %}{% if not loop.last %},{% endif %}
+                                            </span>
+                                        {% endfor %}
+                                        {% if recipe.products|length > 3 %}
+                                            <span style="color: #8b8d94;">+{{ recipe.products|length - 3 }} more</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <div class="product-rating">
+                                <span class="stars">★★★★★</span>
+                                <span class="rating-text">5.0 (12k Reviews)</span>
+                            </div>
+                            <div class="product-price">${{ recipe.price|number_format(2, '.', ',') }}</div>
+                            <div class="product-actions">
+                                <button class="btn-add-cart" 
+                                        data-recipe-id="{{ recipe.id }}" 
+                                        data-recipe-name="{{ recipe.name|e }}" 
+                                        data-recipe-price="{{ recipe.price }}" 
+                                        data-recipe-photo="{{ recipe.photo }}"
+                                        onclick="addToCart(this)">
+                                    Add to Cart
+                                </button>
+                                <button class="btn-buy-now">Buy Now</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #6b6f78;">
+                        <p>No recommendations available at the moment.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

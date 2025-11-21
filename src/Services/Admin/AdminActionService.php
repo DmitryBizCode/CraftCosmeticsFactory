@@ -140,6 +140,7 @@ class AdminActionService
             'name' => $data['name'],
             'time_to_complete' => $timeToComplete,
             'description' => $data['description'] ?? null,
+            'price' => isset($data['price']) && $data['price'] !== '' ? (float)$data['price'] : 0.00,
             'photo' => $photo,
         ];
 
@@ -210,6 +211,7 @@ class AdminActionService
             'name' => $data['name'],
             'time_to_complete' => $timeToComplete,
             'description' => $data['description'] ?? null,
+            'price' => isset($data['price']) && $data['price'] !== '' ? (float)$data['price'] : 0.00,
             'photo' => $photo,
         ];
 
