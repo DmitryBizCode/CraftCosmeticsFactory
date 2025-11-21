@@ -21,10 +21,44 @@
 {% block content %}{% endblock %}
 
 <script>
-    // Функції для роботи з кошиком (глобальні для всіх сторінок)
+    // Функції для роботи з cookies
+    function setCookie(name, value, days = 30) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
+    }
+
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+        }
+        return null;
+    }
+
+    function deleteCookie(name) {
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+    }
+
+    // Функції для роботи з кошиком (зберігаємо тільки ID рецепту та кількість в cookies)
     function getCart() {
-        const cartJson = localStorage.getItem('shopping_cart');
-        return cartJson ? JSON.parse(cartJson) : [];
+        const cartJson = getCookie('shopping_cart');
+        if (!cartJson) return [];
+        try {
+            return JSON.parse(cartJson);
+        } catch (e) {
+            console.error('Error parsing cart cookie:', e);
+            return [];
+        }
+    }
+
+    function saveCart(cart) {
+        const cartJson = JSON.stringify(cart);
+        setCookie('shopping_cart', cartJson, 30); // Зберігаємо на 30 днів
+        updateCartBadge();
     }
 
     function updateCartBadge() {

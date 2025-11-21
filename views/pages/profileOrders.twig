@@ -22,7 +22,7 @@
                 <article class="orders-card spend-card">
                     <div class="card-head">
                         <span>Monthly spend</span>
-                        <strong>$5,420</strong>
+                        <strong>${{ monthlySpend|number_format(2, '.', ',')|default('0.00') }}</strong>
                     </div>
                     <div class="mini-chart">
                         <svg viewBox="0 0 140 60" preserveAspectRatio="none">
@@ -32,13 +32,13 @@
                                     <stop offset="100%" stop-color="rgba(31,154,99,0)" />
                                 </linearGradient>
                             </defs>
-                            <path class="mini-area" d="M0,50 L10,42 L25,46 L40,35 L56,28 L70,24 L85,32 L100,30 L120,18 L140,24 L140,60 L0,60 Z"></path>
-                            <path class="mini-line" d="M0,50 L10,42 L25,46 L40,35 L56,28 L70,24 L85,32 L100,30 L120,18 L140,24"></path>
+                            <path class="mini-area" id="miniChartArea" d="M0,60 L140,60 L140,60 L0,60 Z"></path>
+                            <path class="mini-line" id="miniChartLine" d="M0,60 L140,60"></path>
                         </svg>
                     </div>
                     <div class="card-footer">
-                        <span>Avg order value: <strong>$86</strong></span>
-                        <span>Peak weekday: <strong>Thursday</strong></span>
+                        <span>Avg order value: <strong>${{ avgOrderValue|number_format(2, '.', ',')|default('0.00') }}</strong></span>
+                        <span>Peak weekday: <strong>{{ peakWeekday|default('N/A') }}</strong></span>
                     </div>
                 </article>
 
@@ -47,8 +47,8 @@
                         <i class="fas fa-dollar-sign"></i>
                         <span>Total transactions amount</span>
                     </header>
-                    <strong>$48,230</strong>
-                    <small>Aggregated from `transactions.value` Q3</small>
+                    <strong>${{ totalTransactionsAmount|number_format(2, '.', ',')|default('0.00') }}</strong>
+                    <small>Aggregated from `transactions.value`</small>
                 </article>
 
                 <article class="orders-card metric-card">
@@ -56,7 +56,7 @@
                         <i class="fas fa-receipt"></i>
                         <span>Total orders count</span>
                     </header>
-                    <strong>128</strong>
+                    <strong>{{ totalOrdersCount|default(0) }}</strong>
                     <small>`orders` table entries for the last 90 days</small>
                 </article>
 
@@ -65,7 +65,7 @@
                         <i class="fas fa-file-invoice"></i>
                         <span>Settled invoices</span>
                     </header>
-                    <strong>96</strong>
+                    <strong>{{ settledInvoices|default(0) }}</strong>
                     <small>Transactions with `status = Completed`</small>
                 </article>
             </section>
@@ -85,7 +85,7 @@
                             <i class="fas fa-percentage"></i>
                             <span>Conversion rate</span>
                         </header>
-                        <strong>82%</strong>
+                        <strong>{{ conversionRate|default(0) }}%</strong>
                         <small>Completed vs total transactions this month</small>
                     </article>
 
@@ -94,7 +94,7 @@
                             <i class="fas fa-hourglass-half"></i>
                             <span>Pending volume</span>
                         </header>
-                        <strong>$3,780</strong>
+                        <strong>${{ pendingVolume|number_format(2, '.', ',')|default('0.00') }}</strong>
                         <small>Sum of `transactions.value` with status Pending</small>
                     </article>
                 </div>
@@ -178,80 +178,89 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
     (() => {
+        // Spending trend chart
         const chartElement = document.querySelector('#ordersChart');
-        if (!chartElement || typeof ApexCharts === 'undefined') return;
+        if (chartElement && typeof ApexCharts !== 'undefined') {
+            const chartData = {{ spendingTrend|json_encode|raw }};
+            
+            const options = {
+                chart: {
+                    type: 'area',
+                    height: 320,
+                    toolbar: { show: false },
+                    zoom: { enabled: false }
+                },
+                series: [{
+                    name: 'Monthly spend',
+                    data: chartData.map(({ value }) => value)
+                }],
+                stroke: {
+                    curve: 'smooth',
+                    width: 3
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.4,
+                        opacityTo: 0.05,
+                        stops: [0, 90, 100]
+                    }
+                },
+                colors: ['#1f9a63'],
+                dataLabels: { enabled: false },
+                grid: {
+                    borderColor: '#eef1f6',
+                    strokeDashArray: 4,
+                    padding: { left: 10, right: 10 }
+                },
+                xaxis: {
+                    categories: chartData.map(({ label }) => label),
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                    labels: {
+                        style: { colors: '#8b8e96', fontSize: '12px' }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: '#8b8e96', fontSize: '12px' },
+                        formatter: (value) => `$${Math.round(value).toLocaleString('en-US')}`
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: (value) => `$${value.toLocaleString('en-US')}`
+                    }
+                },
+                markers: {
+                    size: 0
+                }
+            };
 
-        const chartData = [
-            { label: 'Jan', value: 4280 },
-            { label: 'Feb', value: 3960 },
-            { label: 'Mar', value: 5120 },
-            { label: 'Apr', value: 6840 },
-            { label: 'May', value: 7250 },
-            { label: 'Jun', value: 8120 },
-            { label: 'Jul', value: 7620 },
-            { label: 'Aug', value: 6980 },
-            { label: 'Sep', value: 6550 },
-            { label: 'Oct', value: 7120 },
-            { label: 'Nov', value: 7680 }
-        ];
-
-        const options = {
-            chart: {
-                type: 'area',
-                height: 320,
-                toolbar: { show: false },
-                zoom: { enabled: false }
-            },
-            series: [{
-                name: 'Monthly spend',
-                data: chartData.map(({ value }) => value)
-            }],
-            stroke: {
-                curve: 'smooth',
-                width: 3
-            },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.4,
-                    opacityTo: 0.05,
-                    stops: [0, 90, 100]
-                }
-            },
-            colors: ['#1f9a63'],
-            dataLabels: { enabled: false },
-            grid: {
-                borderColor: '#eef1f6',
-                strokeDashArray: 4,
-                padding: { left: 10, right: 10 }
-            },
-            xaxis: {
-                categories: chartData.map(({ label }) => label),
-                axisBorder: { show: false },
-                axisTicks: { show: false },
-                labels: {
-                    style: { colors: '#8b8e96', fontSize: '12px' }
-                }
-            },
-            yaxis: {
-                labels: {
-                    style: { colors: '#8b8e96', fontSize: '12px' },
-                    formatter: (value) => `$${Math.round(value).toLocaleString('en-US')}`
-                }
-            },
-            tooltip: {
-                y: {
-                    formatter: (value) => `$${value.toLocaleString('en-US')}`
-                }
-            },
-            markers: {
-                size: 0
-            }
-        };
-
-        const chart = new ApexCharts(chartElement, options);
-        chart.render();
+            const chart = new ApexCharts(chartElement, options);
+            chart.render();
+        }
+        
+        // Mini chart
+        const miniChartData = {{ miniChartData|json_encode|raw }};
+        if (miniChartData && miniChartData.length > 0) {
+            const maxValue = Math.max(...miniChartData.filter(v => v > 0), 1);
+            const points = miniChartData.map((value, index) => {
+                const x = (miniChartData.length > 1) ? (index / (miniChartData.length - 1)) * 140 : 70;
+                const y = 60 - (value / maxValue) * 42;
+                return `${x},${y}`;
+            }).join(' L');
+            
+            const areaPath = `M0,60 L${points} L140,60 L0,60 Z`;
+            const linePath = `M0,60 L${points}`;
+            
+            const areaEl = document.getElementById('miniChartArea');
+            const lineEl = document.getElementById('miniChartLine');
+            
+            if (areaEl) areaEl.setAttribute('d', areaPath);
+            if (lineEl) lineEl.setAttribute('d', linePath);
+        }
     })();
 </script>
 {% endblock %}

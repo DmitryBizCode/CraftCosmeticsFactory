@@ -3,24 +3,264 @@
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleCart.css">
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        // Отримуємо дані про рецепти з сервера
+        const recipesMap = {{ recipesMap|json_encode|raw }};
+        const userId = {{ userId|default('null')|raw }};
+        const userPhoto = '{{ userPhoto|default("/image/pfp.png")|e("js") }}';
+        console.log('📦 Recipes map loaded:', Object.keys(recipesMap || {}).length, 'recipes');
+        console.log('👤 User ID:', userId);
+        console.log('📷 User photo:', userPhoto);
+        
+        // Функції для читання кошика (перевіряємо і cookies, і localStorage для сумісності)
+        function getCartFromStorage() {
+            // Спочатку перевіряємо cookies
+            function getCookie(name) {
+                const nameEQ = name + "=";
+                const ca = document.cookie.split(';');
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                    if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+                }
+                return null;
+            }
+            
+            // Спробуємо прочитати з cookies
+            const cartCookie = getCookie('shopping_cart');
+            if (cartCookie) {
+                try {
+                    const cart = JSON.parse(cartCookie);
+                    console.log('Cart loaded from cookies:', cart);
+                    return cart;
+                } catch (e) {
+                    console.error('Error parsing cart cookie:', e);
+                }
+            }
+            
+            // Якщо cookies порожні, перевіряємо localStorage (міграція)
+            const cartLocalStorage = localStorage.getItem('shopping_cart');
+            if (cartLocalStorage) {
+                try {
+                    const cart = JSON.parse(cartLocalStorage);
+                    console.log('Cart loaded from localStorage (migrating):', cart);
+                    // Мігруємо в cookies
+                    if (typeof saveCart === 'function') {
+                        saveCart(cart);
+                    }
+                    // Видаляємо з localStorage
+                    localStorage.removeItem('shopping_cart');
+                    return cart;
+                } catch (e) {
+                    console.error('Error parsing cart from localStorage:', e);
+                }
+            }
+            
+            return [];
+        }
+        
+        // Перевизначаємо getCart() для цієї сторінки
+        function getCart() {
+            if (typeof window.getCartFromStorage === 'function') {
+                return window.getCartFromStorage();
+            }
+            return getCartFromStorage();
+        }
+        
+        // Зберігаємо функцію глобально для доступу
+        window.getCartFromStorage = getCartFromStorage;
+
+        if (typeof saveCart === 'undefined') {
+            function saveCart(cart) {
+                function setCookie(name, value, days = 30) {
+                    const expires = new Date();
+                    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+                    document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
+                }
+                const cartJson = JSON.stringify(cart);
+                setCookie('shopping_cart', cartJson, 30);
+                if (typeof updateCartBadge === 'function') {
+                    updateCartBadge();
+                }
+            }
+        }
+
+        // Voucher discount rates (оголошуємо глобально для доступу з усіх функцій)
+        let currentDiscountRate = 0;
+        const voucherCodes = {
+            '12345': 0.1,  // 10% discount
+            'qwerty': 0.15  // 15% discount
+        };
+        
+        // Відображення товарів з кошика
+        function renderCartItems() {
+            console.log('=== renderCartItems START ===');
+            console.log('Current discount rate:', currentDiscountRate);
+            
+            // Використовуємо функцію, яка читає з cookies/localStorage
+            let cart;
+            try {
+                cart = getCartFromStorage();
+            } catch (e) {
+                console.error('Error getting cart:', e);
+                cart = [];
+            }
+            
+            console.log('Cart items:', cart);
+            console.log('Cart length:', cart ? cart.length : 0);
+            console.log('Cart is array:', Array.isArray(cart));
+            console.log('Recipes map keys:', Object.keys(recipesMap || {}));
+            console.log('Recipes map size:', recipesMap ? Object.keys(recipesMap).length : 0);
+            
+            // Чекаємо, поки DOM буде готовий
+            const cartItemsContainer = document.querySelector('.cart-items-column');
+            
+            if (!cartItemsContainer) {
+                console.error('❌ Cart items container not found! Retrying in 200ms...');
+                setTimeout(function() {
+                    renderCartItems();
+                }, 200);
+                return;
+            }
+            
+            console.log('✅ Cart items container found');
+            
+            // Видаляємо старі товари та повідомлення про порожній кошик
+            const existingItems = cartItemsContainer.querySelectorAll('.cart-item');
+            console.log('Removing', existingItems.length, 'existing items');
+            existingItems.forEach(item => item.remove());
+            const emptyMessage = cartItemsContainer.querySelector('.empty-cart-message');
+            if (emptyMessage) emptyMessage.remove();
+
+            if (!cart || cart.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'empty-cart-message';
+                emptyMsg.style.cssText = 'text-align: center; padding: 60px 20px; color: #6b6f78; grid-column: 1 / -1;';
+                emptyMsg.innerHTML = '<h3>Your cart is empty</h3><p>Add some recipes to your cart to get started.</p>';
+                cartItemsContainer.appendChild(emptyMsg);
+                updateOrderSummary();
+                return;
+            }
+
+            const tableHeader = cartItemsContainer.querySelector('.cart-table-header');
+            if (tableHeader) {
+                tableHeader.style.display = 'grid';
+            }
+
+            const updateBtn = cartItemsContainer.querySelector('.btn-update-cart');
+            
+            cart.forEach((item, index) => {
+                console.log(`Processing cart item ${index + 1}:`, item);
+                
+                // Конвертуємо ID в число для порівняння
+                const itemId = parseInt(item.id);
+                console.log(`Looking for recipe with ID: ${itemId} (original: ${item.id})`);
+                
+                // Спробуємо знайти рецепт за числовим ID або строковим
+                let recipe = recipesMap[itemId] || recipesMap[String(itemId)] || recipesMap[item.id] || recipesMap[String(item.id)];
+                
+                if (!recipe) {
+                    console.error('❌ Recipe not found for ID:', item.id, 'Type:', typeof item.id, 'Item:', item);
+                    console.error('Available recipe IDs:', Object.keys(recipesMap || {}).map(k => parseInt(k) || k));
+                    // Пропускаємо товар, якщо рецепт не знайдено
+                    return;
+                }
+                
+                console.log('✅ Recipe found:', recipe.name, 'Price:', recipe.price);
+                // Використовуємо дані з бази даних для відображення
+
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                cartItem.dataset.recipeId = itemId;
+                
+                // Беремо дані з рецепту з бази даних
+                const photoPath = recipe.photo ? '/image/recipes/' + recipe.photo : '/image/recipes/default.png';
+                const itemPrice = parseFloat(recipe.price) || 0;
+                const itemQuantity = parseInt(item.quantity) || 1;
+                const originalTotal = itemPrice * itemQuantity;
+                
+                // Обчислюємо ціну з урахуванням знижки (якщо є)
+                const discount = originalTotal * (currentDiscountRate || 0);
+                const discountedTotal = originalTotal - discount;
+                const hasDiscount = currentDiscountRate > 0;
+
+                // Створюємо HTML для ціни (з урахуванням знижки або без)
+                let priceHtml = '';
+                if (hasDiscount) {
+                    // Показуємо зачеркнуту оригінальну ціну та ціну зі знижкою
+                    priceHtml = `
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <span class="item-price" style="text-decoration: line-through; color: #999; font-size: 0.9em;">$${originalTotal.toFixed(2)}</span>
+                            <span class="item-total" style="color: #28a745; font-weight: bold;">$${discountedTotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                } else {
+                    // Показуємо тільки одну ціну (без зачеркнення)
+                    priceHtml = `
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <span class="item-total">$${originalTotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                }
+
+                cartItem.innerHTML = `
+                    <div class="item-info">
+                        <img src="${photoPath}" alt="${recipe.name}" class="item-image" onerror="this.src='/image/recipes/default.png'">
+                        <div class="item-details">
+                            <h3 class="item-name">${recipe.name}</h3>
+                            <p class="item-specs">Recipe ID: ${recipe.id}</p>
+                        </div>
+                    </div>
+                    <div class="item-quantity">
+                        <button class="quantity-btn quantity-decrease" type="button">−</button>
+                        <input type="number" class="quantity-input" value="${itemQuantity}" min="1" data-recipe-id="${itemId}" data-item-price="${itemPrice}">
+                        <button class="quantity-btn quantity-increase" type="button">+</button>
+                    </div>
+                    <div class="item-price-cell">
+                        ${priceHtml}
+                    </div>
+                    <div class="item-action">
+                        <button class="remove-item" title="Remove item" data-recipe-id="${itemId}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+
+                // Вставляємо товар перед кнопкою Update Cart
+                if (updateBtn) {
+                    cartItemsContainer.insertBefore(cartItem, updateBtn);
+                } else {
+                    cartItemsContainer.appendChild(cartItem);
+                }
+                console.log('Cart item added to DOM:', recipe.name);
+            });
+
+            console.log(`Total items rendered: ${document.querySelectorAll('.cart-item').length}`);
+            attachEventListeners();
+            updateOrderSummary();
+        }
+
+        // Прикріплення обробників подій до товарів
+        function attachEventListeners() {
             // Quantity controls
             const quantityButtons = document.querySelectorAll('.quantity-btn');
             quantityButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const input = this.parentElement.querySelector('.quantity-input');
-                    const currentValue = parseInt(input.value) || 0;
+                    const cartItem = this.closest('.cart-item');
+                    const input = cartItem.querySelector('.quantity-input');
+                    const recipeId = parseInt(input.dataset.recipeId);
+                    const currentValue = parseInt(input.value) || 1;
                     
                     if (this.classList.contains('quantity-decrease')) {
                         if (currentValue > 1) {
-                            input.value = currentValue - 1;
-                            updateTotal(this.closest('.cart-item'));
+                            updateCartQuantity(recipeId, currentValue - 1);
+                            // Оновлюємо відображення ціни після зміни кількості
+                            updateTotal(cartItem);
                         }
                     } else if (this.classList.contains('quantity-increase')) {
-                        input.value = currentValue + 1;
-                        updateTotal(this.closest('.cart-item'));
+                        updateCartQuantity(recipeId, currentValue + 1);
+                        // Оновлюємо відображення ціни після зміни кількості
+                        updateTotal(cartItem);
                     }
-                    updateOrderSummary();
                 });
             });
 
@@ -29,9 +269,17 @@
             quantityInputs.forEach(input => {
                 input.addEventListener('change', function() {
                     const value = parseInt(this.value) || 1;
-                    if (value < 1) this.value = 1;
-                    updateTotal(this.closest('.cart-item'));
-                    updateOrderSummary();
+                    if (value < 1) {
+                        this.value = 1;
+                        value = 1;
+                    }
+                    const recipeId = parseInt(this.dataset.recipeId);
+                    const cartItem = this.closest('.cart-item');
+                    updateCartQuantity(recipeId, value);
+                    // Оновлюємо відображення ціни цього товару після зміни кількості
+                    if (cartItem) {
+                        updateTotal(cartItem);
+                    }
                 });
             });
 
@@ -39,108 +287,336 @@
             const removeButtons = document.querySelectorAll('.remove-item');
             removeButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const cartItem = this.closest('.cart-item');
-                    cartItem.remove();
-                    updateOrderSummary();
+                    const recipeId = parseInt(this.dataset.recipeId);
+                    removeCartItem(recipeId);
                 });
             });
+        }
+
+        // Оновлення кількості товару в кошику
+        function updateCartQuantity(recipeId, quantity) {
+            // Використовуємо функцію, яка читає з cookies/localStorage
+            let cart;
+            if (typeof window.getCartFromStorage === 'function') {
+                cart = window.getCartFromStorage();
+            } else if (typeof getCart === 'function') {
+                cart = getCart();
+            } else {
+                cart = [];
+            }
+            
+            const recipeIdNum = parseInt(recipeId);
+            const itemIndex = cart.findIndex(item => parseInt(item.id) === recipeIdNum);
+            
+            if (itemIndex !== -1) {
+                cart[itemIndex].quantity = quantity;
+                // Оновлюємо тільки ID та quantity
+                cart[itemIndex] = {
+                    id: parseInt(cart[itemIndex].id),
+                    quantity: quantity
+                };
+                if (typeof saveCart === 'function') {
+                    saveCart(cart);
+                }
+                renderCartItems();
+            }
+        }
+
+        // Видалення товару з кошика
+        function removeCartItem(recipeId) {
+            // Використовуємо функцію, яка читає з cookies/localStorage
+            let cart;
+            if (typeof window.getCartFromStorage === 'function') {
+                cart = window.getCartFromStorage();
+            } else if (typeof getCart === 'function') {
+                cart = getCart();
+            } else {
+                cart = [];
+            }
+            
+            const recipeIdNum = parseInt(recipeId);
+            cart = cart.filter(item => parseInt(item.id) !== recipeIdNum);
+            if (typeof saveCart === 'function') {
+                saveCart(cart);
+            }
+            renderCartItems();
+        }
 
             // Update total for a single item
             function updateTotal(cartItem) {
                 const quantity = parseInt(cartItem.querySelector('.quantity-input').value) || 1;
-                const priceText = cartItem.querySelector('.item-price').textContent;
-                const price = parseFloat(priceText.replace('$', '').replace(',', ''));
-                const total = (price * quantity).toFixed(2);
-                cartItem.querySelector('.item-total').textContent = '$' + total;
+                const priceInput = cartItem.querySelector('.quantity-input');
+                const price = parseFloat(priceInput.dataset.itemPrice) || 0;
+                
+                const originalTotal = price * quantity;
+                const discount = originalTotal * (currentDiscountRate || 0);
+                const discountedTotal = originalTotal - discount;
+                const hasDiscount = currentDiscountRate > 0;
+                
+                const priceCell = cartItem.querySelector('.item-price-cell');
+                
+                if (hasDiscount) {
+                    // Показуємо зачеркнуту оригінальну ціну та ціну зі знижкою
+                    priceCell.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <span class="item-price" style="text-decoration: line-through; color: #999; font-size: 0.9em;">$${originalTotal.toFixed(2)}</span>
+                            <span class="item-total" style="color: #28a745; font-weight: bold;">$${discountedTotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                } else {
+                    // Показуємо тільки одну ціну (без зачеркнення)
+                    priceCell.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <span class="item-total">$${originalTotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                }
             }
-
-            // Voucher discount rates
-            let currentDiscountRate = 0;
-            const voucherCodes = {
-                'lera': 0.1,  // 10% discount
-                'lerasex': 0.15  // 15% discount
-            };
 
             // Update order summary
             function updateOrderSummary() {
                 let subtotal = 0;
-                document.querySelectorAll('.cart-item').forEach(item => {
+                const cartItems = document.querySelectorAll('.cart-item');
+                
+                if (cartItems.length === 0) {
+                    // Якщо кошик порожній
+                    document.querySelector('.subtotal-amount').textContent = '$0.00';
+                    const discountRow = document.getElementById('discount-row');
+                    if (discountRow) discountRow.style.display = 'none';
+                    document.querySelector('.delivery-amount').textContent = '$0.00';
+                    document.querySelector('.final-total').textContent = '$0.00';
+                    return;
+                }
+
+                cartItems.forEach(item => {
                     const totalText = item.querySelector('.item-total').textContent;
-                    const total = parseFloat(totalText.replace('$', '').replace(',', ''));
+                    const total = parseFloat(totalText.replace('$', '').replace(',', '')) || 0;
                     subtotal += total;
                 });
 
                 const discount = subtotal * currentDiscountRate;
-                const deliveryFee = 50.00;
+                const deliveryFee = subtotal > 0 ? 50.00 : 0.00;
                 const finalTotal = subtotal - discount + deliveryFee;
 
-                document.querySelector('.subtotal-amount').textContent = '$' + subtotal.toFixed(2);
+                const subtotalEl = document.querySelector('.subtotal-amount');
+                if (subtotalEl) subtotalEl.textContent = '$' + subtotal.toFixed(2);
                 
                 // Show/hide discount row
                 const discountRow = document.getElementById('discount-row');
-                const discountLabel = discountRow.querySelector('.discount-label');
-                
-                if (currentDiscountRate > 0) {
-                    discountRow.style.display = 'flex';
-                    const discountPercent = Math.round(currentDiscountRate * 100);
-                    discountLabel.textContent = 'Discount (' + discountPercent + '%)';
-                    document.querySelector('.discount-amount').textContent = '-$' + discount.toFixed(2);
-                } else {
-                    discountRow.style.display = 'none';
+                if (discountRow) {
+                    const discountLabel = discountRow.querySelector('.discount-label');
+                    
+                    if (currentDiscountRate > 0) {
+                        discountRow.style.display = 'flex';
+                        const discountPercent = Math.round(currentDiscountRate * 100);
+                        if (discountLabel) discountLabel.textContent = 'Discount (' + discountPercent + '%)';
+                        const discountAmount = document.querySelector('.discount-amount');
+                        if (discountAmount) discountAmount.textContent = '-$' + discount.toFixed(2);
+                    } else {
+                        discountRow.style.display = 'none';
+                    }
                 }
                 
-                document.querySelector('.delivery-amount').textContent = '$' + deliveryFee.toFixed(2);
-                document.querySelector('.final-total').textContent = '$' + finalTotal.toFixed(2);
+                const deliveryEl = document.querySelector('.delivery-amount');
+                if (deliveryEl) deliveryEl.textContent = '$' + deliveryFee.toFixed(2);
+                
+                const totalEl = document.querySelector('.final-total');
+                if (totalEl) totalEl.textContent = '$' + finalTotal.toFixed(2);
+                
+                // Оновлюємо відображення цін товарів (додаємо/прибираємо зачеркнення)
+                updateCartItemPrices();
             }
-
-            // Apply voucher
-            const applyVoucherBtn = document.querySelector('.apply-voucher-btn');
-            const voucherInput = document.getElementById('voucher-input');
             
-            if (applyVoucherBtn) {
-                applyVoucherBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const voucherCode = voucherInput.value.trim().toLowerCase();
-                    
-                    if (voucherCode === 'lera') {
-                        currentDiscountRate = voucherCodes['lera'];
-                        updateOrderSummary();
-                        voucherInput.style.borderColor = '#28a745';
-                        setTimeout(() => {
-                            voucherInput.style.borderColor = '#ddd';
-                        }, 2000);
-                    } else if (voucherCode === 'lerasex') {
-                        currentDiscountRate = voucherCodes['lerasex'];
-                        updateOrderSummary();
-                        voucherInput.style.borderColor = '#28a745';
-                        setTimeout(() => {
-                            voucherInput.style.borderColor = '#ddd';
-                        }, 2000);
-                    } else if (voucherCode === '') {
-                        currentDiscountRate = 0;
-                        updateOrderSummary();
-                    } else {
-                        currentDiscountRate = 0;
-                        updateOrderSummary();
-                        voucherInput.style.borderColor = '#dc3545';
-                        setTimeout(() => {
-                            voucherInput.style.borderColor = '#ddd';
-                        }, 2000);
-                    }
-                });
-
-                // Clear discount when voucher input is cleared
-                voucherInput.addEventListener('input', function() {
-                    if (this.value.trim() === '') {
-                        currentDiscountRate = 0;
-                        updateOrderSummary();
-                    }
+            // Оновлюємо відображення цін товарів при зміні знижки
+            function updateCartItemPrices() {
+                const cartItems = document.querySelectorAll('.cart-item');
+                cartItems.forEach(item => {
+                    updateTotal(item);
                 });
             }
 
-            // Initial calculation
-            updateOrderSummary();
-        });
+            // Apply voucher - функція для застосування ваучера
+            function applyVoucher() {
+                const voucherInput = document.getElementById('voucher-input');
+                if (!voucherInput) {
+                    console.error('Voucher input not found!');
+                    return;
+                }
+                
+                const voucherCode = voucherInput.value.trim().toLowerCase();
+                console.log('Applying voucher:', voucherCode);
+                
+                const orderSummaryColumn = document.querySelector('.order-summary-column');
+                const orderSummaryCard = document.querySelector('.order-summary-card');
+                
+                if (voucherCode === '12345') {
+                    currentDiscountRate = voucherCodes['12345'];
+                    console.log('✅ Voucher 12345 applied, discount rate:', currentDiscountRate);
+                    updateOrderSummary(); // Це також викличе updateCartItemPrices()
+                    
+                    // Підсвічуємо колонку зеленою
+                    if (orderSummaryCard) {
+                        orderSummaryCard.style.borderLeft = '4px solid #28a745';
+                        orderSummaryCard.style.transition = 'border-left 0.3s ease';
+                    }
+                    
+                    setTimeout(() => {
+                        if (orderSummaryCard) {
+                            orderSummaryCard.style.borderLeft = '';
+                        }
+                    }, 2000);
+                } else if (voucherCode === 'qwerty') {
+                    currentDiscountRate = voucherCodes['qwerty'];
+                    console.log('✅ Voucher qwerty applied, discount rate:', currentDiscountRate);
+                    updateOrderSummary(); // Це також викличе updateCartItemPrices()
+                    
+                    // Підсвічуємо колонку зеленою
+                    if (orderSummaryCard) {
+                        orderSummaryCard.style.borderLeft = '4px solid #28a745';
+                        orderSummaryCard.style.transition = 'border-left 0.3s ease';
+                    }
+                    
+                    setTimeout(() => {
+                        if (orderSummaryCard) {
+                            orderSummaryCard.style.borderLeft = '';
+                        }
+                    }, 2000);
+                } else if (voucherCode === '') {
+                    currentDiscountRate = 0;
+                    console.log('Voucher cleared, discount rate:', currentDiscountRate);
+                    updateOrderSummary(); // Це також викличе updateCartItemPrices()
+                    
+                    // Прибираємо підсвічування
+                    if (orderSummaryCard) {
+                        orderSummaryCard.style.borderLeft = '';
+                    }
+                } else {
+                    currentDiscountRate = 0;
+                    console.log('❌ Invalid voucher code:', voucherCode);
+                    updateOrderSummary(); // Це також викличе updateCartItemPrices()
+                    
+                    // Підсвічуємо колонку червоною
+                    if (orderSummaryCard) {
+                        orderSummaryCard.style.borderLeft = '4px solid #dc3545';
+                        orderSummaryCard.style.transition = 'border-left 0.3s ease';
+                    }
+                    
+                    // Показуємо помилку в полі вводу
+                    const originalPlaceholder = voucherInput.placeholder;
+                    voucherInput.value = 'Invalid voucher code';
+                    voucherInput.style.color = '#dc3545';
+                    voucherInput.style.borderColor = '#dc3545';
+                    voucherInput.style.backgroundColor = '#fff5f5';
+                    
+                    setTimeout(() => {
+                        // Очищуємо поле та повертаємо оригінальний вигляд
+                        voucherInput.value = '';
+                        voucherInput.placeholder = originalPlaceholder;
+                        voucherInput.style.color = '';
+                        voucherInput.style.borderColor = '#ddd';
+                        voucherInput.style.backgroundColor = '';
+                        if (orderSummaryCard) {
+                            orderSummaryCard.style.borderLeft = '';
+                        }
+                    }, 2000);
+                }
+            }
+            
+            // Прикріплюємо обробник події на кнопку "Apply"
+            function initVoucherHandlers() {
+                const applyVoucherBtn = document.querySelector('.apply-voucher-btn');
+                const voucherInput = document.getElementById('voucher-input');
+                
+                if (applyVoucherBtn && voucherInput) {
+                    console.log('✅ Voucher handlers initialized');
+                    
+                    // Обробник кліку на кнопку "Apply"
+                    applyVoucherBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log('Apply button clicked');
+                        applyVoucher();
+                    });
+                    
+                    // Обробник натискання Enter в полі вводу
+                    voucherInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            console.log('Enter pressed in voucher input');
+                            applyVoucher();
+                        }
+                    });
+                    
+                    // Clear discount when voucher input is cleared
+                    voucherInput.addEventListener('input', function() {
+                        if (this.value.trim() === '') {
+                            currentDiscountRate = 0;
+                            updateOrderSummary(); // Це також викличе updateCartItemPrices()
+                        }
+                    });
+                } else {
+                    console.error('❌ Voucher elements not found!');
+                    // Повторюємо спробу через деякий час
+                    setTimeout(initVoucherHandlers, 200);
+                }
+            }
+
+
+        // Зберігаємо функції глобально для доступу з onclick та інших місць
+        window.renderCartItems = renderCartItems;
+        window.getCartFromStorage = getCartFromStorage;
+        window.updateCartQuantity = updateCartQuantity;
+        window.removeCartItem = removeCartItem;
+        
+        // Викликаємо відображення товарів при завантаженні сторінки
+        function initCartPage() {
+            console.log('🛒 Initializing cart page...');
+            console.log('recipesMap available:', typeof recipesMap !== 'undefined', recipesMap);
+            console.log('getCartFromStorage available:', typeof getCartFromStorage !== 'undefined');
+            
+            const cart = getCartFromStorage();
+            console.log('📋 Cart loaded from storage:', cart);
+            console.log('Cart length:', cart ? cart.length : 0);
+            
+            // Викликаємо відображення товарів
+            setTimeout(function() {
+                console.log('Calling renderCartItems...');
+                renderCartItems();
+                if (typeof updateCartBadge === 'function') {
+                    updateCartBadge();
+                }
+            }, 100);
+        }
+        
+        // Викликаємо ініціалізацію
+        function initAllCartFunctions() {
+            console.log('🔄 Initializing all cart functions...');
+            
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    console.log('✅ DOMContentLoaded - initializing cart');
+                    initCartPage();
+                    initVoucherHandlers();
+                });
+            } else {
+                console.log('✅ DOM already ready - initializing cart immediately');
+                initCartPage();
+                initVoucherHandlers();
+            }
+            
+            // Також викликаємо при повному завантаженні сторінки
+            window.addEventListener('load', function() {
+                console.log('✅ Window load - re-rendering cart');
+                setTimeout(function() {
+                    if (typeof renderCartItems === 'function') {
+                        renderCartItems();
+                    }
+                    initVoucherHandlers(); // Перевіряємо, чи обробники прикріплені
+                }, 200);
+            });
+        }
+        
+        // Викликаємо ініціалізацію всіх функцій
+        initAllCartFunctions();
     </script>
 {% endblock %}
 
@@ -163,82 +639,9 @@
                     <div class="table-header-cell">Action</div>
                 </div>
 
-                <!-- Cart Item 1 -->
-                <div class="cart-item">
-                    <div class="item-info">
-                        <img src="/image/1.jpg" alt="Furniture Set" class="item-image">
-                        <div class="item-details">
-                            <h3 class="item-name">Furniture Set</h3>
-                            <p class="item-specs">Set: Colour: Coffee</p>
-                        </div>
-                    </div>
-                    <div class="item-quantity">
-                        <button class="quantity-btn quantity-decrease">−</button>
-                        <input type="number" class="quantity-input" value="4" min="1">
-                        <button class="quantity-btn quantity-increase">+</button>
-                    </div>
-                    <div class="item-price-cell">
-                        <span class="item-price">$109.25</span>
-                        <span class="item-total">$437.00</span>
-                    </div>
-                    <div class="item-action">
-                        <button class="remove-item" title="Remove item">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Cart Item 2 -->
-                <div class="cart-item">
-                    <div class="item-info">
-                        <img src="/image/2.jpg" alt="Vintage Dining Set" class="item-image">
-                        <div class="item-details">
-                            <h3 class="item-name">Vintage Dining Set</h3>
-                            <p class="item-specs">Set: Colour: Brown</p>
-                        </div>
-                    </div>
-                    <div class="item-quantity">
-                        <button class="quantity-btn quantity-decrease">−</button>
-                        <input type="number" class="quantity-input" value="2" min="1">
-                        <button class="quantity-btn quantity-increase">+</button>
-                    </div>
-                    <div class="item-price-cell">
-                        <span class="item-price">$472.50</span>
-                        <span class="item-total">$945.00</span>
-                    </div>
-                    <div class="item-action">
-                        <button class="remove-item" title="Remove item">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Cart Item 3 -->
-                <div class="cart-item">
-                    <div class="item-info">
-                        <img src="/image/3.jpg" alt="Studio Chair" class="item-image">
-                        <div class="item-details">
-                            <h3 class="item-name">Studio Chair</h3>
-                            <p class="item-specs">Set: Colour: Deep Green</p>
-                        </div>
-                    </div>
-                    <div class="item-quantity">
-                        <button class="quantity-btn quantity-decrease">−</button>
-                        <input type="number" class="quantity-input" value="7" min="1">
-                        <button class="quantity-btn quantity-increase">+</button>
-                    </div>
-                    <div class="item-price-cell">
-                        <span class="item-price">$85.29</span>
-                        <span class="item-total">$597.03</span>
-                    </div>
-                    <div class="item-action">
-                        <button class="remove-item" title="Remove item">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <button class="btn-update-cart">Update Cart</button>
+                <!-- Cart items will be dynamically rendered here by JavaScript -->
+                
+                <button class="btn-update-cart" onclick="renderCartItems(); updateCartBadge();" style="display: none;">Update Cart</button>
             </div>
 
             <!-- Right Column - Order Summary -->
@@ -279,7 +682,8 @@
                         <span>90 Day Limited Warranty against manufacturer's defects. <a href="#" class="warranty-link">Details</a></span>
                     </div>
 
-                    <button class="btn-checkout">Checkout Now</button>
+                    <!-- Checkout Now button -->
+                    <button class="btn-checkout" id="checkout-btn">Checkout Now</button>
                 </div>
             </div>
         </div>
@@ -291,11 +695,97 @@
                     <h3 class="bottom-title">Build custom furniture</h3>
                     <h2 class="bottom-subtitle">Craft Own Furniture</h2>
                 </div>
-                <button class="btn-lets-talk">Lets Talk!</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="email" 
+                           class="lets-talk-email" 
+                           placeholder="Your email" 
+                           id="lets-talk-email"
+                           style="padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; min-width: 250px;">
+                    <button class="btn-lets-talk">Lets Talk!</button>
+                </div>
             </div>
         </div>
     </div>
 </section>
+
+<script>
+    // Додатковий виклик для гарантії відображення товарів після завантаження сторінки
+    (function() {
+        console.log('🔄 Bottom script - additional cart render check...');
+        console.log('window.renderCartItems available:', typeof window.renderCartItems !== 'undefined');
+        console.log('window.getCartFromStorage available:', typeof window.getCartFromStorage !== 'undefined');
+        console.log('Cart container exists:', document.querySelector('.cart-items-column') !== null);
+        
+        setTimeout(function() {
+            console.log('Calling renderCartItems from bottom script...');
+            if (typeof window.renderCartItems === 'function') {
+                window.renderCartItems();
+            } else {
+                console.error('❌ renderCartItems is not available!');
+            }
+            if (typeof updateCartBadge === 'function') {
+                updateCartBadge();
+            }
+        }, 500);
+    })();
+    
+    // Обробник для кнопки Checkout Now
+    (function() {
+        function initCheckoutButton() {
+            const checkoutBtn = document.getElementById('checkout-btn');
+            
+            if (checkoutBtn) {
+                checkoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Перевіряємо, чи користувач залогінений
+                    if (!userId) {
+                        alert('Please log in to complete your purchase');
+                        window.location.href = 'index.php?action=autorization';
+                        return;
+                    }
+                    
+                    // Отримуємо кошик
+                    const cart = getCartFromStorage();
+                    if (!cart || cart.length === 0) {
+                        alert('Your cart is empty');
+                        return;
+                    }
+                    
+                    // Отримуємо поточну знижку
+                    const discountRate = currentDiscountRate || 0;
+                    
+                    // Створюємо форму для відправки
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'index.php?action=cart';
+                    
+                    const cartInput = document.createElement('input');
+                    cartInput.type = 'hidden';
+                    cartInput.name = 'cart';
+                    cartInput.value = JSON.stringify(cart);
+                    form.appendChild(cartInput);
+                    
+                    const discountInput = document.createElement('input');
+                    discountInput.type = 'hidden';
+                    discountInput.name = 'discount_rate';
+                    discountInput.value = discountRate;
+                    form.appendChild(discountInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+            }
+        }
+        
+        // Ініціалізуємо кнопку checkout
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCheckoutButton);
+        } else {
+            initCheckoutButton();
+        }
+    })();
+</script>
 
 {% endblock %}
 

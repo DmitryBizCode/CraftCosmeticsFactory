@@ -52,23 +52,29 @@
                         </div>
                         <div class="profile-field">
                             <span class="field-label">Favorite Routine</span>
-                            <span class="field-value" style="color: #6b6f78; font-style: italic;">Coming soon</span>
+                            <span class="field-value">{{ favoriteRoutine|default('None') }}</span>
                         </div>
                         <div class="profile-field">
                             <span class="field-label">Skin Type</span>
-                            <span class="field-value" style="color: #6b6f78; font-style: italic;">Coming soon</span>
+                            <span class="field-value skin-type-value">{{ skinType|default('Normal to combination') }}</span>
                         </div>
                         <div class="profile-field">
                             <span class="field-label">Preferred Ingredients</span>
-                            <span class="field-value" style="color: #6b6f78; font-style: italic;">Coming soon</span>
+                            <span class="field-value">{{ preferredIngredients|default('None') }}</span>
                         </div>
                         <div class="profile-field">
                             <span class="field-label">Allergies</span>
-                            <span class="field-value" style="color: #6b6f78; font-style: italic;">Coming soon</span>
+                            <span class="field-value allergies-value {% if allergiesStatus == 'No known allergies' %}allergies-ok{% else %}allergies-warning{% endif %}">{{ allergiesStatus|default('Possibly has allergies') }}</span>
                         </div>
                         <div class="profile-field">
                             <span class="field-label">Top Brands</span>
-                            <span class="field-value" style="color: #6b6f78; font-style: italic;">Coming soon</span>
+                            <span class="field-value">
+                                {% if topBrand != 'None' and topBrandCount > 0 %}
+                                    {{ topBrand }} ({{ topBrandCount }}x)
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </span>
                         </div>
                         <div class="profile-field">
                             <span class="field-label">Average Basket</span>
@@ -88,11 +94,7 @@
                         </div>
                         <div class="profile-field">
                             <span class="field-label">Loyalty points</span>
-                            <span class="field-chip info">0 pts</span>
-                        </div>
-                        <div class="profile-field">
-                            <span class="field-label">Favourite scents</span>
-                            <span class="field-tags" style="color: #6b6f78; font-style: italic;">Coming soon</span>
+                            <span class="field-chip info">{{ loyaltyPoints|default(0) }} pts</span>
                         </div>
                     </div>
                 </section>
@@ -154,7 +156,7 @@
             <section class="profile-card profile-orders">
                 <div class="profile-productions-header">
                     <h3>Last orders</h3>
-                    <button class="profile-button accent">View all orders</button>
+                    <a href="index.php?action=ordersProfile" class="profile-button accent">View all orders</a>
                 </div>
                 <table class="profile-table">
                     <thead>
@@ -174,9 +176,13 @@
                                 <td><span class="order-id">{{ order.order_id }}</span></td>
                                 <td>{{ order.date }}</td>
                                 <td>{{ order.quantity }} item{{ order.quantity != 1 ? 's' : '' }}</td>
-                                <td><span class="order-amount">${{ order.total|number_format(2, '.', ',') }} (USD)</span></td>
-                                <td><span class="order-status success">{{ order.status }}</span></td>
-                                <td>{{ order.description }}</td>
+                                <td><span class="order-amount">${{ order.total|number_format(2, '.', ',') }}</span></td>
+                                <td style="text-align: center;">
+                                    <span class="order-status {% if order.status|lower == 'completed' %}success{% elseif order.status|lower == 'pending' %}pending{% else %}success{% endif %}">
+                                        {{ order.status }}
+                                    </span>
+                                </td>
+                                <td>{{ order.description|slice(0, 50) }}{% if order.description|length > 50 %}...{% endif %}</td>
                             </tr>
                         {% endfor %}
                     {% else %}

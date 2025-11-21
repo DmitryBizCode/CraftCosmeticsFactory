@@ -31,12 +31,20 @@ class RecipeService
         $hasPhoto = isset($data['photo']) && $data['photo'] !== null && $data['photo'] !== '';
         $hasPrice = isset($data['price']) && $data['price'] !== null && $data['price'] !== '';
         
-        $fields = ['name', 'time_to_complete', 'description'];
-        $values = [':name', ':time_to_complete', ':description'];
+        // Генеруємо рандомні значення для rating та review_count
+        // rating: від 3.0 до 5.0 з одним десятковим знаком
+        $rating = round(3.0 + (rand(0, 20) / 10), 1);
+        // review_count: від 100 до 12000
+        $reviewCount = rand(100, 12000);
+        
+        $fields = ['name', 'time_to_complete', 'description', 'rating', 'review_count'];
+        $values = [':name', ':time_to_complete', ':description', ':rating', ':review_count'];
         $params = [
             ':name' => $data['name'],
             ':time_to_complete' => (float)$data['time_to_complete'],
             ':description' => (!empty($data['description']) && $data['description'] !== '') ? $data['description'] : null,
+            ':rating' => $rating,
+            ':review_count' => $reviewCount,
         ];
         
         if ($hasPhoto) {
@@ -155,6 +163,14 @@ class RecipeService
                 if (!file_exists($photoPath)) {
                     $recipe['photo'] = 'default.png';
                 }
+            }
+            
+            // Встановлюємо дефолтні значення для rating та review_count, якщо їх немає
+            if (!isset($recipe['rating']) || $recipe['rating'] === null) {
+                $recipe['rating'] = 5.0;
+            }
+            if (!isset($recipe['review_count']) || $recipe['review_count'] === null) {
+                $recipe['review_count'] = 0;
             }
             
             // Отримуємо продукти з алергенами

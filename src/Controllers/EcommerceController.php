@@ -192,72 +192,274 @@ class EcommerceController
             $stmt->execute([':client_id' => $userId]);
             $socialChannels = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
             
-            // Отримуємо замовлення з рецептами
-            $orders = [];
+            // Отримуємо останні 5 транзакцій з деталями замовлень
+            $formattedOrders = [];
             try {
+                // Отримуємо останні 5 транзакцій
                 $stmt = $pdo->prepare("
-                    SELECT o.*, r.name as recipe_name, r.price as recipe_price, r.photo as recipe_photo
+                    SELECT t.*
+                    FROM transactions t
+                    WHERE t.client_id = :client_id
+                    ORDER BY t.id DESC
+                    LIMIT 5
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Отримуємо всі замовлення користувача для формування описів
+                $orderStmt = $pdo->prepare("
+                    SELECT o.*, r.name as recipe_name, r.price as recipe_price
                     FROM orders o
                     LEFT JOIN recipes r ON o.recipe_id = r.id
                     WHERE o.client_id = :client_id
                     ORDER BY o.id DESC
-                    LIMIT 5
                 ");
-                $stmt->execute([':client_id' => $userId]);
-                $orders = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-            } catch (\Exception $e) {
-                error_log("Error fetching orders: " . $e->getMessage());
-                $orders = [];
-            }
-            
-            // Форматуємо замовлення для відображення
-            $formattedOrders = [];
-            foreach ($orders as $order) {
-                $orderTotal = 0.00;
-                if (!empty($order['recipe_price']) && !empty($order['quantity'])) {
-                    $orderTotal = (float)$order['recipe_price'] * (int)$order['quantity'];
+                $orderStmt->execute([':client_id' => $userId]);
+                $allOrders = $orderStmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Для кожної транзакції формуємо замовлення
+                foreach ($transactions as $index => $transaction) {
+                    // Для кожної транзакції беремо відповідні замовлення (намагаємось зіставити по порядку)
+                    $ordersForTransaction = array_slice($allOrders, $index * 2, 3); // Беремо 2-3 замовлення на транзакцію
+                    
+                    // Рахуємо загальну кількість товарів для цієї транзакції
+                    $totalQuantity = 0;
+                    $recipeNames = [];
+                    
+                    foreach ($ordersForTransaction as $order) {
+                        $totalQuantity += (int)$order['quantity'];
+                        if (!empty($order['recipe_name'])) {
+                            $recipeNames[] = $order['recipe_name'];
+                        }
+                    }
+                    
+                    // Якщо не знайшли замовлень, беремо хоча б одне
+                    if ($totalQuantity == 0 && !empty($allOrders)) {
+                        $firstOrder = $allOrders[0] ?? null;
+                        if ($firstOrder) {
+                            $totalQuantity = (int)$firstOrder['quantity'];
+                            if (!empty($firstOrder['recipe_name'])) {
+                                $recipeNames[] = $firstOrder['recipe_name'];
+                            }
+                        }
+                    }
+                    
+                    // Форматуємо дату транзакції
+                    $orderDate = 'N/A';
+                    if (!empty($transaction['date'])) {
+                        $orderDate = date('d M Y', strtotime($transaction['date']));
+                    }
+                    
+                    // Формуємо опис
+                    $description = !empty($transaction['description']) 
+                        ? $transaction['description'] 
+                        : (!empty($recipeNames) ? implode(', ', array_slice($recipeNames, 0, 2)) . (count($recipeNames) > 2 ? '...' : '') : 'Purchase');
+                    
+                    $formattedOrders[] = [
+                        'id' => $transaction['id'],
+                        'order_id' => '#' . str_pad($transaction['id'], 4, '0', STR_PAD_LEFT),
+                        'date' => $orderDate,
+                        'quantity' => $totalQuantity > 0 ? $totalQuantity : 1,
+                        'total' => !empty($transaction['value']) ? (float)$transaction['value'] : 0.00,
+                        'status' => !empty($transaction['status']) ? $transaction['status'] : 'Pending',
+                        'description' => $description
+                    ];
                 }
                 
-                // Форматуємо дату (якщо немає created_at, використовуємо id для приблизної дати)
-                $orderDate = 'N/A';
-                if (!empty($order['created_at'])) {
-                    $orderDate = date('d M Y', strtotime($order['created_at']));
-                } elseif (!empty($order['id'])) {
-                    // Якщо немає created_at, використовуємо поточну дату мінус кілька днів на основі id
-                    $daysAgo = (int)$order['id'] % 30; // Приблизно 0-29 днів тому
-                    $orderDate = date('d M Y', strtotime("-{$daysAgo} days"));
-                }
-                
-                $formattedOrders[] = [
-                    'id' => $order['id'],
-                    'order_id' => strtoupper(substr(md5($order['id']), 0, 4)),
-                    'date' => $orderDate,
-                    'quantity' => (int)$order['quantity'],
-                    'total' => $orderTotal,
-                    'status' => 'Completed', // За замовчуванням
-                    'description' => !empty($order['recipe_name']) ? $order['recipe_name'] : 'N/A',
-                    'recipe_id' => $order['recipe_id'] ?? null
-                ];
-            }
-            
-            // Розраховуємо середній кошик
-            $averageBasket = 0.00;
-            if (!empty($formattedOrders)) {
-                $total = 0;
-                $count = 0;
-                foreach ($formattedOrders as $order) {
-                    if ($order['total'] > 0) {
-                        $total += $order['total'];
-                        $count++;
+                // Якщо немає транзакцій, використовуємо замовлення
+                if (empty($formattedOrders) && !empty($allOrders)) {
+                    $ordersToShow = array_slice($allOrders, 0, 5);
+                    foreach ($ordersToShow as $order) {
+                        $orderTotal = 0.00;
+                        if (!empty($order['recipe_price']) && !empty($order['quantity'])) {
+                            $orderTotal = (float)$order['recipe_price'] * (int)$order['quantity'];
+                        }
+                        
+                        $formattedOrders[] = [
+                            'id' => $order['id'],
+                            'order_id' => '#' . str_pad($order['id'], 4, '0', STR_PAD_LEFT),
+                            'date' => date('d M Y'),
+                            'quantity' => (int)$order['quantity'],
+                            'total' => $orderTotal,
+                            'status' => 'Pending',
+                            'description' => !empty($order['recipe_name']) ? $order['recipe_name'] : 'N/A',
+                        ];
                     }
                 }
-                if ($count > 0) {
-                    $averageBasket = round($total / $count, 2);
-                }
+            } catch (\Exception $e) {
+                error_log("Error fetching orders: " . $e->getMessage());
+                $formattedOrders = [];
             }
             
-            // Отримуємо останнє замовлення
-            $lastOrder = !empty($formattedOrders) ? $formattedOrders[0] : null;
+            // Розраховуємо середній кошик з усіх транзакцій
+            $averageBasket = 0.00;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT AVG(value) as avg_value, COUNT(*) as count
+                    FROM transactions
+                    WHERE client_id = :client_id
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!empty($result) && $result['count'] > 0) {
+                    $averageBasket = round((float)$result['avg_value'], 2);
+                }
+            } catch (\Exception $e) {
+                error_log("Error calculating average basket: " . $e->getMessage());
+            }
+            
+            // Отримуємо останнє замовлення (остання транзакція)
+            $lastOrder = null;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT t.*
+                    FROM transactions t
+                    WHERE t.client_id = :client_id
+                    ORDER BY t.id DESC
+                    LIMIT 1
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $lastTransaction = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($lastTransaction) {
+                    // Отримуємо замовлення для останньої транзакції
+                    $orderStmt = $pdo->prepare("
+                        SELECT o.*, r.name as recipe_name
+                        FROM orders o
+                        LEFT JOIN recipes r ON o.recipe_id = r.id
+                        WHERE o.client_id = :client_id
+                        ORDER BY o.id DESC
+                        LIMIT 1
+                    ");
+                    $orderStmt->execute([':client_id' => $userId]);
+                    $lastOrderData = $orderStmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    $orderDate = 'N/A';
+                    if (!empty($lastTransaction['date'])) {
+                        $orderDate = date('d M Y', strtotime($lastTransaction['date']));
+                    }
+                    
+                    $description = !empty($lastTransaction['description']) 
+                        ? $lastTransaction['description'] 
+                        : (!empty($lastOrderData['recipe_name']) ? $lastOrderData['recipe_name'] : 'Purchase');
+                    
+                    $lastOrder = [
+                        'date' => $orderDate,
+                        'description' => $description
+                    ];
+                }
+            } catch (\Exception $e) {
+                error_log("Error fetching last order: " . $e->getMessage());
+            }
+            
+            // 1. Розраховуємо Loyalty points: 5% від суми всіх транзакцій
+            $loyaltyPoints = 0;
+            try {
+                $stmt = $pdo->prepare("SELECT SUM(value) as total FROM transactions WHERE client_id = :client_id");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $totalPurchases = (float)($result['total'] ?? 0);
+                $loyaltyPoints = (int)round($totalPurchases * 0.05); // 5% від покупок
+            } catch (\Exception $e) {
+                error_log("Error calculating loyalty points: " . $e->getMessage());
+            }
+            
+            // 2. Перевіряємо Allergies: чи були куплені рецепти з алергенами
+            $allergiesStatus = 'Possibly has allergies';
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT DISTINCT o.recipe_id 
+                    FROM orders o
+                    JOIN recipe_product rp ON o.recipe_id = rp.recipe_id
+                    JOIN products p ON rp.product_id = p.id
+                    WHERE o.client_id = :client_id AND p.allergen = 1
+                    LIMIT 1
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $hasAllergenPurchases = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($hasAllergenPurchases) {
+                    $allergiesStatus = 'No known allergies'; // Якщо куплені рецепти з алергенами - немає алергії
+                }
+            } catch (\Exception $e) {
+                error_log("Error checking allergies: " . $e->getMessage());
+            }
+            
+            // 3. Отримуємо Preferred Ingredients (продукти які найчастіше купувались)
+            $preferredIngredients = 'None';
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT p.name, COUNT(*) as purchase_count
+                    FROM orders o
+                    JOIN recipe_product rp ON o.recipe_id = rp.recipe_id
+                    JOIN products p ON rp.product_id = p.id
+                    WHERE o.client_id = :client_id
+                    GROUP BY p.id, p.name
+                    ORDER BY purchase_count DESC
+                    LIMIT 3
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $ingredients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                if (!empty($ingredients)) {
+                    $ingredientNames = array_map(function($ing) {
+                        return $ing['name'];
+                    }, $ingredients);
+                    $preferredIngredients = implode(', ', $ingredientNames);
+                }
+            } catch (\Exception $e) {
+                error_log("Error fetching preferred ingredients: " . $e->getMessage());
+            }
+            
+            // 4. Skin Type - стандартний текст
+            $skinType = 'Normal to combination';
+            
+            // 5. Top Brands (рецепт який найбільше купувався)
+            $topBrand = 'None';
+            $topBrandCount = 0;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT r.name, SUM(o.quantity) as total_quantity, COUNT(*) as purchase_count
+                    FROM orders o
+                    JOIN recipes r ON o.recipe_id = r.id
+                    WHERE o.client_id = :client_id
+                    GROUP BY r.id, r.name
+                    ORDER BY total_quantity DESC, purchase_count DESC
+                    LIMIT 1
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($result) {
+                    $topBrand = $result['name'];
+                    $topBrandCount = (int)$result['total_quantity'];
+                }
+            } catch (\Exception $e) {
+                error_log("Error fetching top brand: " . $e->getMessage());
+            }
+            
+            // 6. Favorite Routine (найпопулярніший рецепт - той що найбільше купувався)
+            $favoriteRoutine = 'None';
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT r.name, COUNT(*) as purchase_count
+                    FROM orders o
+                    JOIN recipes r ON o.recipe_id = r.id
+                    WHERE o.client_id = :client_id
+                    GROUP BY r.id, r.name
+                    ORDER BY purchase_count DESC
+                    LIMIT 1
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($result && !empty($result['name'])) {
+                    $favoriteRoutine = $result['name'];
+                }
+            } catch (\Exception $e) {
+                error_log("Error fetching favorite routine: " . $e->getMessage());
+            }
             
             // Отримуємо випадкові нагадування
             $careReminders = CareRemindersService::getRandomReminders(3);
@@ -272,7 +474,14 @@ class EcommerceController
                 "orders" => $formattedOrders,
                 "averageBasket" => $averageBasket,
                 "lastOrder" => $lastOrder,
-                "careReminders" => $careReminders
+                "careReminders" => $careReminders,
+                "loyaltyPoints" => $loyaltyPoints,
+                "allergiesStatus" => $allergiesStatus,
+                "preferredIngredients" => $preferredIngredients,
+                "skinType" => $skinType,
+                "topBrand" => $topBrand,
+                "topBrandCount" => $topBrandCount,
+                "favoriteRoutine" => $favoriteRoutine
             ]);
         } catch (Exception $e) {
             error_log("Error loading profile: " . $e->getMessage());
@@ -764,12 +973,565 @@ class EcommerceController
     }
     public function getProfileOrders(): string
     {
-        return $this->templateService->render('pages/profileOrders', ["homeNavBar" => 1, "footer" => null]);
+        try {
+            // Перевіряємо, чи користувач залогінений
+            if (!AuthService::isLoggedIn()) {
+                ResponseService::redirectWithError('index.php?action=autorization', 'Please log in to view your orders');
+                return '';
+            }
+            
+            $userId = AuthService::getUserId();
+            if (!$userId) {
+                ResponseService::redirectWithError('index.php?action=autorization', 'Please log in to view your orders');
+                return '';
+            }
+            
+            $sqlService = new SQLService();
+            $pdo = $sqlService->getPdo();
+            
+            // Отримуємо дані користувача та фото
+            $clientService = new ClientService($pdo);
+            $user = $clientService->getById($userId);
+            
+            $userPhoto = '/image/pfp.png';
+            if (!empty($user['photo']) && $user['photo'] !== 'pfp.png' && $user['photo'] !== null) {
+                $baseDir = dirname(__DIR__, 2);
+                // Перевіряємо спочатку в папці profile, потім в старій папці image
+                $photoPath = $baseDir . '/image/profile/' . $user['photo'];
+                if (!file_exists($photoPath)) {
+                    $photoPath = $baseDir . '/image/' . $user['photo'];
+                }
+                
+                if (file_exists($photoPath)) {
+                    // Визначаємо правильний URL в залежності від місця знаходження файлу
+                    if (strpos($photoPath, '/image/profile/') !== false) {
+                        $userPhoto = '/image/profile/' . $user['photo'] . '?t=' . filemtime($photoPath);
+                    } else {
+                        $userPhoto = '/image/' . $user['photo'] . '?t=' . filemtime($photoPath);
+                    }
+                } else {
+                    error_log("Warning: Photo file not found for user ID " . $userId . ", photo: " . $user['photo'] . ", but keeping in DB");
+                }
+            }
+            
+            // 1. Monthly spend (поточний місяць)
+            $monthlySpend = 0.00;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT SUM(value) as total
+                    FROM transactions
+                    WHERE client_id = :client_id
+                    AND YEAR(date) = YEAR(CURDATE())
+                    AND MONTH(date) = MONTH(CURDATE())
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $monthlySpend = (float)($result['total'] ?? 0);
+            } catch (\Exception $e) {
+                error_log("Error calculating monthly spend: " . $e->getMessage());
+            }
+            
+            // 2. Mini chart data (останні 30 днів по днях)
+            $miniChartData = [];
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT DATE(date) as day, SUM(value) as total
+                    FROM transactions
+                    WHERE client_id = :client_id
+                    AND date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                    GROUP BY DATE(date)
+                    ORDER BY day ASC
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $dailyData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Нормалізуємо дані для міні-графіку (14 точок)
+                $dayCount = count($dailyData);
+                if ($dayCount > 0) {
+                    $step = max(1, floor($dayCount / 14));
+                    for ($i = 0; $i < $dayCount; $i += $step) {
+                        if (isset($dailyData[$i])) {
+                            $miniChartData[] = (float)$dailyData[$i]['total'];
+                        }
+                    }
+                    // Заповнюємо до 14 точок
+                    while (count($miniChartData) < 14 && !empty($dailyData)) {
+                        $miniChartData[] = (float)end($dailyData)['total'];
+                    }
+                }
+            } catch (\Exception $e) {
+                error_log("Error fetching mini chart data: " . $e->getMessage());
+            }
+            
+            // 3. Avg order value
+            $avgOrderValue = 0.00;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT AVG(value) as avg_value
+                    FROM transactions
+                    WHERE client_id = :client_id
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $avgOrderValue = (float)($result['avg_value'] ?? 0);
+            } catch (\Exception $e) {
+                error_log("Error calculating avg order value: " . $e->getMessage());
+            }
+            
+            // 4. Peak weekday
+            $peakWeekday = 'N/A';
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT DAYNAME(date) as weekday, COUNT(*) as count
+                    FROM transactions
+                    WHERE client_id = :client_id
+                    GROUP BY DAYNAME(date)
+                    ORDER BY count DESC
+                    LIMIT 1
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($result && !empty($result['weekday'])) {
+                    $peakWeekday = $result['weekday'];
+                }
+            } catch (\Exception $e) {
+                error_log("Error finding peak weekday: " . $e->getMessage());
+            }
+            
+            // 5. Total transactions amount (всі транзакції)
+            $totalTransactionsAmount = 0.00;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT SUM(value) as total
+                    FROM transactions
+                    WHERE client_id = :client_id
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $totalTransactionsAmount = (float)($result['total'] ?? 0);
+            } catch (\Exception $e) {
+                error_log("Error calculating total transactions amount: " . $e->getMessage());
+            }
+            
+            // 6. Total orders count (останні 90 днів)
+            $totalOrdersCount = 0;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT COUNT(*) as count
+                    FROM orders
+                    WHERE client_id = :client_id
+                    AND id IN (
+                        SELECT DISTINCT o.id
+                        FROM orders o
+                        JOIN transactions t ON t.client_id = o.client_id
+                        WHERE o.client_id = :client_id
+                        AND t.date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+                    )
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $totalOrdersCount = (int)($result['count'] ?? 0);
+                
+                // Якщо немає зв'язку, просто рахуємо замовлення
+                if ($totalOrdersCount == 0) {
+                    $stmt = $pdo->prepare("
+                        SELECT COUNT(*) as count
+                        FROM orders
+                        WHERE client_id = :client_id
+                    ");
+                    $stmt->execute([':client_id' => $userId]);
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $totalOrdersCount = (int)($result['count'] ?? 0);
+                }
+            } catch (\Exception $e) {
+                error_log("Error counting orders: " . $e->getMessage());
+            }
+            
+            // 7. Settled invoices (Completed)
+            $settledInvoices = 0;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT COUNT(*) as count
+                    FROM transactions
+                    WHERE client_id = :client_id
+                    AND status = 'Completed'
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $settledInvoices = (int)($result['count'] ?? 0);
+            } catch (\Exception $e) {
+                error_log("Error counting settled invoices: " . $e->getMessage());
+            }
+            
+            // 8. Spending trend (по місяцях за останні 12 місяців)
+            $spendingTrend = [];
+            $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT 
+                        YEAR(date) as year,
+                        MONTH(date) as month,
+                        SUM(value) as total
+                    FROM transactions
+                    WHERE client_id = :client_id
+                    AND date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+                    GROUP BY YEAR(date), MONTH(date)
+                    ORDER BY year ASC, month ASC
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $monthlyData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Заповнюємо масив для останніх 12 місяців
+                for ($i = 11; $i >= 0; $i--) {
+                    $date = date('Y-m', strtotime("-$i months"));
+                    $year = (int)date('Y', strtotime($date));
+                    $month = (int)date('n', strtotime($date));
+                    $monthName = $monthNames[$month - 1];
+                    
+                    $found = false;
+                    foreach ($monthlyData as $data) {
+                        if ((int)$data['year'] == $year && (int)$data['month'] == $month) {
+                            $spendingTrend[] = [
+                                'label' => $monthName,
+                                'value' => (float)$data['total']
+                            ];
+                            $found = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!$found) {
+                        $spendingTrend[] = [
+                            'label' => $monthName,
+                            'value' => 0
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                error_log("Error fetching spending trend: " . $e->getMessage());
+                // Заповнюємо пустими даними
+                for ($i = 11; $i >= 0; $i--) {
+                    $date = date('n', strtotime("-$i months"));
+                    $spendingTrend[] = [
+                        'label' => $monthNames[$date - 1],
+                        'value' => 0
+                    ];
+                }
+            }
+            
+            // 9. Conversion rate (поточний місяць)
+            $conversionRate = 0;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT 
+                        COUNT(*) as total,
+                        SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed
+                    FROM transactions
+                    WHERE client_id = :client_id
+                    AND YEAR(date) = YEAR(CURDATE())
+                    AND MONTH(date) = MONTH(CURDATE())
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $total = (int)($result['total'] ?? 0);
+                $completed = (int)($result['completed'] ?? 0);
+                if ($total > 0) {
+                    $conversionRate = round(($completed / $total) * 100);
+                }
+            } catch (\Exception $e) {
+                error_log("Error calculating conversion rate: " . $e->getMessage());
+            }
+            
+            // 10. Pending volume
+            $pendingVolume = 0.00;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT SUM(value) as total
+                    FROM transactions
+                    WHERE client_id = :client_id
+                    AND status = 'Pending'
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $pendingVolume = (float)($result['total'] ?? 0);
+            } catch (\Exception $e) {
+                error_log("Error calculating pending volume: " . $e->getMessage());
+            }
+            
+            // 11. Recent transactions (останні 5)
+            $transactions = [];
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT t.*,
+                           COUNT(DISTINCT o.id) as items_count
+                    FROM transactions t
+                    LEFT JOIN orders o ON o.client_id = t.client_id
+                    WHERE t.client_id = :client_id
+                    GROUP BY t.id
+                    ORDER BY t.id DESC
+                    LIMIT 5
+                ");
+                $stmt->execute([':client_id' => $userId]);
+                $transactionData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                foreach ($transactionData as $tx) {
+                    $status = $tx['status'] ?? 'Pending';
+                    $statusClass = 'alert'; // Pending по замовчуванню
+                    
+                    $statusLower = strtolower($status);
+                    if ($statusLower == 'completed') {
+                        $statusClass = 'success';
+                    } elseif ($statusLower == 'failed') {
+                        $statusClass = 'failed';
+                    } elseif ($statusLower == 'reject' || $statusLower == 'rejected') {
+                        $statusClass = 'reject';
+                    } elseif ($statusLower == 'pending') {
+                        $statusClass = 'alert';
+                    }
+                    
+                    $transactions[] = [
+                        'hash' => '#' . str_pad($tx['id'], 4, '0', STR_PAD_LEFT),
+                        'date' => date('d M Y', strtotime($tx['date'])),
+                        'items' => (int)($tx['items_count'] ?? 0) . ' item' . ((int)($tx['items_count'] ?? 0) != 1 ? 's' : ''),
+                        'total' => number_format((float)$tx['value'], 2, '.', ','),
+                        'status' => $status,
+                        'statusClass' => $statusClass,
+                        'description' => $tx['description'] ?? 'Purchase'
+                    ];
+                }
+            } catch (\Exception $e) {
+                error_log("Error fetching recent transactions: " . $e->getMessage());
+            }
+            
+            return $this->templateService->render('pages/profileOrders', [
+                "homeNavBar" => 1,
+                "footer" => null,
+                "userPhoto" => $userPhoto,
+                "monthlySpend" => $monthlySpend,
+                "miniChartData" => $miniChartData,
+                "avgOrderValue" => $avgOrderValue,
+                "peakWeekday" => $peakWeekday,
+                "totalTransactionsAmount" => $totalTransactionsAmount,
+                "totalOrdersCount" => $totalOrdersCount,
+                "settledInvoices" => $settledInvoices,
+                "spendingTrend" => $spendingTrend,
+                "conversionRate" => $conversionRate,
+                "pendingVolume" => $pendingVolume,
+                "transactions" => $transactions
+            ]);
+        } catch (Exception $e) {
+            error_log("Error loading profile orders: " . $e->getMessage());
+            ResponseService::redirectWithError('index.php?action=autorization', 'Error loading orders. Please try again.');
+            return '';
+        }
     }
     public function getCart(): string
     {
-        return $this->templateService->render('pages/cartPage', ["homeNavBar" => 1, "footer" => null]);
+        try {
+            // Отримуємо всі рецепти з бази даних для відображення інформації про товари в кошику
+            $sqlService = new SQLService();
+            $pdo = $sqlService->getPdo();
+            $recipeService = new RecipeService($pdo);
+            $allRecipes = $recipeService->getAllForSalesPage();
+            
+            // Створюємо мапу рецептів по ID для швидкого доступу
+            $recipesMap = [];
+            foreach ($allRecipes as $recipe) {
+                // Встановлюємо дефолтне фото, якщо немає
+                if (empty($recipe['photo']) || $recipe['photo'] === null) {
+                    $recipe['photo'] = 'default.png';
+                } else {
+                    // Перевіряємо, чи існує файл фото
+                    $photoPath = dirname(__DIR__, 2) . '/image/recipes/' . $recipe['photo'];
+                    if (!file_exists($photoPath)) {
+                        $recipe['photo'] = 'default.png';
+                    }
+                }
+                $recipesMap[$recipe['id']] = $recipe;
+            }
+            
+            // Отримуємо інформацію про користувача (якщо залогінений)
+            $userId = null;
+            $userPhoto = '/image/pfp.png';
+            
+            if (AuthService::isLoggedIn()) {
+                $userId = AuthService::getUserId();
+                if ($userId) {
+                    $clientService = new ClientService($pdo);
+                    $user = $clientService->getById($userId);
+                    
+                    if ($user && !empty($user['photo']) && $user['photo'] !== 'pfp.png' && $user['photo'] !== null) {
+                        $baseDir = dirname(__DIR__, 2);
+                        $photoPath = $baseDir . '/image/profile/' . $user['photo'];
+                        if (!file_exists($photoPath)) {
+                            $photoPath = $baseDir . '/image/' . $user['photo'];
+                        }
+                        
+                        if (file_exists($photoPath)) {
+                            if (strpos($photoPath, '/image/profile/') !== false) {
+                                $userPhoto = '/image/profile/' . $user['photo'] . '?t=' . filemtime($photoPath);
+                            } else {
+                                $userPhoto = '/image/' . $user['photo'] . '?t=' . filemtime($photoPath);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return $this->templateService->render('pages/cartPage', [
+                "homeNavBar" => 1, 
+                "footer" => null,
+                "recipesMap" => $recipesMap,
+                "userId" => $userId,
+                "userPhoto" => $userPhoto
+            ]);
+        } catch (Exception $e) {
+            error_log("Error loading cart: " . $e->getMessage());
+            return $this->templateService->render('pages/cartPage', [
+                "homeNavBar" => 1, 
+                "footer" => null,
+                "recipesMap" => [],
+                "userId" => null,
+                "userPhoto" => '/image/pfp.png'
+            ]);
+        }
     }
+    public function checkout(array $data): string
+    {
+        try {
+            // Перевіряємо, чи користувач залогінений
+            if (!AuthService::isLoggedIn()) {
+                ResponseService::redirectWithError('index.php?action=autorization', 'Please log in to complete your purchase');
+                return '';
+            }
+            
+            $userId = AuthService::getUserId();
+            if (!$userId) {
+                ResponseService::redirectWithError('index.php?action=autorization', 'Please log in to complete your purchase');
+                return '';
+            }
+            
+            // Отримуємо дані з POST запиту
+            $cartJson = $data['cart'] ?? null;
+            $discountRate = isset($data['discount_rate']) ? (float)$data['discount_rate'] : 0.0;
+            
+            if (!$cartJson) {
+                ResponseService::redirectWithError('index.php?action=cart', 'Cart is empty');
+                return '';
+            }
+            
+            $cart = json_decode($cartJson, true);
+            if (!is_array($cart) || empty($cart)) {
+                ResponseService::redirectWithError('index.php?action=cart', 'Cart is empty');
+                return '';
+            }
+            
+            // Підключаємося до бази даних
+            $sqlService = new SQLService();
+            $pdo = $sqlService->getPdo();
+            
+            // Отримуємо першого staff для транзакції
+            $stmt = $pdo->query("SELECT id FROM staff ORDER BY id ASC LIMIT 1");
+            $staff = $stmt->fetch(PDO::FETCH_ASSOC);
+            $staffId = $staff ? (int)$staff['id'] : 1; // Якщо немає staff, використовуємо 1
+            
+            // Отримуємо рецепти та розраховуємо загальну суму
+            $recipeService = new RecipeService($pdo);
+            $allRecipes = $recipeService->getAllForSalesPage();
+            $recipesMap = [];
+            foreach ($allRecipes as $recipe) {
+                $recipesMap[$recipe['id']] = $recipe;
+            }
+            
+            $subtotal = 0;
+            $deliveryFee = 50.00;
+            
+            // Розраховуємо subtotal
+            foreach ($cart as $item) {
+                $recipeId = (int)$item['id'];
+                $quantity = (int)$item['quantity'];
+                
+                if (isset($recipesMap[$recipeId])) {
+                    $price = (float)$recipesMap[$recipeId]['price'];
+                    $subtotal += $price * $quantity;
+                }
+            }
+            
+            // Застосовуємо знижку
+            $discount = $subtotal * $discountRate;
+            $finalTotal = $subtotal - $discount + $deliveryFee;
+            
+            // Починаємо транзакцію в базі даних
+            $pdo->beginTransaction();
+            
+            try {
+                // Створюємо транзакцію (статус 'Pending' - менеджер змінить на 'Completed')
+                $stmt = $pdo->prepare("
+                    INSERT INTO transactions (value, currency, date, status, description, staff_id, client_id)
+                    VALUES (:value, :currency, CURDATE(), 'Pending', :description, :staff_id, :client_id)
+                ");
+                
+                $description = "Purchase of " . count($cart) . " item(s)";
+                if ($discountRate > 0) {
+                    $discountPercent = round($discountRate * 100);
+                    $description .= " with {$discountPercent}% discount";
+                }
+                
+                $stmt->execute([
+                    ':value' => $finalTotal,
+                    ':currency' => 'USD',
+                    ':description' => $description,
+                    ':staff_id' => $staffId,
+                    ':client_id' => $userId
+                ]);
+                
+                $transactionId = $pdo->lastInsertId();
+                
+                // Створюємо ордери для кожного товару в кошику
+                $orderStmt = $pdo->prepare("
+                    INSERT INTO orders (quantity, client_id, recipe_id)
+                    VALUES (:quantity, :client_id, :recipe_id)
+                ");
+                
+                foreach ($cart as $item) {
+                    $recipeId = (int)$item['id'];
+                    $quantity = (int)$item['quantity'];
+                    
+                    if (isset($recipesMap[$recipeId])) {
+                        $orderStmt->execute([
+                            ':quantity' => $quantity,
+                            ':client_id' => $userId,
+                            ':recipe_id' => $recipeId
+                        ]);
+                    }
+                }
+                
+                // Підтверджуємо транзакцію
+                $pdo->commit();
+                
+                // Очищаємо кошик (видаляємо cookie)
+                if (isset($_COOKIE['shopping_cart'])) {
+                    setcookie('shopping_cart', '', time() - 3600, '/');
+                }
+                
+                // Перенаправляємо на сторінку з товарами з повідомленням про успіх
+                ResponseService::redirectWithSuccess('index.php?action=salesPage', 'Order placed successfully! Thank you for your purchase.');
+                return '';
+                
+            } catch (\Exception $e) {
+                // Відкатуємо транзакцію при помилці
+                $pdo->rollBack();
+                error_log("Error during checkout: " . $e->getMessage());
+                throw $e;
+            }
+            
+        } catch (Exception $e) {
+            error_log("Checkout error: " . $e->getMessage());
+            ResponseService::redirectWithError('index.php?action=cart', 'Error processing your order. Please try again.');
+            return '';
+        }
+    }
+    
     public function autorization(): string
     {
         $error = isset($_GET['error']) ? $_GET['error'] : null;

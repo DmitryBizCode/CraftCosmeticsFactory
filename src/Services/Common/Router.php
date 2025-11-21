@@ -309,7 +309,18 @@ class Router
                 // }
             // no break
             case 'cart':
-                $content = $this->ecommerceController->getCart();
+                if ($method == 'POST') {
+                    $content = $this->ecommerceController->checkout($data);
+                } else {
+                    $content = $this->ecommerceController->getCart();
+                }
+                break;
+            case 'checkout':
+                if ($method == 'POST') {
+                    $content = $this->ecommerceController->checkout($data);
+                } else {
+                    ResponseService::redirectWithError('index.php?action=cart', 'Please go to cart page first');
+                }
                 break;
 
             case 'rental':
