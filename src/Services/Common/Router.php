@@ -48,8 +48,11 @@ class Router
                 }
                 break;
             case 'admin':
-                // Вхід в адмінку тільки по URL: index.php?action=admin (сторінка логіну)
-                $content = $this->adminController->getAdminLogin();
+                if ($method == 'POST') {
+                    $content = $this->adminController->adminLogin($data);
+                } else {
+                    $content = $this->adminController->getAdminLogin();
+                }
                 break;
             case 'adminProducts':
                 if ($method == 'POST') {

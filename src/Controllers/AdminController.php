@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Services\Common\TemplateService;
 use App\Services\Common\ResponseService;
 use App\Services\Admin\AdminActionService;
+use App\Services\Auth\AuthService;
 use Exception;
 
 class AdminController
@@ -21,10 +22,52 @@ class AdminController
     /** Сторінка логіну в адмінку */
     public function getAdminLogin(): string
     {
+        $error = isset($_GET['error']) ? urldecode($_GET['error']) : null;
+        $username = isset($_GET['username']) ? urldecode($_GET['username']) : '';
         return $this->templateService->render('pages/adminPage', [
             'homeNavBar' => null,
             'footer' => null,
+            'error' => $error,
+            'username' => $username,
         ]);
+    }
+
+    /** Обробка входу в адмінку */
+    public function adminLogin(array $data): string
+    {
+        try {
+            // Валідація обов'язкових полів
+            if (empty($data['username']) || empty($data['password'])) {
+                $username = isset($data['username']) ? urlencode($data['username']) : '';
+                ResponseService::redirectWithError('index.php?action=admin&username=' . $username, 'Username and password are required');
+                return '';
+            }
+
+            $username = trim($data['username']);
+            $password = trim($data['password']);
+
+            // Перевіряємо логін та пароль
+            if ($username === 'admin' && $password === 'admin') {
+                // Зберігаємо інформацію про адміна в сесії
+                AuthService::startSession();
+                $_SESSION['admin_logged_in'] = true;
+                $_SESSION['admin_username'] = 'admin';
+
+                // Редирект на сторінку продуктів
+                ResponseService::redirectWithSuccess('index.php?action=adminProducts', 'Welcome to Admin Panel!');
+                return '';
+            } else {
+                // Невірний логін або пароль
+                $usernameEncoded = urlencode($username);
+                ResponseService::redirectWithError('index.php?action=admin&username=' . $usernameEncoded, 'Invalid username or password');
+                return '';
+            }
+
+        } catch (Exception $e) {
+            error_log("Error during admin login: " . $e->getMessage());
+            ResponseService::redirectWithError('index.php?action=admin', 'Login error. Please try again.');
+            return '';
+        }
     }
 
     /** Сторінка управління продуктами (інгредієнти) */

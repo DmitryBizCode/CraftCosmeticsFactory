@@ -7,26 +7,55 @@
 {% block content %}
 <section class="admin-page">
     <div class="admin-login-wrapper">
-        <form class="admin-login-form">
+        <form class="admin-login-form" method="POST" action="index.php?action=admin">
             <h1 class="admin-title">Admin Panel</h1>
-            <p class="admin-subtitle">Sign in as <strong>admin / admin</strong> to access the admin panel (no backend yet).</p>
+            <p class="admin-subtitle">Sign in as <strong>admin / admin</strong> to access the admin panel.</p>
 
-            <label class="admin-label">
+            {% if error %}
+                <div class="admin-login-error visible">{{ error }}</div>
+            {% else %}
+                <div class="admin-login-error"></div>
+            {% endif %}
+
+            <label class="admin-label {% if error %}admin-label-error{% endif %}">
                 <span>Login</span>
-                <input type="text" name="username" placeholder="admin" required>
+                <input type="text" name="username" placeholder="admin" required value="{{ username|default('') }}" id="admin-username">
             </label>
 
-            <label class="admin-label">
+            <label class="admin-label {% if error %}admin-label-error{% endif %}">
                 <span>Password</span>
-                <input type="password" name="password" placeholder="admin" required>
+                <input type="password" name="password" placeholder="admin" required id="admin-password">
             </label>
-
-            <p class="admin-login-hint">* login and password are not validated by backend yet, this is a visual mockup only.</p>
 
             <button type="submit" class="admin-login-button">Sign in</button>
         </form>
     </div>
 </section>
+
+<script>
+    (function() {
+        const errorElement = document.querySelector('.admin-login-error.visible');
+        if (errorElement) {
+            // Прибираємо підсвічування полів через 2 секунди
+            setTimeout(function() {
+                errorElement.classList.remove('visible');
+                errorElement.style.opacity = '0';
+                
+                // Прибираємо підсвічування полів
+                const labels = document.querySelectorAll('.admin-label-error');
+                labels.forEach(function(label) {
+                    label.classList.remove('admin-label-error');
+                    const input = label.querySelector('input');
+                    if (input) {
+                        input.style.borderColor = '';
+                        input.style.backgroundColor = '';
+                        input.style.boxShadow = '';
+                    }
+                });
+            }, 2000);
+        }
+    })();
+</script>
 {% endblock %}
 
 

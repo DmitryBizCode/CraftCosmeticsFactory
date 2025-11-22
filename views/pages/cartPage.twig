@@ -87,8 +87,9 @@
         // Voucher discount rates (оголошуємо глобально для доступу з усіх функцій)
         let currentDiscountRate = 0;
         const voucherCodes = {
-            '12345': 0.1,  // 10% discount
-            'qwerty': 0.15  // 15% discount
+            'lera': 0.1,        // 10% discount
+            'lerasex': 0.15,    // 15% discount
+            'leraknukyrsova': 0.2  // 20% discount
         };
         
         // Відображення товарів з кошика
@@ -388,12 +389,18 @@
                     return;
                 }
 
+                // Розраховуємо subtotal з ОРИГІНАЛЬНИХ цін (без знижки)
                 cartItems.forEach(item => {
-                    const totalText = item.querySelector('.item-total').textContent;
-                    const total = parseFloat(totalText.replace('$', '').replace(',', '')) || 0;
-                    subtotal += total;
+                    const quantityInput = item.querySelector('.quantity-input');
+                    if (quantityInput) {
+                        const quantity = parseInt(quantityInput.value) || 1;
+                        const price = parseFloat(quantityInput.dataset.itemPrice) || 0;
+                        const originalTotal = price * quantity;
+                        subtotal += originalTotal;
+                    }
                 });
 
+                // Застосовуємо знижку до ОРИГІНАЛЬНОГО subtotal
                 const discount = subtotal * currentDiscountRate;
                 const deliveryFee = subtotal > 0 ? 50.00 : 0.00;
                 const finalTotal = subtotal - discount + deliveryFee;
@@ -449,39 +456,8 @@
                 const orderSummaryColumn = document.querySelector('.order-summary-column');
                 const orderSummaryCard = document.querySelector('.order-summary-card');
                 
-                if (voucherCode === '12345') {
-                    currentDiscountRate = voucherCodes['12345'];
-                    console.log('✅ Voucher 12345 applied, discount rate:', currentDiscountRate);
-                    updateOrderSummary(); // Це також викличе updateCartItemPrices()
-                    
-                    // Підсвічуємо колонку зеленою
-                    if (orderSummaryCard) {
-                        orderSummaryCard.style.borderLeft = '4px solid #28a745';
-                        orderSummaryCard.style.transition = 'border-left 0.3s ease';
-                    }
-                    
-                    setTimeout(() => {
-                        if (orderSummaryCard) {
-                            orderSummaryCard.style.borderLeft = '';
-                        }
-                    }, 2000);
-                } else if (voucherCode === 'qwerty') {
-                    currentDiscountRate = voucherCodes['qwerty'];
-                    console.log('✅ Voucher qwerty applied, discount rate:', currentDiscountRate);
-                    updateOrderSummary(); // Це також викличе updateCartItemPrices()
-                    
-                    // Підсвічуємо колонку зеленою
-                    if (orderSummaryCard) {
-                        orderSummaryCard.style.borderLeft = '4px solid #28a745';
-                        orderSummaryCard.style.transition = 'border-left 0.3s ease';
-                    }
-                    
-                    setTimeout(() => {
-                        if (orderSummaryCard) {
-                            orderSummaryCard.style.borderLeft = '';
-                        }
-                    }, 2000);
-                } else if (voucherCode === '') {
+                // Перевіряємо, чи є ваучер в об'єкті voucherCodes
+                if (voucherCode === '') {
                     currentDiscountRate = 0;
                     console.log('Voucher cleared, discount rate:', currentDiscountRate);
                     updateOrderSummary(); // Це також викличе updateCartItemPrices()
@@ -490,6 +466,23 @@
                     if (orderSummaryCard) {
                         orderSummaryCard.style.borderLeft = '';
                     }
+                } else if (voucherCodes.hasOwnProperty(voucherCode)) {
+                    currentDiscountRate = voucherCodes[voucherCode];
+                    const discountPercent = Math.round(currentDiscountRate * 100);
+                    console.log(`✅ Voucher ${voucherCode} applied, discount rate: ${currentDiscountRate} (${discountPercent}%)`);
+                    updateOrderSummary(); // Це також викличе updateCartItemPrices()
+                    
+                    // Підсвічуємо колонку зеленою
+                    if (orderSummaryCard) {
+                        orderSummaryCard.style.borderLeft = '4px solid #28a745';
+                        orderSummaryCard.style.transition = 'border-left 0.3s ease';
+                    }
+                    
+                    setTimeout(() => {
+                        if (orderSummaryCard) {
+                            orderSummaryCard.style.borderLeft = '';
+                        }
+                    }, 2000);
                 } else {
                     currentDiscountRate = 0;
                     console.log('❌ Invalid voucher code:', voucherCode);

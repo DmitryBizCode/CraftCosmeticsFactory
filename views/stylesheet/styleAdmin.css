@@ -74,17 +74,31 @@
     background-color: #ffffff;
 }
 
+.admin-label.admin-label-error input {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.admin-label.admin-label-error input:focus {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
 .admin-login-error {
     min-height: 18px;
-    margin: 4px 0 8px;
-    font-size: 12px;
+    margin: 4px 0 12px;
+    font-size: 13px;
     color: #dc3545;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s ease;
+    font-weight: 500;
 }
 
 .admin-login-error.visible {
     opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
 .admin-login-hint {
