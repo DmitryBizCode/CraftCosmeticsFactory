@@ -367,6 +367,8 @@
     font-size: 13px;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
 }
 
 .orders-table-button:hover {
@@ -462,6 +464,11 @@
 }
 
 .status.reject {
+    color: #b71c1c;
+    background: rgba(244, 67, 54, 0.2);
+}
+
+.status.cancel {
     color: #b71c1c;
     background: rgba(244, 67, 54, 0.2);
 }

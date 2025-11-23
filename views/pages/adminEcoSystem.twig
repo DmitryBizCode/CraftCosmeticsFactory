@@ -295,22 +295,8 @@
                             return;
                         }
 
-                        // Валідація: перевіряємо межі датчика
-                        const sensor = sensors.find(s => s.id === sensorId);
-                        if (sensor) {
-                            const minValue = sensor.start_value ?? sensor.iot_start_value ?? 0;
-                            const maxValue = sensor.end_value ?? sensor.iot_end_value ?? 100;
-                            
-                            if (value < minValue || value > maxValue) {
-                                showNotification(
-                                    `Value must be between ${minValue} and ${maxValue}. Current value: ${value}`,
-                                    'error'
-                                );
-                                input.focus();
-                                input.select();
-                                return;
-                            }
-                        }
+                        // Прибираємо валідацію меж - дозволяємо вводити будь-які значення
+                        // Бекенд сам обробить критичні значення і покаже попередження
 
                         // Відправляємо POST запит для встановлення значення
                         const formData = new FormData();
@@ -321,9 +307,19 @@
                             method: 'POST',
                             body: formData
                         })
-                        .then(response => response.json())
+                        .then(response => {
+                            // Завжди намагаємося отримати JSON, навіть якщо response не ok
+                            return response.json().catch(() => {
+                                console.warn('Failed to parse JSON response');
+                                return { success: false, error: 'Failed to parse response' };
+                            });
+                        })
                         .then(data => {
-                            if (data.success) {
+                            // Логуємо відповідь для дебагу
+                            console.log('Set value response:', data);
+                            
+                            // Якщо success = true, обробляємо успішно
+                            if (data && data.success === true) {
                                 // Оновлюємо графік поточного датчика
                                 window.updateChart(sensorId);
                                 
@@ -375,12 +371,14 @@
                                 
                                 input.value = '';
                             } else {
-                                alert('Error setting value: ' + (data.error || 'Unknown error'));
+                                // Показуємо помилку через notification, але не блокуємо роботу
+                                console.error('Error setting value:', data.error || 'Unknown error');
+                                // Не показуємо alert для критичних значень - вони обробляються через showCriticalWarning
                             }
                         })
                         .catch(error => {
                             console.error('Error setting value:', error);
-                            alert('Error setting value');
+                            // Не показуємо alert - просто логуємо помилку
                         });
                     } else if (action === 'reset') {
                         input.value = '';

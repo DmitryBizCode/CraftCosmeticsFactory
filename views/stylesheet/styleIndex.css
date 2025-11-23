@@ -510,6 +510,13 @@ body {
 .pagination-dots {
     padding: 8px 5px;
     color: #666;
+    font-weight: 500;
+}
+
+.pagination-link.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 /* Recommendations Section */

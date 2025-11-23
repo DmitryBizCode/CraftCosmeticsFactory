@@ -208,8 +208,20 @@
                                                 <td style="text-align: center;">{{ eco.id }}</td>
                                                 <td style="text-align: center;">{{ eco.recipe_id }}</td>
                                                 <td style="text-align: center;">{{ eco.description ?? 'N/A' }}</td>
-                                                <td style="text-align: center;">{{ eco.date_start }}</td>
-                                                <td style="text-align: center;">{{ eco.date_end ?? 'N/A' }}</td>
+                                                <td style="text-align: center;">
+                                                    {% if eco.date_start %}
+                                                        {{ eco.date_start|date('Y-m-d H:i:s') }}
+                                                    {% else %}
+                                                        N/A
+                                                    {% endif %}
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    {% if eco.date_end %}
+                                                        {{ eco.date_end|date('Y-m-d H:i:s') }}
+                                                    {% else %}
+                                                        N/A
+                                                    {% endif %}
+                                                </td>
                                                 <td style="text-align: center;">{{ eco.staff_id ?? 'N/A' }}</td>
                                             </tr>
                                         {% endfor %}

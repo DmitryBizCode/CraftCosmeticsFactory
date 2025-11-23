@@ -2,22 +2,421 @@
 
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const statusSelects = document.querySelectorAll('.admin-transaction-status-select');
-            statusSelects.forEach(function (select) {
-                select.addEventListener('change', function () {
-                    const badge = this.closest('tr').querySelector('.badge-status');
-                    if (!badge) return;
-
-                    const value = this.value;
-                    badge.textContent = value;
-                    badge.className = 'badge badge-status';
-                    if (value === 'Approved') badge.classList.add('badge-status-approved');
-                    else if (value === 'Pending') badge.classList.add('badge-status-pending');
-                    else if (value === 'Rejected') badge.classList.add('badge-status-rejected');
+            // Графік продажів по днях (останні 30 днів)
+            const salesByDayCtx = document.getElementById('salesByDayChart');
+            if (salesByDayCtx) {
+                const salesByDayData = {{ salesByDay|json_encode|raw }};
+                const labels = salesByDayData.map(item => {
+                    const date = new Date(item.sale_date);
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 });
-            });
+                // На графіку показуємо всі транзакції (включаючи Reject/Cancel), але для метрик використовуємо active_value
+                const values = salesByDayData.map(item => parseFloat(item.total_value || 0));
+
+                new Chart(salesByDayCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Sales ($)',
+                            data: values,
+                            borderColor: '#111111',
+                            backgroundColor: 'rgba(17, 17, 17, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Графік продажів по тижнях (останні 12 тижнів)
+            const salesByWeekCtx = document.getElementById('salesByWeekChart');
+            if (salesByWeekCtx) {
+                const salesByWeekData = {{ salesByWeek|json_encode|raw }};
+                const weekLabels = salesByWeekData.map(item => {
+                    const date = new Date(item.week_start);
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                });
+                const weekValues = salesByWeekData.map(item => parseFloat(item.total_value || 0));
+
+                new Chart(salesByWeekCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: weekLabels,
+                        datasets: [{
+                            label: 'Sales ($)',
+                            data: weekValues,
+                            backgroundColor: '#111111',
+                            borderColor: '#111111',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Графік продажів по місяцях (останні 12 місяців)
+            const salesByMonthCtx = document.getElementById('salesByMonthChart');
+            if (salesByMonthCtx) {
+                const salesByMonthData = {{ salesByMonth|json_encode|raw }};
+                const monthLabels = salesByMonthData.map(item => {
+                    const [year, month] = item.sale_month.split('-');
+                    const date = new Date(year, month - 1);
+                    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                });
+                const monthValues = salesByMonthData.map(item => parseFloat(item.total_value || 0));
+
+                new Chart(salesByMonthCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: monthLabels,
+                        datasets: [{
+                            label: 'Sales ($)',
+                            data: monthValues,
+                            backgroundColor: '#111111',
+                            borderColor: '#111111',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Графік статусів (Pie chart)
+            const statusChartCtx = document.getElementById('statusChart');
+            if (statusChartCtx) {
+                const statusData = {{ statusStats|json_encode|raw }};
+                const statusLabels = statusData.map(item => item.status);
+                const statusValues = statusData.map(item => parseFloat(item.total_value || 0));
+                const statusColors = {
+                    'Complete': '#1a7f46',
+                    'Pending': '#c26a11',
+                    'Reject': '#b71c1c',
+                    'Cancel': '#b71c1c'
+                };
+
+                new Chart(statusChartCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [{
+                            data: statusValues,
+                            backgroundColor: statusLabels.map(label => {
+                                return statusColors[label] || '#6b6f78';
+                            })
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Графік трендів статусів по днях
+            const statusTrendsCtx = document.getElementById('statusTrendsChart');
+            if (statusTrendsCtx) {
+                const statusTrendsData = {{ statusTrends|json_encode|raw }};
+                const trendLabels = statusTrendsData.map(item => {
+                    const date = new Date(item.sale_date);
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                });
+                const completeTrends = statusTrendsData.map(item => parseInt(item.complete_count || 0));
+                const pendingTrends = statusTrendsData.map(item => parseInt(item.pending_count || 0));
+                const rejectedTrends = statusTrendsData.map(item => parseInt(item.rejected_count || 0));
+
+                new Chart(statusTrendsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: trendLabels,
+                        datasets: [
+                            {
+                                label: 'Complete',
+                                data: completeTrends,
+                                borderColor: '#1a7f46',
+                                backgroundColor: 'rgba(26, 127, 70, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Pending',
+                                data: pendingTrends,
+                                borderColor: '#c26a11',
+                                backgroundColor: 'rgba(194, 106, 17, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Rejected/Canceled',
+                                data: rejectedTrends,
+                                borderColor: '#b71c1c',
+                                backgroundColor: 'rgba(183, 28, 28, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Графік топ рецептів
+            const topRecipesCtx = document.getElementById('topRecipesChart');
+            if (topRecipesCtx) {
+                const topRecipesData = {{ topRecipesChart|json_encode|raw }};
+                const recipeLabels = topRecipesData.map(item => item.name);
+                const recipeRevenues = topRecipesData.map(item => parseFloat(item.total_revenue || 0));
+
+                new Chart(topRecipesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: recipeLabels,
+                        datasets: [{
+                            label: 'Revenue ($)',
+                            data: recipeRevenues,
+                            backgroundColor: '#111111',
+                            borderColor: '#111111',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Графік топ співробітників
+            const topStaffCtx = document.getElementById('topStaffChart');
+            if (topStaffCtx) {
+                const topStaffData = {{ topStaffChart|json_encode|raw }};
+                const staffLabels = topStaffData.map(item => (item.first_name || '') + ' ' + (item.last_name || ''));
+                const staffRevenues = topStaffData.map(item => parseFloat(item.total_revenue || 0));
+
+                new Chart(topStaffCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: staffLabels,
+                        datasets: [{
+                            label: 'Revenue ($)',
+                            data: staffRevenues,
+                            backgroundColor: '#111111',
+                            borderColor: '#111111',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Графік транзакцій по днях тижня
+            const transactionsByWeekdayCtx = document.getElementById('transactionsByWeekdayChart');
+            if (transactionsByWeekdayCtx) {
+                const weekdayData = {{ transactionsByWeekday|json_encode|raw }};
+                const weekdayLabels = weekdayData.map(item => item.weekday);
+                const transactionCounts = weekdayData.map(item => parseInt(item.transaction_count || 0));
+                const transactionValues = weekdayData.map(item => parseFloat(item.total_value || 0));
+
+                new Chart(transactionsByWeekdayCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: weekdayLabels,
+                        datasets: [
+                            {
+                                label: 'Transaction Count',
+                                data: transactionCounts,
+                                backgroundColor: 'rgba(17, 17, 17, 0.7)',
+                                borderColor: '#111111',
+                                borderWidth: 2,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Total Revenue ($)',
+                                data: transactionValues,
+                                type: 'line',
+                                borderColor: '#1a7f46',
+                                backgroundColor: 'rgba(26, 127, 70, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.datasetIndex === 0) {
+                                            return 'Transactions: ' + context.parsed.y;
+                                        } else {
+                                            return 'Revenue: $' + context.parsed.y.toLocaleString();
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Transaction Count'
+                                },
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Revenue ($)'
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
         });
     </script>
 {% endblock %}
@@ -32,101 +431,182 @@
                 <header class="admin-main-header">
                     <div>
                         <h1>Sales Statistics</h1>
-                        <p>Transactions from the <code>transactions</code> table (value, currency, date, status, description, staff_id, client_id).</p>
+                        <p>Company overview, financial metrics, client analytics, and sales performance.</p>
                     </div>
                 </header>
 
-                <section class="admin-stats-cards">
+                {# Загальна статистика компанії та фінансова статистика по періодах - об'єднано #}
+                <section class="admin-stats-cards" style="margin-bottom: 32px; grid-template-columns: repeat(5, minmax(0, 1fr));">
                     <div class="admin-stats-card">
-                        <span class="admin-stats-label">Today's Turnover</span>
-                        <strong class="admin-stats-value">$1 240</strong>
-                        <span class="admin-stats-sub">8 transactions</span>
+                        <span class="admin-stats-label">Total Revenue</span>
+                        <strong class="admin-stats-value">${{ companyOverview.total_revenue|number_format(2, '.', ' ') }}</strong>
+                        <span class="admin-stats-sub">{{ companyOverview.total_transactions|default(0) }} total transactions</span>
                     </div>
                     <div class="admin-stats-card">
-                        <span class="admin-stats-label">Pending</span>
-                        <strong class="admin-stats-value">$320</strong>
-                        <span class="admin-stats-sub">3 transactions pending approval</span>
+                        <span class="admin-stats-label">Unique Clients</span>
+                        <strong class="admin-stats-value">{{ companyOverview.unique_clients|default(0) }}</strong>
+                        <span class="admin-stats-sub">{{ clientStats.active_clients_30d|default(0) }} active (30 days)</span>
                     </div>
                     <div class="admin-stats-card">
-                        <span class="admin-stats-label">Approved</span>
-                        <strong class="admin-stats-value">$5 780</strong>
-                        <span class="admin-stats-sub">last 7 days</span>
+                        <span class="admin-stats-label">Avg Transaction</span>
+                        <strong class="admin-stats-value">${{ companyOverview.avg_transaction_value|number_format(2, '.', ' ') }}</strong>
+                        <span class="admin-stats-sub">Average transaction value</span>
+                    </div>
+                    <div class="admin-stats-card">
+                        <span class="admin-stats-label">Total Orders</span>
+                        <strong class="admin-stats-value">{{ totalOrders|default(0) }}</strong>
+                        <span class="admin-stats-sub">All orders in system</span>
+                    </div>
+                    <div class="admin-stats-card">
+                        <span class="admin-stats-label">Active Staff</span>
+                        <strong class="admin-stats-value">{{ companyOverview.active_staff|default(0) }}</strong>
+                        <span class="admin-stats-sub">Staff with transactions</span>
                     </div>
                 </section>
 
-                <section class="admin-table-wrapper admin-table-wrapper-mt">
+                {# Фінансова статистика по періодах #}
+                <section class="admin-stats-cards" style="margin-bottom: 32px; grid-template-columns: repeat(4, minmax(0, 1fr));">
+                    <div class="admin-stats-card">
+                        <span class="admin-stats-label">Today</span>
+                        <strong class="admin-stats-value">${{ statsDay.total_value|number_format(2, '.', ' ') }}</strong>
+                        <span class="admin-stats-sub">{{ statsDay.transaction_count|default(0) }} transactions</span>
+                    </div>
+                    <div class="admin-stats-card">
+                        <span class="admin-stats-label">This Week</span>
+                        <strong class="admin-stats-value">${{ statsWeek.total_value|number_format(2, '.', ' ') }}</strong>
+                        <span class="admin-stats-sub">{{ statsWeek.transaction_count|default(0) }} transactions</span>
+                    </div>
+                    <div class="admin-stats-card">
+                        <span class="admin-stats-label">This Month</span>
+                        <strong class="admin-stats-value">${{ statsMonth.total_value|number_format(2, '.', ' ') }}</strong>
+                        <span class="admin-stats-sub">{{ statsMonth.transaction_count|default(0) }} transactions</span>
+                    </div>
+                    <div class="admin-stats-card">
+                        <span class="admin-stats-label">This Year</span>
+                        <strong class="admin-stats-value">${{ statsYear.total_value|number_format(2, '.', ' ') }}</strong>
+                        <span class="admin-stats-sub">{{ statsYear.transaction_count|default(0) }} transactions</span>
+                    </div>
+                </section>
+
+                {# Статистика по статусах #}
+                <section class="admin-stats-cards" style="margin-bottom: 32px; grid-template-columns: repeat(3, minmax(0, 1fr));">
+                    <div class="admin-stats-card" style="border-left: 4px solid #1a7f46;">
+                        <span class="admin-stats-label">Complete</span>
+                        <strong class="admin-stats-value">${{ statsAll.complete_value|number_format(2, '.', ' ') }}</strong>
+                        <span class="admin-stats-sub">{{ statsAll.complete_count|default(0) }} transactions</span>
+                    </div>
+                    <div class="admin-stats-card" style="border-left: 4px solid #c26a11;">
+                        <span class="admin-stats-label">Pending</span>
+                        <strong class="admin-stats-value">${{ statsAll.pending_value|number_format(2, '.', ' ') }}</strong>
+                        <span class="admin-stats-sub">{{ statsAll.pending_count|default(0) }} transactions</span>
+                    </div>
+                    <div class="admin-stats-card" style="border-left: 4px solid #b71c1c;">
+                        <span class="admin-stats-label">Rejected/Canceled</span>
+                        <strong class="admin-stats-value">${{ statsAll.rejected_value|number_format(2, '.', ' ') }}</strong>
+                        <span class="admin-stats-sub">{{ statsAll.rejected_count|default(0) }} transactions</span>
+                    </div>
+                </section>
+
+                {# Графіки #}
+                <section class="admin-charts-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+                    <div class="admin-chart-card" style="background: #ffffff; border-radius: 24px; padding: 24px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08); border: 1px solid #eceff3;">
+                        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111111;">Sales by Day (Last 30 Days)</h3>
+                        <canvas id="salesByDayChart" style="height: 300px;"></canvas>
+                    </div>
+                    <div class="admin-chart-card" style="background: #ffffff; border-radius: 24px; padding: 24px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08); border: 1px solid #eceff3;">
+                        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111111;">Sales by Week (Last 12 Weeks)</h3>
+                        <canvas id="salesByWeekChart" style="height: 300px;"></canvas>
+                    </div>
+                    <div class="admin-chart-card" style="background: #ffffff; border-radius: 24px; padding: 24px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08); border: 1px solid #eceff3;">
+                        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111111;">Sales by Month (Last 12 Months)</h3>
+                        <canvas id="salesByMonthChart" style="height: 300px;"></canvas>
+                    </div>
+                    <div class="admin-chart-card" style="background: #ffffff; border-radius: 24px; padding: 24px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08); border: 1px solid #eceff3;">
+                        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111111;">Status Distribution</h3>
+                        <canvas id="statusChart" style="height: 300px;"></canvas>
+                    </div>
+                    <div class="admin-chart-card" style="background: #ffffff; border-radius: 24px; padding: 24px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08); border: 1px solid #eceff3;">
+                        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111111;">Status Trends (Last 30 Days)</h3>
+                        <canvas id="statusTrendsChart" style="height: 300px;"></canvas>
+                    </div>
+                    <div class="admin-chart-card" style="background: #ffffff; border-radius: 24px; padding: 24px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08); border: 1px solid #eceff3;">
+                        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111111;">Top Recipes by Revenue</h3>
+                        <canvas id="topRecipesChart" style="height: 300px;"></canvas>
+                    </div>
+                    <div class="admin-chart-card" style="background: #ffffff; border-radius: 24px; padding: 24px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08); border: 1px solid #eceff3;">
+                        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111111;">Top Staff by Revenue</h3>
+                        <canvas id="topStaffChart" style="height: 300px;"></canvas>
+                    </div>
+                    <div class="admin-chart-card" style="background: #ffffff; border-radius: 24px; padding: 24px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08); border: 1px solid #eceff3;">
+                        <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111111;">Transactions by Weekday (Last 90 Days)</h3>
+                        <canvas id="transactionsByWeekdayChart" style="height: 300px;"></canvas>
+                    </div>
+                </section>
+
+                {# Статистика клієнтів #}
+                <section class="admin-table-wrapper" style="margin-bottom: 32px;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 600; color: #111111;">Top Clients</h3>
                     <table class="admin-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Date</th>
-                                <th>Client (client_id)</th>
-                                <th>Manager (staff_id)</th>
-                                <th>Amount (value)</th>
-                                <th>Currency</th>
-                                <th>Status</th>
-                                <th>Description</th>
-                                <th>Action</th>
+                                <th>Client</th>
+                                <th>Email</th>
+                                <th>Transactions</th>
+                                <th>Total Spent</th>
                             </tr>
                         </thead>
                         <tbody>
+                            {% if clientStats.top_clients|length > 0 %}
+                                {% for client in clientStats.top_clients %}
+                                    <tr>
+                                        <td>{{ client.first_name }} {{ client.last_name|default('') }}</td>
+                                        <td>{{ client.email }}</td>
+                                        <td>{{ client.transaction_count }}</td>
+                                        <td>${{ client.total_spent|number_format(2, '.', ',') }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: #6b6f78; font-style: italic; padding: 40px;">
+                                        No client data available.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </section>
+
+                {# Статистика рецептів #}
+                <section class="admin-table-wrapper">
+                    <h3 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 600; color: #111111;">Top Recipes</h3>
+                    <table class="admin-table">
+                        <thead>
                             <tr>
-                                <td>#501</td>
-                                <td>2025-03-01</td>
-                                <td>12</td>
-                                <td>3</td>
-                                <td>120.00</td>
-                                <td>USD</td>
-                                <td>
-                                    <span class="badge badge-status badge-status-pending">Pending</span>
-                                </td>
-                                <td>Payment for order #101</td>
-                                <td class="admin-table-actions">
-                                    <select class="admin-transaction-status-select">
-                                        <option value="Pending" selected>Pending</option>
-                                        <option value="Approved">Approved</option>
-                                        <option value="Rejected">Rejected</option>
-                                    </select>
-                                </td>
+                                <th>Recipe</th>
+                                <th>Price</th>
+                                <th>Orders</th>
+                                <th>Quantity Sold</th>
+                                <th>Revenue</th>
                             </tr>
-                            <tr>
-                                <td>#502</td>
-                                <td>2025-03-01</td>
-                                <td>18</td>
-                                <td>4</td>
-                                <td>320.50</td>
-                                <td>USD</td>
-                                <td>
-                                    <span class="badge badge-status badge-status-approved">Approved</span>
-                                </td>
-                                <td>Prepayment for eco-session</td>
-                                <td class="admin-table-actions">
-                                    <select class="admin-transaction-status-select">
-                                        <option value="Pending">Pending</option>
-                                        <option value="Approved" selected>Approved</option>
-                                        <option value="Rejected">Rejected</option>
-                                    </select>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>#503</td>
-                                <td>2025-02-28</td>
-                                <td>7</td>
-                                <td>2</td>
-                                <td>89.90</td>
-                                <td>EUR</td>
-                                <td>
-                                    <span class="badge badge-status badge-status-rejected">Rejected</span>
-                                </td>
-                                <td>Rejected card transaction</td>
-                                <td class="admin-table-actions">
-                                    <select class="admin-transaction-status-select">
-                                        <option value="Pending">Pending</option>
-                                        <option value="Approved">Approved</option>
-                                        <option value="Rejected" selected>Rejected</option>
-                                    </select>
-                                </td>
-                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recipeStats|length > 0 %}
+                                {% for recipe in recipeStats %}
+                                    <tr>
+                                        <td>{{ recipe.name }}</td>
+                                        <td>${{ recipe.price|number_format(2, '.', ',') }}</td>
+                                        <td>{{ recipe.order_count }}</td>
+                                        <td>{{ recipe.total_quantity_sold|default(0) }}</td>
+                                        <td>${{ recipe.total_revenue|number_format(2, '.', ',') }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: #6b6f78; font-style: italic; padding: 40px;">
+                                        No recipe data available.
+                                    </td>
+                                </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </section>
@@ -135,5 +615,3 @@
     </div>
 </section>
 {% endblock %}
-
-

@@ -3,6 +3,7 @@
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleProfileAside.css">
     <link rel="stylesheet" href="/views/stylesheet/styleProfile.css">
+    <link rel="stylesheet" href="/views/stylesheet/styleProfileOrders.css">
 {% endblock %}
 
 {% block content %}
@@ -158,10 +159,10 @@
                     <h3>Last orders</h3>
                     <a href="index.php?action=ordersProfile" class="profile-button accent">View all orders</a>
                 </div>
-                <table class="profile-table">
+                <table class="orders-table profile-style">
                     <thead>
                     <tr>
-                        <th>Order</th>
+                        <th>Hash</th>
                         <th>Date</th>
                         <th>Quantity</th>
                         <th>Total</th>
@@ -172,21 +173,19 @@
                     <tbody>
                     {% if orders|length > 0 %}
                         {% for order in orders %}
-                            <tr>
+                            <tr class="orders-row">
                                 <td><span class="order-id">{{ order.order_id }}</span></td>
                                 <td>{{ order.date }}</td>
                                 <td>{{ order.quantity }} item{{ order.quantity != 1 ? 's' : '' }}</td>
                                 <td><span class="order-amount">${{ order.total|number_format(2, '.', ',') }}</span></td>
-                                <td style="text-align: center;">
-                                    <span class="order-status {% if order.status|lower == 'completed' %}success{% elseif order.status|lower == 'pending' %}pending{% else %}success{% endif %}">
-                                        {{ order.status }}
-                                    </span>
+                                <td>
+                                    <span class="status {{ order.statusClass|default('alert') }}">{{ order.status }}</span>
                                 </td>
-                                <td>{{ order.description|slice(0, 50) }}{% if order.description|length > 50 %}...{% endif %}</td>
+                                <td>{{ order.description }}</td>
                             </tr>
                         {% endfor %}
                     {% else %}
-                        <tr>
+                        <tr class="orders-row placeholder-row">
                             <td colspan="6" style="text-align: center; color: #6b6f78; font-style: italic; padding: 40px;">
                                 No orders yet. Start shopping to see your orders here!
                             </td>

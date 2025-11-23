@@ -2,6 +2,45 @@
 
 {% block linksScript %}
     <link rel="stylesheet" href="/views/stylesheet/styleAdmin.css">
+    <script>
+        // Фільтрація по статусу
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusFilter = document.querySelector('.admin-filter-select');
+            const searchInput = document.querySelector('.admin-filter-input');
+            
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    const status = this.value;
+                    const search = searchInput ? searchInput.value : '';
+                    let url = 'index.php?action=adminOrders';
+                    if (status && status !== 'All Statuses') {
+                        url += '&status=' + encodeURIComponent(status);
+                    }
+                    if (search) {
+                        url += '&search=' + encodeURIComponent(search);
+                    }
+                    window.location.href = url;
+                });
+            }
+            
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const status = statusFilter ? statusFilter.value : 'All Statuses';
+                        const search = this.value;
+                        let url = 'index.php?action=adminOrders';
+                        if (status && status !== 'All Statuses') {
+                            url += '&status=' + encodeURIComponent(status);
+                        }
+                        if (search) {
+                            url += '&search=' + encodeURIComponent(search);
+                        }
+                        window.location.href = url;
+                    }
+                });
+            }
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -14,17 +53,17 @@
                 <header class="admin-main-header">
                     <div>
                         <h1>All Orders</h1>
-                        <p>Visual list of orders from the <code>orders</code> table (id, quantity, client_id, recipe_id).</p>
+                        <p>Manage all transactions and their related orders from the database.</p>
                     </div>
                     <div class="admin-filters-row">
                         <select class="admin-filter-select">
-                            <option>All Statuses</option>
-                            <option>New</option>
-                            <option>Processing</option>
-                            <option>Completed</option>
-                            <option>Cancelled</option>
+                            <option value="All Statuses" {% if not statusFilter or statusFilter == 'All Statuses' %}selected{% endif %}>All Statuses</option>
+                            <option value="Pending" {% if statusFilter == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Complete" {% if statusFilter == 'Complete' %}selected{% endif %}>Complete</option>
+                            <option value="Reject" {% if statusFilter == 'Reject' %}selected{% endif %}>Reject</option>
+                            <option value="Cancel" {% if statusFilter == 'Cancel' %}selected{% endif %}>Cancel</option>
                         </select>
-                        <input type="text" class="admin-filter-input" placeholder="Search by ID / client">
+                        <input type="text" class="admin-filter-input" placeholder="Search by Transaction ID / client" value="{{ searchQuery|default('') }}">
                     </div>
                 </header>
 
@@ -32,45 +71,121 @@
                     <table class="admin-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Client (client_id)</th>
-                                <th>Recipe (recipe_id)</th>
-                                <th>Quantity</th>
+                                <th>Transaction ID</th>
+                                <th>Client</th>
+                                <th>Value</th>
+                                <th>Description</th>
+                                <th>Orders</th>
                                 <th>Status</th>
-                                <th></th>
+                                <th>Date</th>
+                                <th>Staff</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>#101</td>
-                                <td>12</td>
-                                <td>5</td>
-                                <td>3</td>
-                                <td><span class="badge badge-status-new">New</span></td>
-                                <td class="admin-table-actions">
-                                    <button class="admin-btn admin-btn-edit">Details / Change Status</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>#102</td>
-                                <td>18</td>
-                                <td>NULL</td>
-                                <td>1</td>
-                                <td><span class="badge badge-status-processing">Processing</span></td>
-                                <td class="admin-table-actions">
-                                    <button class="admin-btn admin-btn-edit">Details / Change Status</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>#103</td>
-                                <td>7</td>
-                                <td>2</td>
-                                <td>10</td>
-                                <td><span class="badge badge-status-done">Completed</span></td>
-                                <td class="admin-table-actions">
-                                    <button class="admin-btn admin-btn-edit">Details / Change Status</button>
-                                </td>
-                            </tr>
+                            {% if orders is defined and orders|length > 0 %}
+                                {% for transaction in orders %}
+                                    <tr>
+                                        <td>#{{ transaction.transaction_id }}</td>
+                                        <td>
+                                            {% if transaction.client_first_name or transaction.client_last_name %}
+                                                {{ transaction.client_first_name|default('') }} {{ transaction.client_last_name|default('') }}
+                                            {% else %}
+                                                Client #{{ transaction.client_id }}
+                                            {% endif %}
+                                            <br>
+                                            <small style="color: #6b6f78;">{{ transaction.client_email|default('') }}</small>
+                                        </td>
+                                        <td>
+                                            ${{ transaction.transaction_value|number_format(2, '.', ',') }} {{ transaction.transaction_currency|default('USD') }}
+                                        </td>
+                                        <td>
+                                            {% if transaction.transaction_description %}
+                                                <span style="font-size: 13px; color: #6b6f78;">{{ transaction.transaction_description|slice(0, 50) }}{% if transaction.transaction_description|length > 50 %}...{% endif %}</span>
+                                            {% else %}
+                                                <span style="color: #999;">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.orders|length > 0 %}
+                                                <div style="max-height: 100px; overflow-y: auto;">
+                                                    {% for order in transaction.orders %}
+                                                        <div style="margin-bottom: 4px;">
+                                                            <strong>{{ order.recipe_name|default('N/A') }}</strong>
+                                                            <br>
+                                                            <small style="color: #6b6f78;">Qty: {{ order.quantity }}</small>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                                <small style="color: #6b6f78;">Total: {{ transaction.total_quantity }} items</small>
+                                            {% else %}
+                                                <span style="color: #999;">No orders</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.transaction_status %}
+                                                {% set status = transaction.transaction_status|lower %}
+                                                {% if status == 'pending' %}
+                                                    <span class="status alert">Pending</span>
+                                                {% elseif status == 'complete' %}
+                                                    <span class="status success">Complete</span>
+                                                {% elseif status == 'reject' %}
+                                                    <span class="status reject">Reject</span>
+                                                {% elseif status == 'cancel' %}
+                                                    <span class="status cancel">Cancel</span>
+                                                {% else %}
+                                                    <span class="status alert">{{ transaction.transaction_status }}</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="status alert">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.transaction_date %}
+                                                {{ transaction.transaction_date|date('Y-m-d') }}
+                                            {% else %}
+                                                <span style="color: #999;">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.transaction_id and canChangeStatus %}
+                                                <select class="staff-dropdown" 
+                                                        data-transaction-id="{{ transaction.transaction_id }}"
+                                                        data-current-status="{{ transaction.transaction_status|default('Pending') }}">
+                                                    <option value="">Select staff</option>
+                                                    {% if staffList is defined %}
+                                                        {% for staff in staffList %}
+                                                            <option value="{{ staff.id }}" {% if transaction.staff_id == staff.id %}selected{% endif %}>
+                                                                {{ staff.first_name }} {{ staff.last_name|default('') }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                </select>
+                                            {% else %}
+                                                {% if transaction.staff_first_name or transaction.staff_last_name %}
+                                                    {{ transaction.staff_first_name|default('') }} {{ transaction.staff_last_name|default('') }}
+                                                {% else %}
+                                                    <span style="color: #999;">—</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td class="admin-table-actions">
+                                            {% if transaction.transaction_id and canChangeStatus %}
+                                                <button class="admin-btn admin-btn-edit" 
+                                                        onclick="openStatusModal({{ transaction.transaction_id }}, '{{ transaction.transaction_status|default('Pending') }}', {{ transaction.transaction_id }})">
+                                                    Change Status
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="9" style="text-align: center; padding: 40px; color: #6b6f78;">
+                                        No transactions found.
+                                    </td>
+                                </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </section>
@@ -78,6 +193,303 @@
         </div>
     </div>
 </section>
+
+<!-- Modal for changing status -->
+<div id="statusModal" class="admin-modal" style="display: none;">
+    <div class="admin-modal-content">
+        <div class="admin-modal-header">
+            <h2>Change Transaction Status</h2>
+            <button class="admin-modal-close" onclick="closeStatusModal()">&times;</button>
+        </div>
+        <form method="POST" action="index.php?action=adminOrders" id="statusForm">
+            <input type="hidden" name="action" value="update_status">
+            <input type="hidden" name="transaction_id" id="modal_transaction_id">
+            <input type="hidden" name="order_id" id="modal_order_id">
+            
+            <div class="admin-modal-body">
+                <p>Transaction ID: <strong id="modal_order_display">#</strong></p>
+                <p>Current Status: <strong id="modal_current_status">—</strong></p>
+                
+                <label class="admin-label">
+                    <span>New Status</span>
+                    <select name="status" id="modal_status_select" required>
+                        <option value="Pending">Pending</option>
+                        <option value="Complete">Complete</option>
+                        <option value="Reject">Reject</option>
+                        <option value="Cancel">Cancel</option>
+                    </select>
+                </label>
+                
+            </div>
+            
+            <div class="admin-modal-footer">
+                <button type="button" class="admin-btn admin-btn-secondary" onclick="closeStatusModal()">Cancel</button>
+                <button type="submit" class="admin-btn admin-btn-primary">Update Status</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openStatusModal(transactionId, currentStatus, orderId) {
+        document.getElementById('modal_transaction_id').value = transactionId;
+        document.getElementById('modal_order_id').value = orderId;
+        document.getElementById('modal_order_display').textContent = '#' + transactionId;
+        document.getElementById('modal_current_status').textContent = currentStatus || 'Pending';
+        document.getElementById('modal_status_select').value = currentStatus || 'Pending';
+        document.getElementById('statusModal').style.display = 'flex';
+    }
+    
+    function closeStatusModal() {
+        document.getElementById('statusModal').style.display = 'none';
+    }
+    
+    // Close modal on outside click
+    window.onclick = function(event) {
+        const modal = document.getElementById('statusModal');
+        if (event.target == modal) {
+            closeStatusModal();
+        }
+    }
+    
+    // Обробка зміни staff через випадаючий список (автоматичне збереження)
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('staff-dropdown')) {
+            const select = e.target;
+            const transactionId = select.dataset.transactionId;
+            const staffId = select.value;
+            
+            if (!staffId || staffId === '') {
+                return;
+            }
+            
+            // Відправляємо запит на оновлення тільки staff_id (без статусу)
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'index.php?action=adminOrders';
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'update_status';
+            form.appendChild(actionInput);
+            
+            const transactionInput = document.createElement('input');
+            transactionInput.type = 'hidden';
+            transactionInput.name = 'transaction_id';
+            transactionInput.value = transactionId;
+            form.appendChild(transactionInput);
+            
+            // Не передаємо status - тільки staff_id
+            const staffInput = document.createElement('input');
+            staffInput.type = 'hidden';
+            staffInput.name = 'staff_id';
+            staffInput.value = staffId;
+            form.appendChild(staffInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+</script>
+
+<style>
+    .admin-modal {
+        display: none;
+        position: fixed;
+        z-index: 10000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .admin-modal-content {
+        background-color: #ffffff;
+        border-radius: 24px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+        border: 1px solid #eceff3;
+        overflow: hidden;
+    }
+    
+    .admin-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 26px;
+        border-bottom: 1px solid #eceff3;
+        background-color: #ffffff;
+    }
+    
+    .admin-modal-header h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #111111;
+    }
+    
+    .admin-modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6b6f78;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    
+    .admin-modal-close:hover {
+        color: #111111;
+        background-color: #f8f9fa;
+    }
+    
+    .admin-modal-body {
+        padding: 24px 26px;
+        background-color: #ffffff;
+    }
+    
+    .admin-modal-body p {
+        margin: 12px 0;
+        color: #4a4d55;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    
+    .admin-modal-body p strong {
+        color: #111111;
+        font-weight: 600;
+    }
+    
+    .admin-modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 20px 26px 24px;
+        border-top: 1px solid #eceff3;
+        background-color: #ffffff;
+    }
+    
+    .admin-modal-footer .admin-btn {
+        border-radius: 12px;
+        padding: 10px 20px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+    
+    .admin-modal-footer .admin-btn-secondary {
+        background-color: #ffffff;
+        color: #4a4d55;
+        border: 1px solid #dde1ea;
+    }
+    
+    .admin-modal-footer .admin-btn-secondary:hover {
+        background-color: #f8f9fa;
+        border-color: #111111;
+        color: #111111;
+    }
+    
+    .admin-modal-footer .admin-btn-primary {
+        background-color: #111111;
+        color: #ffffff;
+    }
+    
+    .admin-modal-footer .admin-btn-primary:hover {
+        background-color: #222222;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .admin-modal-body .admin-label {
+        margin-bottom: 20px;
+    }
+    
+    .admin-modal-body .admin-label select {
+        border-radius: 12px;
+        border: 1px solid #dde1ea;
+        padding: 10px 12px;
+        font-size: 14px;
+        background-color: #ffffff;
+        color: #111111;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .admin-modal-body .admin-label select:focus {
+        border-color: #111111;
+        box-shadow: 0 0 0 1px rgba(17, 17, 17, 0.1);
+        outline: none;
+    }
+    
+    .badge-status-cancelled {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .staff-dropdown {
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 13px;
+        background-color: #fff;
+        cursor: pointer;
+        min-width: 150px;
+        transition: border-color 0.2s;
+    }
+    
+    .staff-dropdown:hover {
+        border-color: #999;
+    }
+    
+    .staff-dropdown:focus {
+        outline: none;
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+    }
+    
+    /* Стилі статусів як на Orders analytics */
+    .status {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .status.success {
+        color: #1a7f46;
+        background: rgba(46, 204, 113, 0.18);
+    }
+    
+    .status.alert {
+        color: #c26a11;
+        background: rgba(255, 193, 7, 0.22);
+    }
+    
+    .status.reject {
+        color: #b71c1c;
+        background: rgba(244, 67, 54, 0.2);
+    }
+    
+    .status.cancel {
+        color: #b71c1c;
+        background: rgba(244, 67, 54, 0.2);
+    }
+</style>
+
 {% endblock %}
-
-

@@ -153,7 +153,11 @@ class Router
                 $content = $this->adminController->getAdminIotStats($recipeId);
                 break;
             case 'adminOrders':
-                $content = $this->adminController->getAdminOrders();
+                if ($method == 'POST' && isset($data['action']) && $data['action'] === 'update_status') {
+                    $content = $this->adminController->updateOrderStatus($data);
+                } else {
+                    $content = $this->adminController->getAdminOrders();
+                }
                 break;
             case 'adminStats':
                 $content = $this->adminController->getAdminStats();

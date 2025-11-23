@@ -74,7 +74,7 @@ class EcommerceController
             }
             
             // Розраховуємо пагінацію
-            $itemsPerPage = 12; // Товарів на сторінку
+            $itemsPerPage = 9; // Товарів на сторінку (максимум 9)
             $totalRecipes = count($recipes);
             $totalPages = max(1, ceil($totalRecipes / $itemsPerPage));
             $currentPage = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
@@ -122,7 +122,7 @@ class EcommerceController
                 "currentPage" => 1,
                 "totalPages" => 1,
                 "totalRecipes" => 0,
-                "itemsPerPage" => 12,
+                "itemsPerPage" => 9,
                 "searchQuery" => $searchQuery,
                 "userPhoto" => '/image/pfp.png',
                 "userProfileLink" => '/index.php?action=profile'
@@ -218,29 +218,35 @@ class EcommerceController
                 $allOrders = $orderStmt->fetchAll(PDO::FETCH_ASSOC);
                 
                 // Для кожної транзакції формуємо замовлення
-                foreach ($transactions as $index => $transaction) {
-                    // Для кожної транзакції беремо відповідні замовлення (намагаємось зіставити по порядку)
-                    $ordersForTransaction = array_slice($allOrders, $index * 2, 3); // Беремо 2-3 замовлення на транзакцію
+                foreach ($transactions as $transaction) {
+                    // Отримуємо загальну кількість товарів для цієї транзакції через SQL SUM (з бази даних)
+                    $quantityStmt = $pdo->prepare("
+                        SELECT COALESCE(SUM(o.quantity), 0) as total_quantity
+                        FROM transaction_order to_rel
+                        INNER JOIN orders o ON to_rel.order_id = o.id
+                        WHERE to_rel.transaction_id = :transaction_id
+                    ");
+                    $quantityStmt->execute([':transaction_id' => $transaction['id']]);
+                    $quantityResult = $quantityStmt->fetch(PDO::FETCH_ASSOC);
+                    $totalQuantity = (int)($quantityResult['total_quantity'] ?? 0);
                     
-                    // Рахуємо загальну кількість товарів для цієї транзакції
-                    $totalQuantity = 0;
+                    // Отримуємо всі замовлення для формування опису
+                    $orderStmt = $pdo->prepare("
+                        SELECT o.*, r.name as recipe_name, r.price as recipe_price
+                        FROM transaction_order to_rel
+                        INNER JOIN orders o ON to_rel.order_id = o.id
+                        LEFT JOIN recipes r ON o.recipe_id = r.id
+                        WHERE to_rel.transaction_id = :transaction_id
+                        ORDER BY o.id ASC
+                    ");
+                    $orderStmt->execute([':transaction_id' => $transaction['id']]);
+                    $transactionOrders = $orderStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                    
+                    // Формуємо список назв рецептів для опису
                     $recipeNames = [];
-                    
-                    foreach ($ordersForTransaction as $order) {
-                        $totalQuantity += (int)$order['quantity'];
+                    foreach ($transactionOrders as $order) {
                         if (!empty($order['recipe_name'])) {
                             $recipeNames[] = $order['recipe_name'];
-                        }
-                    }
-                    
-                    // Якщо не знайшли замовлень, беремо хоча б одне
-                    if ($totalQuantity == 0 && !empty($allOrders)) {
-                        $firstOrder = $allOrders[0] ?? null;
-                        if ($firstOrder) {
-                            $totalQuantity = (int)$firstOrder['quantity'];
-                            if (!empty($firstOrder['recipe_name'])) {
-                                $recipeNames[] = $firstOrder['recipe_name'];
-                            }
                         }
                     }
                     
@@ -255,37 +261,35 @@ class EcommerceController
                         ? $transaction['description'] 
                         : (!empty($recipeNames) ? implode(', ', array_slice($recipeNames, 0, 2)) . (count($recipeNames) > 2 ? '...' : '') : 'Purchase');
                     
+                    // Визначаємо клас статусу для відображення
+                    $status = !empty($transaction['status']) ? $transaction['status'] : 'Pending';
+                    $statusClass = 'alert'; // Pending по замовчуванню
+                    
+                    $statusLower = strtolower($status);
+                    if ($statusLower == 'completed' || $statusLower == 'complete') {
+                        $statusClass = 'success';
+                    } elseif ($statusLower == 'failed') {
+                        $statusClass = 'failed';
+                    } elseif ($statusLower == 'reject' || $statusLower == 'rejected') {
+                        $statusClass = 'reject';
+                    } elseif ($statusLower == 'cancel' || $statusLower == 'cancelled') {
+                        $statusClass = 'cancel';
+                    } elseif ($statusLower == 'pending') {
+                        $statusClass = 'alert';
+                    }
+                    
                     $formattedOrders[] = [
                         'id' => $transaction['id'],
                         'order_id' => '#' . str_pad($transaction['id'], 4, '0', STR_PAD_LEFT),
                         'date' => $orderDate,
-                        'quantity' => $totalQuantity > 0 ? $totalQuantity : 1,
+                        'quantity' => $totalQuantity, // Загальна кількість товарів (сума всіх quantity)
                         'total' => !empty($transaction['value']) ? (float)$transaction['value'] : 0.00,
-                        'status' => !empty($transaction['status']) ? $transaction['status'] : 'Pending',
+                        'status' => $status,
+                        'statusClass' => $statusClass,
                         'description' => $description
                     ];
                 }
                 
-                // Якщо немає транзакцій, використовуємо замовлення
-                if (empty($formattedOrders) && !empty($allOrders)) {
-                    $ordersToShow = array_slice($allOrders, 0, 5);
-                    foreach ($ordersToShow as $order) {
-                        $orderTotal = 0.00;
-                        if (!empty($order['recipe_price']) && !empty($order['quantity'])) {
-                            $orderTotal = (float)$order['recipe_price'] * (int)$order['quantity'];
-                        }
-                        
-                        $formattedOrders[] = [
-                            'id' => $order['id'],
-                            'order_id' => '#' . str_pad($order['id'], 4, '0', STR_PAD_LEFT),
-                            'date' => date('d M Y'),
-                            'quantity' => (int)$order['quantity'],
-                            'total' => $orderTotal,
-                            'status' => 'Pending',
-                            'description' => !empty($order['recipe_name']) ? $order['recipe_name'] : 'N/A',
-                        ];
-                    }
-                }
             } catch (\Exception $e) {
                 error_log("Error fetching orders: " . $e->getMessage());
                 $formattedOrders = [];
@@ -1098,13 +1102,14 @@ class EcommerceController
                 error_log("Error finding peak weekday: " . $e->getMessage());
             }
             
-            // 5. Total transactions amount (всі транзакції)
+            // 5. Total transactions amount (виключаємо Reject та Cancel, бо вони скасовані)
             $totalTransactionsAmount = 0.00;
             try {
                 $stmt = $pdo->prepare("
                     SELECT SUM(value) as total
                     FROM transactions
                     WHERE client_id = :client_id
+                    AND status NOT IN ('Reject', 'Cancel', 'reject', 'cancel', 'Rejected', 'Cancelled')
                 ");
                 $stmt->execute([':client_id' => $userId]);
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1154,7 +1159,7 @@ class EcommerceController
                     SELECT COUNT(*) as count
                     FROM transactions
                     WHERE client_id = :client_id
-                    AND status = 'Completed'
+                    AND status = 'Complete'
                 ");
                 $stmt->execute([':client_id' => $userId]);
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1225,7 +1230,7 @@ class EcommerceController
                 $stmt = $pdo->prepare("
                     SELECT 
                         COUNT(*) as total,
-                        SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed
+                        SUM(CASE WHEN status = 'Complete' THEN 1 ELSE 0 END) as completed
                     FROM transactions
                     WHERE client_id = :client_id
                     AND YEAR(date) = YEAR(CURDATE())
@@ -1258,20 +1263,25 @@ class EcommerceController
                 error_log("Error calculating pending volume: " . $e->getMessage());
             }
             
-            // 11. Recent transactions (останні 5)
+            // 11. Recent transactions (останні 5, або всі якщо show_all=1)
+            $showAll = isset($_GET['show_all']) && $_GET['show_all'] == '1';
+            $limit = $showAll ? 1000 : 5;
             $transactions = [];
             try {
                 $stmt = $pdo->prepare("
                     SELECT t.*,
-                           COUNT(DISTINCT o.id) as items_count
+                           COALESCE(SUM(o.quantity), 0) as total_quantity
                     FROM transactions t
-                    LEFT JOIN orders o ON o.client_id = t.client_id
+                    LEFT JOIN transaction_order to_rel ON to_rel.transaction_id = t.id
+                    LEFT JOIN orders o ON to_rel.order_id = o.id
                     WHERE t.client_id = :client_id
                     GROUP BY t.id
                     ORDER BY t.id DESC
-                    LIMIT 5
+                    LIMIT :limit
                 ");
-                $stmt->execute([':client_id' => $userId]);
+                $stmt->bindValue(':client_id', $userId, PDO::PARAM_INT);
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmt->execute();
                 $transactionData = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
                 foreach ($transactionData as $tx) {
@@ -1279,20 +1289,24 @@ class EcommerceController
                     $statusClass = 'alert'; // Pending по замовчуванню
                     
                     $statusLower = strtolower($status);
-                    if ($statusLower == 'completed') {
+                    if ($statusLower == 'completed' || $statusLower == 'complete') {
                         $statusClass = 'success';
                     } elseif ($statusLower == 'failed') {
                         $statusClass = 'failed';
                     } elseif ($statusLower == 'reject' || $statusLower == 'rejected') {
                         $statusClass = 'reject';
+                    } elseif ($statusLower == 'cancel' || $statusLower == 'cancelled') {
+                        $statusClass = 'reject'; // Cancel також червоний
                     } elseif ($statusLower == 'pending') {
                         $statusClass = 'alert';
                     }
                     
+                    $totalQuantity = (int)($tx['total_quantity'] ?? 0);
+                    
                     $transactions[] = [
                         'hash' => '#' . str_pad($tx['id'], 4, '0', STR_PAD_LEFT),
                         'date' => date('d M Y', strtotime($tx['date'])),
-                        'items' => (int)($tx['items_count'] ?? 0) . ' item' . ((int)($tx['items_count'] ?? 0) != 1 ? 's' : ''),
+                        'items' => $totalQuantity . ' item' . ($totalQuantity != 1 ? 's' : ''),
                         'total' => number_format((float)$tx['value'], 2, '.', ','),
                         'status' => $status,
                         'statusClass' => $statusClass,
@@ -1487,10 +1501,15 @@ class EcommerceController
                 
                 $transactionId = $pdo->lastInsertId();
                 
-                // Створюємо ордери для кожного товару в кошику
+                // Створюємо ордери для кожного товару в кошику та зв'язуємо їх з транзакцією
                 $orderStmt = $pdo->prepare("
                     INSERT INTO orders (quantity, client_id, recipe_id)
                     VALUES (:quantity, :client_id, :recipe_id)
+                ");
+                
+                $linkStmt = $pdo->prepare("
+                    INSERT INTO transaction_order (transaction_id, order_id)
+                    VALUES (:transaction_id, :order_id)
                 ");
                 
                 foreach ($cart as $item) {
@@ -1502,6 +1521,14 @@ class EcommerceController
                             ':quantity' => $quantity,
                             ':client_id' => $userId,
                             ':recipe_id' => $recipeId
+                        ]);
+                        
+                        $orderId = $pdo->lastInsertId();
+                        
+                        // Зв'язуємо замовлення з транзакцією
+                        $linkStmt->execute([
+                            ':transaction_id' => $transactionId,
+                            ':order_id' => $orderId
                         ]);
                     }
                 }

@@ -86,7 +86,13 @@ class IotEcoService
      */
     public function setValue(int $iotEcoId, float $value): bool
     {
-        return $this->addValue($iotEcoId, $value);
+        try {
+            $result = $this->addValue($iotEcoId, $value);
+            return $result > 0; // Повертаємо true, якщо ID > 0
+        } catch (\Exception $e) {
+            error_log("Error setting IoT value: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**

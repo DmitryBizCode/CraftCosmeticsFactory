@@ -66,7 +66,7 @@
                         <span>Settled invoices</span>
                     </header>
                     <strong>{{ settledInvoices|default(0) }}</strong>
-                    <small>Transactions with `status = Completed`</small>
+                    <small>Transactions with `status = Complete`</small>
                 </article>
             </section>
 
@@ -86,7 +86,7 @@
                             <span>Conversion rate</span>
                         </header>
                         <strong>{{ conversionRate|default(0) }}%</strong>
-                        <small>Completed vs total transactions this month</small>
+                        <small>Complete vs total transactions this month</small>
                     </article>
 
                     <article class="orders-card metric-card pending-card">
@@ -103,25 +103,25 @@
             <section class="orders-table-profile">
                 <div class="orders-table-header">
                     <h2>Recent transactions</h2>
-                    <button type="button" class="orders-table-button">View all transactions</button>
+                    <a href="?action=ordersProfile&show_all=1" class="profile-button accent">View all transactions</a>
                 </div>
                 <table class="orders-table profile-style">
                     <thead>
                     <tr>
                         <th>Hash</th>
                         <th>Date</th>
-                        <th>Items</th>
+                        <th>Quantity</th>
                         <th>Total</th>
                         <th>Status</th>
                         <th>Description</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {% for tx in transactions|slice(0,5)|default([]) %}
+                    {% for tx in transactions|default([]) %}
                         <tr class="orders-row">
                             <td><span class="order-id">{{ tx.hash }}</span></td>
                             <td>{{ tx.date }}</td>
-                            <td>{{ tx.items }}</td>
+                            <td>{{ tx.items|replace({'item': 'item'}) }}</td>
                             <td><span class="order-amount">${{ tx.total }}</span></td>
                             <td><span class="status {{ tx.statusClass }}">{{ tx.status }}</span></td>
                             <td>{{ tx.description }}</td>

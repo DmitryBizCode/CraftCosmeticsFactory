@@ -320,21 +320,181 @@ class AdminController
     /** Сторінка всіх замовлень */
     public function getAdminOrders(): string
     {
-        return $this->templateService->render('pages/adminOrders', [
-            'homeNavBar' => null,
-            'footer' => null,
-            'currentPage' => 'orders',
-        ]);
+        try {
+            // Перевіряємо, чи адмін залогінений
+            AuthService::startSession();
+            if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+                ResponseService::redirectWithError('index.php?action=admin', 'Please log in to access admin panel');
+                return '';
+            }
+
+            // Отримуємо фільтри з GET параметрів
+            $statusFilter = isset($_GET['status']) ? trim($_GET['status']) : null;
+            $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : null;
+
+            // Отримуємо всі замовлення
+            $orders = $this->adminActionService->getAllOrders($statusFilter, $searchQuery);
+
+            // Отримуємо список staff для вибору
+            $staffList = $this->adminActionService->getAllStaffForSelect();
+
+            // Перевіряємо, чи поточний адмін є бухгалтером (для зміни статусу)
+            // Для спрощення, якщо адмін залогінений, дозволяємо зміну статусу
+            // В реальному проекті тут була б перевірка через staff_id та access_layer
+            $canChangeStatus = true; // Адмін може змінювати статус
+
+            return $this->templateService->render('pages/adminOrders', [
+                'homeNavBar' => null,
+                'footer' => null,
+                'currentPage' => 'orders',
+                'orders' => $orders,
+                'statusFilter' => $statusFilter,
+                'searchQuery' => $searchQuery,
+                'canChangeStatus' => $canChangeStatus,
+                'staffList' => $staffList,
+            ]);
+        } catch (Exception $e) {
+            error_log("Error loading orders: " . $e->getMessage());
+            return $this->templateService->render('pages/adminOrders', [
+                'homeNavBar' => null,
+                'footer' => null,
+                'currentPage' => 'orders',
+                'orders' => [],
+                'statusFilter' => null,
+                'searchQuery' => null,
+                'canChangeStatus' => false,
+            ]);
+        }
+    }
+
+    /** Оновити статус транзакції */
+    public function updateOrderStatus(array $data): string
+    {
+        try {
+            // Перевіряємо, чи адмін залогінений
+            AuthService::startSession();
+            if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+                ResponseService::redirectWithError('index.php?action=adminOrders', 'Access denied');
+                return '';
+            }
+
+            $transactionId = isset($data['transaction_id']) ? (int)$data['transaction_id'] : 0;
+            $newStatus = isset($data['status']) ? trim($data['status']) : '';
+            $staffId = isset($data['staff_id']) && !empty($data['staff_id']) ? (int)$data['staff_id'] : null;
+
+            // Якщо передано тільки staff_id без статусу - оновлюємо тільки staff
+            if ($transactionId > 0 && empty($newStatus) && $staffId !== null && $staffId > 0) {
+                $result = $this->adminActionService->updateTransactionStaff($transactionId, $staffId);
+                if ($result['success']) {
+                    ResponseService::redirectWithSuccess('index.php?action=adminOrders', $result['message']);
+                } else {
+                    ResponseService::redirectWithError('index.php?action=adminOrders', $result['message']);
+                }
+                return '';
+            }
+
+            // Якщо передано статус - оновлюємо статус (staff_id опціональний)
+            if ($transactionId <= 0 || empty($newStatus)) {
+                ResponseService::redirectWithError('index.php?action=adminOrders', 'Invalid transaction ID or status');
+                return '';
+            }
+
+            // При зміні статусу staff_id не обов'язковий
+            $result = $this->adminActionService->updateTransactionStatus($transactionId, $newStatus, $staffId);
+
+            if ($result['success']) {
+                ResponseService::redirectWithSuccess('index.php?action=adminOrders', $result['message']);
+            } else {
+                ResponseService::redirectWithError('index.php?action=adminOrders', $result['message']);
+            }
+            return '';
+        } catch (Exception $e) {
+            error_log("Error updating order status: " . $e->getMessage());
+            ResponseService::redirectWithError('index.php?action=adminOrders', 'Error updating status');
+            return '';
+        }
     }
 
     /** Сторінка статистики продажів / транзакцій */
     public function getAdminStats(): string
     {
-        return $this->templateService->render('pages/adminStats', [
-            'homeNavBar' => null,
-            'footer' => null,
-            'currentPage' => 'stats',
-        ]);
+        try {
+            // Фінансова статистика по періодах
+            $statsDay = $this->adminActionService->getFinancialStatsByPeriod('day');
+            $statsWeek = $this->adminActionService->getFinancialStatsByPeriod('week');
+            $statsMonth = $this->adminActionService->getFinancialStatsByPeriod('month');
+            $statsYear = $this->adminActionService->getFinancialStatsByPeriod('year');
+            $statsAll = $this->adminActionService->getFinancialStatsByPeriod('all');
+
+            // Статистика по статусах
+            $statusStats = $this->adminActionService->getStatusStats();
+
+            // Статистика клієнтів
+            $clientStats = $this->adminActionService->getClientStats();
+
+            // Статистика рецептів
+            $recipeStats = $this->adminActionService->getRecipeStats();
+
+            // Дані для графіків
+            $salesByDay = $this->adminActionService->getSalesByDay(30);
+            $salesByWeek = $this->adminActionService->getSalesByWeek(12);
+            $salesByMonth = $this->adminActionService->getSalesByMonth(12);
+
+            // Загальна статистика компанії
+            $companyOverview = $this->adminActionService->getCompanyOverview();
+            $totalOrders = $this->adminActionService->getTotalOrders();
+            $statusTrends = $this->adminActionService->getStatusTrendsByDay(30);
+            $topRecipesChart = $this->adminActionService->getTopRecipesChart(5);
+            $topStaffChart = $this->adminActionService->getTopStaffChart(5);
+            $transactionsByWeekday = $this->adminActionService->getTransactionsByWeekday();
+
+            return $this->templateService->render('pages/adminStats', [
+                'homeNavBar' => null,
+                'footer' => null,
+                'currentPage' => 'stats',
+                'statsDay' => $statsDay,
+                'statsWeek' => $statsWeek,
+                'statsMonth' => $statsMonth,
+                'statsYear' => $statsYear,
+                'statsAll' => $statsAll,
+                'statusStats' => $statusStats,
+                'clientStats' => $clientStats,
+                'recipeStats' => $recipeStats,
+                'salesByDay' => $salesByDay,
+                'salesByWeek' => $salesByWeek,
+                'salesByMonth' => $salesByMonth,
+                'companyOverview' => $companyOverview,
+                'totalOrders' => $totalOrders,
+                'statusTrends' => $statusTrends,
+                'topRecipesChart' => $topRecipesChart,
+                'topStaffChart' => $topStaffChart,
+                'transactionsByWeekday' => $transactionsByWeekday,
+            ]);
+        } catch (Exception $e) {
+            error_log("Error loading admin stats: " . $e->getMessage());
+            return $this->templateService->render('pages/adminStats', [
+                'homeNavBar' => null,
+                'footer' => null,
+                'currentPage' => 'stats',
+                'statsDay' => [],
+                'statsWeek' => [],
+                'statsMonth' => [],
+                'statsYear' => [],
+                'statsAll' => [],
+                'statusStats' => [],
+                'clientStats' => ['total_clients' => 0, 'active_clients_30d' => 0, 'top_clients' => []],
+                'recipeStats' => [],
+                'salesByDay' => [],
+                'salesByWeek' => [],
+                'salesByMonth' => [],
+                'companyOverview' => [],
+                'totalOrders' => 0,
+                'statusTrends' => [],
+                'topRecipesChart' => [],
+                'topStaffChart' => [],
+                'transactionsByWeekday' => [],
+            ]);
+        }
     }
 
     /** Сторінка користувачів (клієнти та співробітники) */

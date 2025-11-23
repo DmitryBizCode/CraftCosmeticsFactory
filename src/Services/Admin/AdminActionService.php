@@ -9,6 +9,7 @@ use App\Services\Iot\IotEcoService;
 use App\Services\Iot\IotDataGenerator;
 use App\Services\User\ClientService;
 use App\Services\User\StaffService;
+use App\Services\Order\OrderService;
 use App\Services\Database\SQLService;
 use Exception;
 use PDO;
@@ -24,6 +25,7 @@ class AdminActionService
     private IotEcoService $iotEcoService;
     private ClientService $clientService;
     private StaffService $staffService;
+    private OrderService $orderService;
 
     public function __construct()
     {
@@ -35,6 +37,7 @@ class AdminActionService
         $this->iotEcoService = new IotEcoService($pdo);
         $this->clientService = new ClientService($pdo);
         $this->staffService = new StaffService($pdo);
+        $this->orderService = new OrderService($pdo);
     }
 
     // ============ Products ============
@@ -539,6 +542,11 @@ class AdminActionService
         $endValue = $sensor['end_value'] ?? $sensor['iot_end_value'] ?? 100;
         $range = $endValue - $startValue;
         
+        // Захист від ділення на 0
+        if ($range <= 0) {
+            $range = 1; // Якщо range = 0, встановлюємо 1 для уникнення ділення на 0
+        }
+        
         // Отримуємо попереднє значення для розрахунку зміни
         $previousValue = $this->iotEcoService->getLastValue($iotEcoId);
         if ($previousValue === null) {
@@ -550,7 +558,10 @@ class AdminActionService
         $changePercent = ($change / $range) * 100;
         
         // Зберігаємо нове значення
-        $this->iotEcoService->setValue($iotEcoId, $value);
+        $setResult = $this->iotEcoService->setValue($iotEcoId, $value);
+        if (!$setResult) {
+            throw new Exception('Failed to save value to database');
+        }
         
         // Отримуємо всі інші датчики в eco_system
         $allSensors = $this->iotEcoService->getIotSensorsByEcoSystemId($sensor['eco_system_id']);
@@ -564,6 +575,11 @@ class AdminActionService
                     $otherStartValue = $otherSensor['start_value'] ?? $otherSensor['iot_start_value'] ?? 0;
                     $otherEndValue = $otherSensor['end_value'] ?? $otherSensor['iot_end_value'] ?? 100;
                     $otherRange = $otherEndValue - $otherStartValue;
+                    
+                    // Захист від ділення на 0
+                    if ($otherRange <= 0) {
+                        $otherRange = 1;
+                    }
                     
                     // 25% від зміни (випадково вибираємо напрямок в + або -)
                     $influencePercent = 0.25;
@@ -590,7 +606,7 @@ class AdminActionService
         }
         
         // Перевірка на критичні значення
-        $criticalThreshold = $range * 0.05;
+        $criticalThreshold = max(1, $range * 0.05); // Мінімум 1, щоб уникнути проблем з дуже малими range
         $distanceToMin = $value - $startValue;
         $distanceToMax = $endValue - $value;
         $isCritical = false;
@@ -618,6 +634,8 @@ class AdminActionService
             'updated_sensors' => $updatedSensors,
             'is_critical' => $isCritical,
             'warning_type' => $warningType,
+            'distance_to_min' => $distanceToMin,
+            'distance_to_max' => $distanceToMax,
             'critical_warnings' => $isCritical ? $this->iotEcoService->getCriticalWarnings($iotEcoId) : null
         ];
     }
@@ -818,6 +836,172 @@ class AdminActionService
             'success' => true,
             'staff_id' => $staffId
         ];
+    }
+
+    // ============ Orders ============
+
+    /**
+     * Отримати всі замовлення з фільтрацією
+     */
+    public function getAllOrders(?string $statusFilter = null, ?string $searchQuery = null): array
+    {
+        return $this->orderService->getAllOrders($statusFilter, $searchQuery);
+    }
+
+    /**
+     * Отримати замовлення по ID
+     */
+    public function getOrderById(int $orderId): ?array
+    {
+        return $this->orderService->getOrderById($orderId);
+    }
+
+    /**
+     * Оновити статус транзакції (тільки для бухгалтера)
+     */
+    public function updateTransactionStatus(int $transactionId, string $newStatus, ?int $staffId = null): array
+    {
+        $transaction = $this->orderService->getTransactionById($transactionId);
+        if (!$transaction) {
+            return [
+                'success' => false,
+                'message' => 'Transaction not found'
+            ];
+        }
+
+        // Перевіряємо, чи статус дозволений
+        $allowedStatuses = ['Pending', 'Complete', 'Reject', 'Cancel'];
+        if (!in_array($newStatus, $allowedStatuses)) {
+            return [
+                'success' => false,
+                'message' => 'Invalid status'
+            ];
+        }
+
+        // Оновлюємо статус та staff_id
+        $success = $this->orderService->updateTransactionStatus($transactionId, $newStatus, $staffId);
+        
+        return [
+            'success' => $success,
+            'message' => $success ? 'Status updated successfully' : 'Failed to update status'
+        ];
+    }
+
+    /**
+     * Отримати всіх staff для вибору
+     */
+    public function getAllStaffForSelect(): array
+    {
+        return $this->staffService->getAllForSelect();
+    }
+
+    /**
+     * Оновити тільки staff_id транзакції (без зміни статусу)
+     */
+    public function updateTransactionStaff(int $transactionId, int $staffId): array
+    {
+        $transaction = $this->orderService->getTransactionById($transactionId);
+        if (!$transaction) {
+            return [
+                'success' => false,
+                'message' => 'Transaction not found'
+            ];
+        }
+
+        // Оновлюємо тільки staff_id
+        $success = $this->orderService->updateTransactionStaff($transactionId, $staffId);
+        
+        return [
+            'success' => $success,
+            'message' => $success ? 'Staff updated successfully' : 'Failed to update staff'
+        ];
+    }
+
+    // ============ Statistics ============
+
+    public function getTodayStats(): array
+    {
+        return $this->orderService->getTodayStats();
+    }
+
+    public function getPendingStats(): array
+    {
+        return $this->orderService->getPendingStats();
+    }
+
+    public function getApprovedLast7Days(): array
+    {
+        return $this->orderService->getApprovedLast7Days();
+    }
+
+    public function getSalesByDay(int $days = 30): array
+    {
+        return $this->orderService->getSalesByDay($days);
+    }
+
+    public function getSalesByMonth(int $months = 12): array
+    {
+        return $this->orderService->getSalesByMonth($months);
+    }
+
+    public function getAllTransactionsForStats(int $limit = 50, int $offset = 0): array
+    {
+        return $this->orderService->getAllTransactionsForStats($limit, $offset);
+    }
+
+    public function getFinancialStatsByPeriod(string $period = 'day'): array
+    {
+        return $this->orderService->getFinancialStatsByPeriod($period);
+    }
+
+    public function getStatusStats(): array
+    {
+        return $this->orderService->getStatusStats();
+    }
+
+    public function getClientStats(): array
+    {
+        return $this->orderService->getClientStats();
+    }
+
+    public function getRecipeStats(): array
+    {
+        return $this->orderService->getRecipeStats();
+    }
+
+    public function getSalesByWeek(int $weeks = 12): array
+    {
+        return $this->orderService->getSalesByWeek($weeks);
+    }
+
+    public function getCompanyOverview(): array
+    {
+        return $this->orderService->getCompanyOverview();
+    }
+
+    public function getTotalOrders(): int
+    {
+        return $this->orderService->getTotalOrders();
+    }
+
+    public function getStatusTrendsByDay(int $days = 30): array
+    {
+        return $this->orderService->getStatusTrendsByDay($days);
+    }
+
+    public function getTopRecipesChart(int $limit = 5): array
+    {
+        return $this->orderService->getTopRecipesChart($limit);
+    }
+
+    public function getTopStaffChart(int $limit = 5): array
+    {
+        return $this->orderService->getTopStaffChart($limit);
+    }
+
+    public function getTransactionsByWeekday(): array
+    {
+        return $this->orderService->getTransactionsByWeekday();
     }
 }
 
