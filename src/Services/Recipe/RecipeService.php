@@ -331,16 +331,35 @@ class RecipeService
 
     public function addIotSensorToEcoSystem(int $ecoSystemId, int $iotId, ?float $startValue = null, ?float $endValue = null): bool
     {
-        $stmt = $this->pdo->prepare("
-            INSERT INTO iot_eco (eco_system_id, iot_id, start_value, end_value) 
-            VALUES (:eco_system_id, :iot_id, :start_value, :end_value)
-        ");
-        return $stmt->execute([
-            ':eco_system_id' => $ecoSystemId,
-            ':iot_id' => $iotId,
-            ':start_value' => $startValue,
-            ':end_value' => $endValue,
-        ]);
+        try {
+            // Перевіряємо, чи не існує вже такий запис
+            $checkStmt = $this->pdo->prepare("
+                SELECT id FROM iot_eco 
+                WHERE eco_system_id = :eco_system_id AND iot_id = :iot_id
+            ");
+            $checkStmt->execute([
+                ':eco_system_id' => $ecoSystemId,
+                ':iot_id' => $iotId,
+            ]);
+            
+            if ($checkStmt->fetch()) {
+                // Запис вже існує, не додаємо дублікат
+                return true;
+            }
+            
+            // Додаємо новий запис (таблиця iot_eco не має полів start_value та end_value)
+            $stmt = $this->pdo->prepare("
+                INSERT INTO iot_eco (eco_system_id, iot_id, critical_warnings_count) 
+                VALUES (:eco_system_id, :iot_id, 0)
+            ");
+            return $stmt->execute([
+                ':eco_system_id' => $ecoSystemId,
+                ':iot_id' => $iotId,
+            ]);
+        } catch (\Exception $e) {
+            error_log("Error adding IoT sensor to eco system: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function clearEcoSystemIotSensors(int $ecoSystemId): bool

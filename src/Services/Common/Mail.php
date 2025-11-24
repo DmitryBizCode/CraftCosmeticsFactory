@@ -12,7 +12,7 @@ class Mail
         $mail = new PHPMailer(true);
 
         try {
-            $password = trim(file_get_contents(__DIR__ . '/../../../var/password.txt'));
+            $password = trim(file_get_contents(__DIR__ . '/../- ../../var/password.txt'));
             $mail->isSMTP();
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;

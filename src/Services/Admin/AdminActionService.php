@@ -175,13 +175,22 @@ class AdminActionService
         if (isset($data['iot_sensors']) && !empty($data['iot_sensors'])) {
             $iotSensors = is_string($data['iot_sensors']) ? json_decode($data['iot_sensors'], true) : $data['iot_sensors'];
             
+            error_log("DEBUG: iot_sensors raw: " . print_r($data['iot_sensors'], true));
+            error_log("DEBUG: iot_sensors parsed: " . print_r($iotSensors, true));
+            error_log("DEBUG: ecoSystemId: " . $ecoSystemId);
+            
             if (is_array($iotSensors) && !empty($iotSensors)) {
                 foreach ($iotSensors as $iotId) {
                     if (!empty($iotId)) {
-                        $this->recipeService->addIotSensorToEcoSystem($ecoSystemId, (int)$iotId);
+                        $result = $this->recipeService->addIotSensorToEcoSystem($ecoSystemId, (int)$iotId);
+                        error_log("DEBUG: Added IoT sensor " . (int)$iotId . " to eco system " . $ecoSystemId . " - result: " . ($result ? 'success' : 'failed'));
                     }
                 }
+            } else {
+                error_log("DEBUG: iot_sensors is not array or empty");
             }
+        } else {
+            error_log("DEBUG: iot_sensors not set or empty in data");
         }
     }
 
